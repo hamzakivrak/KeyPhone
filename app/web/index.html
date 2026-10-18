@@ -14,7 +14,7 @@ button{font-family:inherit;color:var(--t)}
 .hid{display:none!important}
 
 /* üst çubuk */
-#top{display:flex;gap:5px;padding:5px;align-items:center;flex:none}
+#top{display:flex;gap:5px;padding:5px;align-items:center;flex:none;z-index:20}
 .tab{flex:1;padding:10px 2px;border-radius:12px;background:var(--p);border:1px solid var(--b);font-size:15px;touch-action:manipulation}
 .tab.on{background:var(--a);color:#001;border-color:var(--a);font-weight:600}
 .ib{flex:none;width:44px;padding:10px 0}
@@ -23,7 +23,7 @@ button{font-family:inherit;color:var(--t)}
 #dot.ok{background:#30a46c}
 
 /* ayarlar */
-#set{margin:0 5px 5px;padding:10px 12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:58vh;overflow-y:auto;flex:none}
+#set{margin:0 5px 5px;padding:10px 12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:58vh;overflow-y:auto;flex:none;z-index:25}
 #set h4{margin:6px 0 0;font-size:13px;color:var(--a);text-transform:uppercase;letter-spacing:.5px}
 #set label{display:flex;align-items:center;gap:10px;justify-content:space-between}
 #set input[type=range]{flex:1;max-width:50%}
@@ -42,25 +42,47 @@ button{font-family:inherit;color:var(--t)}
 .k.lock{background:var(--w);color:#001;border-color:var(--w)}
 .k.s{font-size:14px;height:42px}
 .k.w2{flex:2}.k.w4{flex:4}
-.k.big{height:54px;font-size:17px}
+.k.big{height:52px;font-size:16px}
 
-/* Yaz ekranı */
+/* Yaz ekranı & Sabit Üst Kutu */
 #vy.on{flex-direction:column}
-#ycol{flex:1;min-width:0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
-#box{flex:1 0 auto;min-height:92px;font-size:18px;padding:10px;border-radius:12px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit}
-#interim{min-height:20px;color:var(--m);font-size:14px;padding:0 4px;flex:none}
+#ymain{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px}
+
+#stickyTop{flex:none;display:flex;flex-direction:column;gap:4px;background:var(--bg);padding-bottom:4px;border-bottom:1px solid var(--b);z-index:10}
+#boxWrap{display:flex;gap:6px;align-items:stretch}
+#boxContainer{flex:1;position:relative;display:flex}
+#box{width:100%;height:88px;font-size:17px;padding:8px 10px 22px 10px;border-radius:12px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit;transition:border-color .15s}
+#box:focus{outline:none;border-color:var(--a)}
+#delModeBadge{position:absolute;right:8px;bottom:4px;font-size:11px;padding:2px 6px;border-radius:6px;background:var(--p2);color:var(--m);pointer-events:none;border:1px solid var(--b);transition:all .15s}
+#box:focus ~ #delModeBadge{background:rgba(77,163,255,.18);color:var(--a);border-color:var(--a)}
+
+#boxSide{display:flex;flex-direction:column;gap:4px;width:54px;flex:none}
+#smartBs{flex:1.4;border-radius:12px;background:var(--p2);border:1px solid var(--b);font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;padding:0}
+#smartBs span{font-size:10px;color:var(--m);margin-top:-2px}
+#smartBs.press{background:var(--r);color:#fff;border-color:var(--r)}
+#smartBs.press span{color:#fff}
+#quickSend{flex:1;border-radius:10px;background:#1c3354;border:1px solid var(--a);font-size:13px;font-weight:600;touch-action:manipulation}
+#quickSend:active{background:var(--a);color:#001}
+
+#interimBar{display:flex;align-items:center;justify-content:space-between;min-height:20px;padding:0 4px;gap:6px}
+#interim{color:var(--a);font-size:14px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+#unfocusBtn{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--p2);border:1px solid var(--b);color:var(--m)}
+
+/* Kaydırılabilir alt kontroller */
+#ycol{flex:1;min-width:0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-top:2px;padding-bottom:76px;-webkit-overflow-scrolling:touch}
+
 .seg{flex:1;display:flex;border:1px solid var(--b);border-radius:10px;overflow:hidden}
 .seg button{flex:1;padding:9px 4px;background:var(--p);border:0;font-size:14px;touch-action:manipulation}
 .seg button.on{background:var(--a);color:#001;font-weight:600}
-#mic{flex:2;background:#1c3354;border-color:var(--a);font-size:18px}
+#mic{flex:1.6;background:#1c3354;border-color:var(--a);font-size:16px;touch-action:none}
 #mic.rec{background:var(--r);border-color:var(--r);color:#fff}
-.mod{flex:1;height:50px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:21px;touch-action:none}
+.mod{flex:1;height:48px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:20px;touch-action:none}
 .mod.on{background:var(--a);color:#001;border-color:var(--a)}
 .mod.once{border:2px dashed var(--w);color:var(--w)}
 .mod.lock{background:var(--w);color:#001;border-color:var(--w)}
 .chips{display:flex;gap:5px;overflow-x:auto;flex:none;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;min-width:44px;height:44px;padding:0 12px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:18px;touch-action:manipulation}
+.chip{flex:none;min-width:44px;height:42px;padding:0 12px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:18px;touch-action:manipulation}
 .chip.sm{font-size:14px}
 .chip:active{background:var(--a);color:#001}
 details{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:6px 12px;font-size:14px;color:var(--m);flex:none;-webkit-user-select:text;user-select:text}
@@ -92,22 +114,55 @@ body[data-pad="off"] #ypadwrap{display:none}
 @media (orientation:landscape) and (max-height:520px){
   .tab{padding:7px 2px}
   .ib{padding:7px 0}
-  #box{min-height:56px;font-size:16px}
-  .k{height:40px}
-  .k.big{height:44px;font-size:15px}
-  .k.s{height:36px}
-  .mod{height:42px;font-size:18px}
-  .chip{height:38px;font-size:16px}
-  .seg button{padding:7px 4px}
-  #interim{min-height:14px}
+  #box{height:58px;font-size:15px}
+  .k{height:38px}
+  .k.big{height:42px;font-size:14px}
+  .k.s{height:34px}
+  .mod{height:40px;font-size:17px}
+  .chip{height:36px;font-size:15px}
+  .seg button{padding:6px 4px}
 }
 
 /* klavye sekmesi */
-#vk{overflow-y:auto}
+#vk{overflow-y:auto;padding-bottom:76px}
 .sc{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .sc .k{height:40px;font-size:13px}
 
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+/* Her Zaman Görünen Yüzen Bas-Konuş Mikrofon (FAB) */
+#fabMic{
+  position:fixed;
+  right:16px;
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  width:66px;
+  height:66px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#1c3a63,#2563eb);
+  border:2px solid var(--a);
+  color:#fff;
+  font-size:26px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 20px rgba(0,0,0,.55);
+  z-index:100;
+  touch-action:none;
+  transition:transform .12s,background .15s,box-shadow .15s;
+}
+#fabMic small{font-size:9px;font-weight:700;letter-spacing:.3px;margin-top:1px;opacity:.9}
+#fabMic.rec{
+  background:var(--r);
+  border-color:#ff8b8e;
+  transform:scale(1.12);
+  box-shadow:0 0 24px rgba(229,72,77,.75);
+}
+#fabMic.lock{
+  background:var(--w);
+  color:#001;
+  border-color:#ffe0a3;
+}
+
+#toast{position:fixed;left:50%;bottom:94px;transform:translateX(-50%);background:#000d;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:110}
 #toast.on{opacity:1}
 </style>
 </head>
@@ -118,7 +173,7 @@ body[data-pad="off"] #ypadwrap{display:none}
   <button class="tab on" data-v="vy">Yaz</button>
   <button class="tab" data-v="vp">Pad</button>
   <button class="tab" data-v="vk">Klavye</button>
-  <button class="tab ib" id="micTop" title="Sesle yaz">🎤</button>
+  <button class="tab ib" id="micTop" title="Bas-Konuş / Dokun-Kilitle">🎤</button>
   <button class="tab ib" id="gear" title="Ayarlar">⚙</button>
 </div>
 
@@ -126,6 +181,7 @@ body[data-pad="off"] #ypadwrap{display:none}
 <div id="set" class="hid">
   <h4>Giriş</h4>
   <label>Sesi doğrudan PC'ye yaz (kapalıysa önce kutuya) <input type="checkbox" data-s="direct"></label>
+  <label>Yüzen mikrofon düğmesini göster <input type="checkbox" data-s="showFab"></label>
   <label>Sesli komutlar (nokta, tırnak, madde...) <input type="checkbox" data-s="punct"></label>
   <label>Cümle başını büyük harf yap <input type="checkbox" data-s="cap"></label>
   <label>Paragraf başında girinti (Tab) <input type="checkbox" data-s="indent"></label>
@@ -177,62 +233,80 @@ body[data-pad="off"] #ypadwrap{display:none}
 
 <!-- YAZ -->
 <div class="view on" id="vy">
-  <div id="ycol">
-    <textarea id="box" placeholder="Konuş ya da yaz. Düzelttikten sonra Gönder'e bas."></textarea>
-    <div id="interim"></div>
-    <div class="row">
-      <div class="seg" id="segMode"><button data-direct="0">Kutuya</button><button data-direct="1">Doğrudan PC</button></div>
-      <div class="seg" id="segNum"><button data-num="auto">Sayı: oto</button><button data-num="digit">123</button><button data-num="word">Yazıyla</button></div>
-    </div>
-    <div class="row">
-      <button class="k big" id="mic">🎤 Konuş</button>
-      <button class="k big" id="send">Gönder</button>
-      <button class="k big" id="sendEnter">Gönder ↵</button>
-    </div>
-    <div class="row" id="fmtRow">
-      <button class="mod" id="mCap" title="Büyük harf">Aa</button>
-      <button class="mod" id="mUpper" title="HEPSİ BÜYÜK">AA</button>
-      <button class="mod" id="mB" title="Kalın"></button>
-      <button class="mod" id="mI" title="İtalik"></button>
-      <button class="mod" id="mU" title="Altı çizili"></button>
-    </div>
-    <div class="chips" id="chPunct"></div>
-    <div class="chips" id="chDigit"></div>
-    <div class="chips" id="chStyle"></div>
-    <div class="row">
-      <button class="k s" id="eEnter">↵ Satır</button>
-      <button class="k s" id="eTab">⇥ Tab</button>
-      <button class="k s" id="eBs">⌫</button>
-      <button class="k s" id="eWord">Kelime sil</button>
-      <button class="k s" id="eUndo">Geri al</button>
-      <button class="k s" id="eClr">Temizle</button>
-    </div>
-    <details id="tdet">
-      <summary>Tablo hücreleri</summary>
-      <p>Word'de tabloyu sen ekle ve imleci <b>ilk hücreye</b> koy, sonra "İmleç 1. hücrede" düğmesine bas. Bir hücreye dokununca imleç oraya gider, konuştuğun ya da yazdığın metin o hücreye yazılır.</p>
-      <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap">
-        <span class="step">Satır <button id="rMinus">−</button><b id="rVal">4</b><button id="rPlus">+</button></span>
-        <span class="step">Sütun <button id="cMinus">−</button><b id="cVal">3</b><button id="cPlus">+</button></span>
+  <div id="ymain">
+    <!-- EKRAN KAYSA BİLE ÜSTTE SABİT KALAN KUTU VE AKILLI SİLME -->
+    <div id="stickyTop">
+      <div id="boxWrap">
+        <div id="boxContainer">
+          <textarea id="box" placeholder="Basılı tutup konuş ya da yaz..."></textarea>
+          <span id="delModeBadge">⌫ Kelime siler</span>
+        </div>
+        <div id="boxSide">
+          <button id="smartBs" title="Kutuya tıklanmışsa harf, değilse son kelimeyi siler">⌫<span id="bsSub">Kelime</span></button>
+          <button id="quickSend" title="Kutudakini PC'ye gönder">Gönder</button>
+        </div>
       </div>
-      <div id="tgrid"></div>
+      <div id="interimBar">
+        <div id="interim"></div>
+        <button id="unfocusBtn" class="hid" title="Harf silme modundan kelime silme moduna geç">Odak Kaldır ✕</button>
+      </div>
+    </div>
+
+    <!-- KAYDIRILABİLİR KONTROLLER -->
+    <div id="ycol">
       <div class="row">
-        <button class="k s" id="tPrev">◀ Önceki hücre</button>
-        <button class="k s" id="tNext">Sonraki hücre ▶</button>
-        <button class="k s" id="tReset">İmleç 1. hücrede</button>
+        <button class="k big" id="mic">🎤 Bas-Konuş</button>
+        <button class="k big" id="send">Gönder</button>
+        <button class="k big" id="sendEnter">Gönder ↵</button>
       </div>
-    </details>
-    <details>
-      <summary>Sesli komutlar ve ipuçları</summary>
-      <p><b>Noktalama:</b> nokta, virgül, soru işareti, ünlem, iki nokta, noktalı virgül, üç nokta</p>
-      <p><b>Tırnak:</b> tırnak içinde ... tırnak kapat (ya da tırnak aç / tırnak kapat). Cümle sonu noktalaması gelince açık tırnak kendiliğinden kapanır. Parantez: parantez aç, parantez kapat, parantez içinde.</p>
-      <p><b>Satır:</b> yeni satır, yeni paragraf (paragraf başı), girinti</p>
-      <p><b>Liste:</b> madde numarası (1. ile başlar, Word devamını kendisi numaralar), madde işareti, yeni madde, listeyi bitir</p>
-      <p><b>Biçim:</b> kalın aç / kalın kapat, italik aç / italik kapat, altı çizili aç / altı çizili kapat. Düğmelerde: dokun = aç/kapat, basılı tut = bırakana kadar. Büyük harf: <b>Aa</b> dokun = sonraki kelimenin ilk harfi, <b>AA</b> dokun = sonraki kelime tamamen büyük, çift dokun = kilitle, basılı tut = tutarken. Sesle: büyük harfle, hepsi büyük.</p>
-      <p><b>Stil:</b> başlık bir / iki / üç, normal metin, ortala, sola yasla, sağa yasla, iki yana yasla</p>
-      <p><b>Sayı:</b> "sayıyla yirmi beş" = 25, "yazıyla 25" = yirmi beş. Üstteki Sayı düğmesiyle kalıcı yap.</p>
-      <p><b>Düzeltme:</b> geri al, kelimeyi sil (ya da yalnızca sil), harfi sil, boşluk. Tablo: sonraki hücre, önceki hücre.</p>
-    </details>
+      <div class="row">
+        <div class="seg" id="segMode"><button data-direct="0">Kutuya</button><button data-direct="1">Doğrudan PC</button></div>
+        <div class="seg" id="segNum"><button data-num="auto">Sayı: oto</button><button data-num="digit">123</button><button data-num="word">Yazıyla</button></div>
+      </div>
+      <div class="row" id="fmtRow">
+        <button class="mod" id="mCap" title="Büyük harf">Aa</button>
+        <button class="mod" id="mUpper" title="HEPSİ BÜYÜK">AA</button>
+        <button class="mod" id="mB" title="Kalın"></button>
+        <button class="mod" id="mI" title="İtalik"></button>
+        <button class="mod" id="mU" title="Altı çizili"></button>
+      </div>
+      <div class="chips" id="chPunct"></div>
+      <div class="chips" id="chDigit"></div>
+      <div class="chips" id="chStyle"></div>
+      <div class="row">
+        <button class="k s" id="eEnter">↵ Satır</button>
+        <button class="k s" id="eTab">⇥ Tab</button>
+        <button class="k s" id="eBs">⌫ Harf</button>
+        <button class="k s" id="eWord">Kelime sil</button>
+        <button class="k s" id="eUndo">Geri al</button>
+        <button class="k s" id="eClr">Temizle</button>
+      </div>
+      <details id="tdet">
+        <summary>Tablo hücreleri</summary>
+        <p>Word'de tabloyu sen ekle ve imleci <b>ilk hücreye</b> koy, sonra "İmleç 1. hücrede" düğmesine bas. Bir hücreye dokununca imleç oraya gider, konuştuğun ya da yazdığın metin o hücreye yazılır.</p>
+        <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap">
+          <span class="step">Satır <button id="rMinus">−</button><b id="rVal">4</b><button id="rPlus">+</button></span>
+          <span class="step">Sütun <button id="cMinus">−</button><b id="cVal">3</b><button id="cPlus">+</button></span>
+        </div>
+        <div id="tgrid"></div>
+        <div class="row">
+          <button class="k s" id="tPrev">◀ Önceki hücre</button>
+          <button class="k s" id="tNext">Sonraki hücre ▶</button>
+          <button class="k s" id="tReset">İmleç 1. hücrede</button>
+        </div>
+      </details>
+      <details>
+        <summary>Sesli komutlar ve ipuçları</summary>
+        <p><b>Mikrofon:</b> Basılı tutarak konuş (Bas-Konuş), parmağını çekince durur. Sürekli dinlemesi için bir kez kısa dokun.</p>
+        <p><b>Silme (⌫):</b> Metin kutusunun içine dokunup imleci koyduğunda <b>harf</b> siler. Kutu seçili değilken bastığında <b>son kelimeyi</b> siler.</p>
+        <p><b>Noktalama:</b> nokta, virgül, soru işareti, ünlem, iki nokta, noktalı virgül, üç nokta</p>
+        <p><b>Tırnak:</b> tırnak içinde ... tırnak kapat (ya da tırnak aç / tırnak kapat). Parantez: parantez aç, parantez kapat, parantez içinde.</p>
+        <p><b>Satır & Liste:</b> yeni satır, yeni paragraf, girinti, madde numarası, madde işareti, yeni madde, listeyi bitir</p>
+        <p><b>Biçim & Stil:</b> kalın aç/kapat, italik aç/kapat, altı çizili aç/kapat, başlık bir/iki/üç, normal metin, ortala, sola/sağa/iki yana yasla</p>
+      </details>
+    </div>
   </div>
+
   <div id="ypadwrap">
     <div class="padbox" id="ypad">Mousepad<br>1 parmak: imleç · dokun: tık<br>2 parmak: kaydır / sağ tık</div>
     <div class="clicks opt">
@@ -265,6 +339,9 @@ body[data-pad="off"] #ypadwrap{display:none}
   <div class="sc" id="sc"></div>
 </div>
 
+<!-- EKRAN KAYSA BİLE HER YERDE SABİT BAS-KONUŞ MİKROFONU -->
+<button id="fabMic" title="Basılı Tut: Bas-Konuş | Kısa Dokun: Sürekli Dinle">🎤<small>BAS-KONUŞ</small></button>
+
 <div id="toast"></div>
 
 <script>
@@ -287,7 +364,7 @@ const WL = {
   en: { kb: 'b', ki: 'i', ku: 'u', kc: 'e', kl: 'l', kr: 'r', kj: 'j' }
 };
 const D = Object.assign({
-  speed: 1.6, scroll: 1.0, invert: false, awake: false, direct: false, punct: true, cap: true, indent: false,
+  speed: 1.6, scroll: 1.0, invert: false, awake: true, direct: false, showFab: true, punct: true, cap: true, indent: false,
   num: 'auto', startTab: 'vy', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
   wl: 'tr', tblR: 4, tblC: 3
 }, WL.tr);
@@ -342,7 +419,30 @@ function showTab(id) {
 }
 $$('.tab[data-v]').forEach(b => b.onclick = () => showTab(b.dataset.v));
 
-/* ---------- Touchpad (birden çok alan için) ---------- */
+/* ---------- Metin Kutusu Odak (Focus) ve Akıllı Silme (Madde 2 & 3) ---------- */
+const box = $('#box');
+let boxFocused = false;
+
+function updateFocusUI() {
+  $('#delModeBadge').textContent = boxFocused ? '⌫ Harf siler' : '⌫ Kelime siler';
+  $('#bsSub').textContent = boxFocused ? 'Harf' : 'Kelime';
+  $('#unfocusBtn').classList.toggle('hid', !boxFocused);
+}
+box.addEventListener('focus', () => { boxFocused = true; updateFocusUI(); });
+box.addEventListener('blur', () => { boxFocused = false; updateFocusUI(); });
+$('#unfocusBtn').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  box.blur();
+});
+
+// Touchpad'e veya diğer kontrollere dokunulduğunda kutu odağını kaldır ki kelime silme moduna dönsün
+document.addEventListener('pointerdown', e => {
+  if (!boxFocused) return;
+  if (e.target === box || e.target.closest('#smartBs') || e.target.closest('#unfocusBtn')) return;
+  box.blur();
+});
+
+/* ---------- Touchpad ---------- */
 function makePad(el) {
   let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0;
   const avg = (ts, k) => { let s = 0; for (const t of ts) s += t[k]; return s / ts.length; };
@@ -356,6 +456,7 @@ function makePad(el) {
   function sched() { if (!raf) raf = requestAnimationFrame(flush); }
   el.addEventListener('touchstart', e => {
     e.preventDefault();
+    if (boxFocused) box.blur();
     const n = e.touches.length;
     if (!T.active) T = { active: true, t0: Date.now(), moved: 0, max: n, drag: false, pend: n === 1 && (Date.now() - lastTap < 300) };
     T.max = Math.max(T.max, n);
@@ -400,12 +501,11 @@ $$('[data-click]').forEach(b => b.addEventListener('pointerdown', e => {
 /* ================================================================
    Word biçimi, jetonlar, tablo
    ================================================================ */
-const box = $('#box');
 const FK = { b: 'kb', i: 'ki', u: 'ku' };
 const FN = { b: 'kalın', i: 'italik', u: 'altı çizili' };
 const FKEY = { 'kalın': 'b', 'italik': 'i', 'altı çizili': 'u' };
-const fmtDoc = { b: false, i: false, u: false };   // Word'de olduğu varsayılan biçim
-const want = { b: false, i: false, u: false };     // arayüzün istediği biçim
+const fmtDoc = { b: false, i: false, u: false };
+const want = { b: false, i: false, u: false };
 const hist = [];
 const tbl = { exec: { r: 1, c: 1 }, ui: { r: 1, c: 1 } };
 
@@ -483,6 +583,36 @@ function press(k, m) {
   else if (k === 'backspace') box.value = /⟦[^⟧]*⟧$/.test(box.value) ? box.value.replace(/⟦[^⟧]*⟧$/, '') : box.value.slice(0, -1);
   else if (k === 'z' && ctrl) { if (hist.length) box.value = hist.pop(); }
 }
+
+/* Akıllı Silme Fonksiyonu (Madde 3) */
+function smartBackspace() {
+  if (!S.direct && boxFocused) {
+    // Metin kutusu odaklıysa: İmlecin olduğu yerden HARF sil
+    const val = box.value;
+    if (!val) return;
+    const start = box.selectionStart;
+    const end = box.selectionEnd;
+    if (typeof start === 'number' && typeof end === 'number') {
+      if (start !== end) {
+        box.value = val.slice(0, start) + val.slice(end);
+        box.setSelectionRange(start, start);
+      } else if (start > 0) {
+        // İmlecin hemen önünde ⟦...⟧ jetonu varsa tamamını sil, yoksa 1 harf sil
+        const before = val.slice(0, start);
+        const tokMatch = before.match(/⟦[^⟧]*⟧$/);
+        const delLen = tokMatch ? tokMatch[0].length : 1;
+        box.value = val.slice(0, start - delLen) + val.slice(start);
+        box.setSelectionRange(start - delLen, start - delLen);
+      }
+      return;
+    }
+    run([['bs']]);
+  } else {
+    // Metin kutusu odaklı değilse: SONDAN KELİME sil
+    run([['delword']]);
+  }
+}
+
 function needSp() {
   if (!S.direct && box.value) return !/[\s(\[“⟧]$/.test(box.value);
   return st.space;
@@ -901,14 +1031,16 @@ function holdRepeat(el, fn) {
   const stop = () => { clearTimeout(to); clearInterval(iv); to = iv = 0; el.classList.remove('press'); };
   el.addEventListener('pointerdown', e => {
     e.preventDefault(); el.classList.add('press'); fn();
-    to = setTimeout(() => { iv = setInterval(fn, 55); }, 380);
+    if (navigator.vibrate) navigator.vibrate(8);
+    to = setTimeout(() => { iv = setInterval(fn, 65); }, 380);
   });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stop));
 }
 $('#eEnter').onclick = () => run([['nl']]);
 $('#eTab').onclick = () => run([['tab']]);
 holdRepeat($('#eBs'), () => run([['bs']]));
-$('#eWord').onclick = () => run([['delword']]);
+holdRepeat($('#smartBs'), smartBackspace);
+holdRepeat($('#eWord'), () => run([['delword']]));
 $('#eUndo').onclick = () => run([['undo']]);
 $('#eClr').onclick = () => { box.value = ''; hist.length = 0; $('#interim').textContent = ''; };
 
@@ -920,6 +1052,7 @@ function sendBox(enter) {
   syncDoc();
 }
 $('#send').onclick = () => sendBox(false);
+$('#quickSend').onclick = () => sendBox(false);
 $('#sendEnter').onclick = () => sendBox(true);
 
 /* ---------- Tablo ---------- */
@@ -955,15 +1088,22 @@ $('#tPrev').onclick = () => {
 };
 $('#tReset').onclick = () => { tbl.exec = { r: 1, c: 1 }; tbl.ui = { r: 1, c: 1 }; renderGrid(); toast('İmleç 1. hücre kabul edildi.'); };
 
-/* ---------- Konuşma tanıma ---------- */
+/* ---------- Konuşma Tanıma: Bas-Konuş (PTT) & Dokun-Kilitle (Madde 1) ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null;
-function setMic(on) {
+let rec = null, micLocked = false;
+
+function setMicUI(on, locked) {
   $('#mic').classList.toggle('rec', on);
   $('#micTop').classList.toggle('rec', on);
-  $('#mic').textContent = on ? '⏹ Dinleniyor... (durdur)' : '🎤 Konuş';
+  $('#fabMic').classList.toggle('rec', on && !locked);
+  $('#fabMic').classList.toggle('lock', on && locked);
+  $('#mic').textContent = on ? (locked ? '⏹ Kilitli (Durdur)' : '🔴 Dinleniyor...') : '🎤 Bas-Konuş';
+  $('#fabMic').innerHTML = on
+    ? (locked ? '⏹<small>KİLİTLİ</small>' : '🎙️<small>DİNLİYOR</small>')
+    : '🎤<small>BAS-KONUŞ</small>';
   if (!on) $('#interim').textContent = '';
 }
+
 function startRec() {
   if (!listening) return;
   rec = new SR();
@@ -978,29 +1118,86 @@ function startRec() {
     if (e.results[e.results.length - 1].isFinal && !done) { done = true; commit(t); }
   };
   rec.onerror = e => {
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { listening = false; setMic(false); toast('Mikrofon izni verilmedi.'); }
-    else if (e.error === 'network') { listening = false; setMic(false); toast('Sesli yazma için internet gerekli.'); }
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      listening = false; micLocked = false; setMicUI(false, false); toast('Mikrofon izni verilmedi.');
+    } else if (e.error === 'network') {
+      listening = false; micLocked = false; setMicUI(false, false); toast('Sesli yazma için internet gerekli.');
+    }
   };
   rec.onend = () => {
     if (!done && last) { done = true; commit(last); }
     $('#interim').textContent = '';
-    if (listening) setTimeout(startRec, 120); else setMic(false);
+    if (listening) setTimeout(startRec, 80); else setMicUI(false, false);
   };
-  try { rec.start(); } catch (e) { setTimeout(startRec, 500); }
+  try { rec.start(); } catch (e) { if (listening) setTimeout(startRec, 350); }
 }
-function toggleVoice() {
-  if (listening) { listening = false; try { rec.stop(); } catch (e) {} setMic(false); return; }
-  if (!SR) { toast('Bu tarayıcı sesli yazmayı desteklemiyor. Chrome kullan.'); return; }
-  if (!window.isSecureContext) { toast('Sesli yazma için https adresini aç (http değil).'); return; }
-  listening = true; st.autos = [];
-  setMic(true);
+
+function beginVoice(locked) {
+  if (!SR) { toast('Bu tarayıcı sesli yazmayı desteklemiyor. Chrome kullan.'); return false; }
+  if (!window.isSecureContext) { toast('Sesli yazma için https adresini aç (http değil).'); return false; }
+  listening = true;
+  micLocked = !!locked;
+  st.autos = [];
+  setMicUI(true, micLocked);
+  if (navigator.vibrate) navigator.vibrate(25);
   startRec();
+  return true;
 }
-$('#mic').onclick = toggleVoice;
-$('#micTop').onclick = () => {
-  if (!listening && !S.direct) showTab('vy');
-  toggleVoice();
-};
+
+function endVoice() {
+  if (!listening) return;
+  listening = false;
+  micLocked = false;
+  if (navigator.vibrate) navigator.vibrate(15);
+  try { if (rec) rec.stop(); } catch (e) {}
+  setMicUI(false, false);
+}
+
+// Basılı tutunca Bas-Konuş (PTT), kısa dokununca Kilitli Aç/Kapat
+function bindPTT(btn) {
+  let downTime = 0, wasListeningAtDown = false, wasLockedAtDown = false, activePointer = null;
+
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+    activePointer = e.pointerId;
+    downTime = Date.now();
+    wasListeningAtDown = listening;
+    wasLockedAtDown = micLocked;
+
+    if (!listening) {
+      beginVoice(false); // Bas-konuş olarak hemen başlat
+    }
+  });
+
+  const finishPointer = e => {
+    if (activePointer === null || (e.pointerId !== undefined && e.pointerId !== activePointer)) return;
+    activePointer = null;
+    const heldMs = Date.now() - downTime;
+
+    if (wasListeningAtDown && wasLockedAtDown) {
+      // Zaten kilitli dinliyordu, dokununca durdur
+      endVoice();
+      return;
+    }
+
+    if (heldMs < 260) {
+      // Kısa dokunuş -> Kilitli moda geçir (parmak çekilse de dinlemeye devam etsin)
+      micLocked = true;
+      setMicUI(true, true);
+    } else {
+      // Basılı tutulup bırakıldı (Bas-Konuş bitti) -> Dinlemeyi durdur ve son kelimeyi yaz
+      endVoice();
+    }
+  };
+
+  btn.addEventListener('pointerup', finishPointer);
+  btn.addEventListener('pointercancel', finishPointer);
+}
+
+bindPTT($('#fabMic'));
+bindPTT($('#mic'));
+bindPTT($('#micTop'));
 
 /* ---------- Klavye sekmesi (QWERTY) ---------- */
 const kmods = { ctrl: false, alt: false, win: false, shift: 0 };
@@ -1104,6 +1301,7 @@ function applyPrefs() {
   document.body.dataset.clicks = S.clicks ? 'on' : 'off';
   document.documentElement.style.setProperty('--padh', S.padH + '%');
   document.documentElement.style.setProperty('--padw', S.padW + '%');
+  $('#fabMic').classList.toggle('hid', !S.showFab);
   $$('#segMode button').forEach(b => b.classList.toggle('on', (b.dataset.direct === '1') === !!S.direct));
   $$('#segNum button').forEach(b => b.classList.toggle('on', b.dataset.num === S.num));
   setFmtLabels();
@@ -1142,6 +1340,7 @@ loadSettingsUI();
 applyPrefs();
 renderGrid();
 renderMods();
+updateFocusUI();
 showTab(S.startTab || 'vy');
 wake();
 
