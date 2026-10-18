@@ -22,7 +22,7 @@ from urllib.parse import urlparse, parse_qs
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.environ.get("KUMANDA_DATA") or os.path.join(HERE, "data")
 PORT = 8765
-GUID = "258EAFA5-E914-47DA-95CA-5AB9DC85B11"
+GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 # ---------------------------------------------------------------- Windows girdi
 user32 = ctypes.windll.user32
