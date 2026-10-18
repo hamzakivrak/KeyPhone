@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0f1115">
 <title>Kumanda</title>
 <style>
-:root{--bg:#0f1115;--p:#1a1d24;--p2:#232832;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3;--w:#f5a524;--r:#e5484d;--padh:36%;--padw:38%}
+:root{--bg:#0f1115;--p:#1a1d24;--p2:#232832;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3;--w:#f5a524;--r:#e5484d;--ai:#8b5cf6;--padh:36%;--padw:38%}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font-family:system-ui,Arial,sans-serif;overscroll-behavior:none}
 body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -23,15 +23,18 @@ button{font-family:inherit;color:var(--t)}
 #dot.ok{background:#30a46c}
 
 /* ayarlar */
-#set{margin:0 5px 5px;padding:10px 12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:58vh;overflow-y:auto;flex:none;z-index:25}
+#set{margin:0 5px 5px;padding:10px 12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:68vh;overflow-y:auto;flex:none;z-index:25}
 #set h4{margin:6px 0 0;font-size:13px;color:var(--a);text-transform:uppercase;letter-spacing:.5px}
 #set label{display:flex;align-items:center;gap:10px;justify-content:space-between}
 #set input[type=range]{flex:1;max-width:50%}
-#set select,#set input[type=number],#set input[type=text]{background:var(--p2);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:6px;font-size:14px;-webkit-user-select:text;user-select:text}
+#set select,#set input[type=number],#set input[type=text],#set textarea{background:var(--p2);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:6px;font-size:13px;-webkit-user-select:text;user-select:text;font-family:inherit}
 #set input.l1{width:42px;text-align:center;text-transform:lowercase}
 .krow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .krow label{flex-direction:column;gap:2px;font-size:12px;color:var(--m)}
 .small{font-size:12px;color:var(--m);line-height:1.4}
+#aiKeysInput{width:100%;height:90px;resize:vertical;font-family:monospace;font-size:12px}
+.ai-stat{display:flex;gap:8px;font-size:12px;background:var(--p2);padding:6px 10px;border-radius:8px;border:1px solid var(--b);justify-content:space-between;align-items:center}
+.ai-badge{padding:2px 8px;border-radius:6px;background:rgba(139,92,246,.2);color:#c4b5fd;font-weight:600}
 
 /* görünümler */
 .view{flex:1;display:none;min-height:0;padding:0 5px 5px;gap:6px}
@@ -49,19 +52,22 @@ button{font-family:inherit;color:var(--t)}
 #ymain{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px}
 
 #stickyTop{flex:none;display:flex;flex-direction:column;gap:4px;background:var(--bg);padding-bottom:4px;border-bottom:1px solid var(--b);z-index:10}
-#boxWrap{display:flex;gap:6px;align-items:stretch}
+#boxWrap{display:flex;gap:5px;align-items:stretch}
 #boxContainer{flex:1;position:relative;display:flex}
-#box{width:100%;height:88px;font-size:17px;padding:8px 10px 22px 10px;border-radius:12px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit;transition:border-color .15s}
+#box{width:100%;height:102px;font-size:17px;padding:8px 10px 22px 10px;border-radius:12px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit;transition:border-color .15s}
 #box:focus{outline:none;border-color:var(--a)}
 #delModeBadge{position:absolute;right:8px;bottom:4px;font-size:11px;padding:2px 6px;border-radius:6px;background:var(--p2);color:var(--m);pointer-events:none;border:1px solid var(--b);transition:all .15s}
 #box:focus ~ #delModeBadge{background:rgba(77,163,255,.18);color:var(--a);border-color:var(--a)}
 
-#boxSide{display:flex;flex-direction:column;gap:4px;width:54px;flex:none}
-#smartBs{flex:1.4;border-radius:12px;background:var(--p2);border:1px solid var(--b);font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;padding:0}
-#smartBs span{font-size:10px;color:var(--m);margin-top:-2px}
+#boxSide{display:flex;flex-direction:column;gap:4px;width:62px;flex:none}
+#smartBs{flex:1.2;border-radius:10px;background:var(--p2);border:1px solid var(--b);font-size:19px;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;padding:0}
+#smartBs span{font-size:9px;color:var(--m);margin-top:-2px}
 #smartBs.press{background:var(--r);color:#fff;border-color:var(--r)}
 #smartBs.press span{color:#fff}
-#quickSend{flex:1;border-radius:10px;background:#1c3354;border:1px solid var(--a);font-size:13px;font-weight:600;touch-action:manipulation}
+#aiFixBtn{flex:1;border-radius:10px;background:linear-gradient(135deg,#4c1d95,#7c3aed);border:1px solid #a78bfa;color:#fff;font-size:12px;font-weight:600;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:2px}
+#aiFixBtn:active{transform:scale(.96)}
+#aiFixBtn.busy{opacity:.65;pointer-events:none}
+#quickSend{flex:1;border-radius:10px;background:#1c3354;border:1px solid var(--a);font-size:12px;font-weight:600;touch-action:manipulation}
 #quickSend:active{background:var(--a);color:#001}
 
 #interimBar{display:flex;align-items:center;justify-content:space-between;min-height:20px;padding:0 4px;gap:6px}
@@ -114,7 +120,7 @@ body[data-pad="off"] #ypadwrap{display:none}
 @media (orientation:landscape) and (max-height:520px){
   .tab{padding:7px 2px}
   .ib{padding:7px 0}
-  #box{height:58px;font-size:15px}
+  #box{height:68px;font-size:15px}
   .k{height:38px}
   .k.big{height:42px;font-size:14px}
   .k.s{height:34px}
@@ -179,6 +185,26 @@ body[data-pad="off"] #ypadwrap{display:none}
 
 <!-- AYARLAR -->
 <div id="set" class="hid">
+  <h4>Yapay Zeka (Dilbilgisi & İmla)</h4>
+  <div class="ai-stat">
+    <span id="aiCountText">Yüklü Anahtar: Groq (0) · Gemini (0)</span>
+    <span class="ai-badge" id="aiActiveBadge">Hazır</span>
+  </div>
+  <label>Öncelikli Servis
+    <select data-s="aiOrder">
+      <option value="groq_first">Önce Grok/Groq, biterse Gemini</option>
+      <option value="gemini_first">Önce Gemini, biterse Grok/Groq</option>
+    </select>
+  </label>
+  <div class="row">
+    <button class="k s" id="btnLoadTxt">📂 .txt Dosyası Yükle</button>
+    <input type="file" id="aiFileInput" accept=".txt,text/plain" class="hid">
+    <button class="k s" id="btnSaveKeys">💾 Anahtarları Kaydet</button>
+    <button class="k s" id="btnClearKeys" style="flex:0.6">Sil</button>
+  </div>
+  <textarea id="aiKeysInput" placeholder="gemini:&#10;AIzaSy...&#10;&#10;grok:&#10;gsk_...&#10;(Elle yazabilir veya .txt yükleyebilirsin)"></textarea>
+  <div class="small">Kota dolduğunda (429) veya hata alındığında otomatik olarak sıradaki anahtara ve diğer servise geçer.</div>
+
   <h4>Giriş</h4>
   <label>Sesi doğrudan PC'ye yaz (kapalıysa önce kutuya) <input type="checkbox" data-s="direct"></label>
   <label>Yüzen mikrofon düğmesini göster <input type="checkbox" data-s="showFab"></label>
@@ -234,7 +260,7 @@ body[data-pad="off"] #ypadwrap{display:none}
 <!-- YAZ -->
 <div class="view on" id="vy">
   <div id="ymain">
-    <!-- EKRAN KAYSA BİLE ÜSTTE SABİT KALAN KUTU VE AKILLI SİLME -->
+    <!-- EKRAN KAYSA BİLE ÜSTTE SABİT KALAN KUTU, AKILLI SİLME VE YAPAY ZEKA -->
     <div id="stickyTop">
       <div id="boxWrap">
         <div id="boxContainer">
@@ -243,6 +269,7 @@ body[data-pad="off"] #ypadwrap{display:none}
         </div>
         <div id="boxSide">
           <button id="smartBs" title="Kutuya tıklanmışsa harf, değilse son kelimeyi siler">⌫<span id="bsSub">Kelime</span></button>
+          <button id="aiFixBtn" title="Yapay zeka ile dilbilgisi ve imlayı düzelt">✨ Düzelt</button>
           <button id="quickSend" title="Kutudakini PC'ye gönder">Gönder</button>
         </div>
       </div>
@@ -297,6 +324,7 @@ body[data-pad="off"] #ypadwrap{display:none}
       </details>
       <details>
         <summary>Sesli komutlar ve ipuçları</summary>
+        <p><b>✨ Düzelt:</b> Ayarlar'dan `.txt` dosyasıyla veya elle girdiğin Gemini (`AIza...`) ve Grok/Groq (`gsk_...`) anahtarlarını kullanarak kutudaki metni dilbilgisi ve imla kurallarına uygun hale getirir. Beğenmezsen <b>Geri al</b> tuşuyla eski haline dönebilirsin.</p>
         <p><b>Mikrofon:</b> Basılı tutarak konuş (Bas-Konuş), parmağını çekince durur. Sürekli dinlemesi için bir kez kısa dokun.</p>
         <p><b>Silme (⌫):</b> Metin kutusunun içine dokunup imleci koyduğunda <b>harf</b> siler. Kutu seçili değilken bastığında <b>son kelimeyi</b> siler.</p>
         <p><b>Noktalama:</b> nokta, virgül, soru işareti, ünlem, iki nokta, noktalı virgül, üç nokta</p>
@@ -366,7 +394,7 @@ const WL = {
 const D = Object.assign({
   speed: 1.6, scroll: 1.0, invert: false, awake: true, direct: false, showFab: true, punct: true, cap: true, indent: false,
   num: 'auto', startTab: 'vy', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
-  wl: 'tr', tblR: 4, tblC: 3
+  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first'
 }, WL.tr);
 let saved = {};
 try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
@@ -382,12 +410,236 @@ async function wake() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
 $('#gear').onclick = () => $('#set').classList.toggle('hid');
-document.addEventListener('contextmenu', e => { if (e.target.id !== 'box') e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.id !== 'box' && e.target.id !== 'aiKeysInput') e.preventDefault(); });
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
   clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800);
 }
+
+/* ================================================================
+   Yapay Zeka (Gemini & Grok/Groq) Anahtar Havuzu ve Kota Rotasyonu
+   ================================================================ */
+const aiPool = { gemini: [], groq: [], gIdx: 0, qIdx: 0 };
+
+function parseAndStoreKeys(rawText) {
+  const gemini = [];
+  const groq = [];
+  let currentSection = '';
+
+  const lines = (rawText || '').split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    if (/^gemini\s*:/i.test(line)) {
+      currentSection = 'gemini';
+      const rest = line.replace(/^gemini\s*:\s*/i, '').trim();
+      if (rest) extractTokens(rest, currentSection, gemini, groq);
+      continue;
+    }
+    if (/^gro[qk]\s*:/i.test(line)) {
+      currentSection = 'groq';
+      const rest = line.replace(/^gro[qk]\s*:\s*/i, '').trim();
+      if (rest) extractTokens(rest, currentSection, gemini, groq);
+      continue;
+    }
+    extractTokens(line, currentSection, gemini, groq);
+  }
+
+  aiPool.gemini = Array.from(new Set(gemini));
+  aiPool.groq = Array.from(new Set(groq));
+  aiPool.gIdx = 0;
+  aiPool.qIdx = 0;
+
+  lsSet('k_ai_raw', rawText || '');
+  updateAiStatusUI();
+}
+
+function extractTokens(str, section, geminiArr, groqArr) {
+  const tokens = str.split(/[\s,;]+/).filter(Boolean);
+  for (const tok of tokens) {
+    if (/^AIza[0-9A-Za-z_-]{20,}$/i.test(tok)) {
+      geminiArr.push(tok);
+    } else if (/^gsk_[0-9A-Za-z_-]{20,}$/i.test(tok)) {
+      groqArr.push(tok);
+    } else if (tok.length > 20) {
+      if (section === 'gemini') geminiArr.push(tok);
+      else if (section === 'groq') groqArr.push(tok);
+    }
+  }
+}
+
+function updateAiStatusUI(activeLabel) {
+  $('#aiCountText').textContent = `Yüklü: Grok/Groq (${aiPool.groq.length}) · Gemini (${aiPool.gemini.length})`;
+  if (activeLabel) $('#aiActiveBadge').textContent = activeLabel;
+  else {
+    const total = aiPool.groq.length + aiPool.gemini.length;
+    $('#aiActiveBadge').textContent = total > 0 ? `${total} Anahtar Hazır` : 'Anahtar Yok';
+  }
+}
+
+// Kayıtlı anahtarları yükle
+const initialRawKeys = lsGet('k_ai_raw') || '';
+$('#aiKeysInput').value = initialRawKeys;
+parseAndStoreKeys(initialRawKeys);
+
+$('#btnSaveKeys').onclick = () => {
+  parseAndStoreKeys($('#aiKeysInput').value);
+  toast(`Kaydedildi: ${aiPool.groq.length} Grok/Groq, ${aiPool.gemini.length} Gemini anahtarı.`);
+};
+
+$('#btnClearKeys').onclick = () => {
+  $('#aiKeysInput').value = '';
+  parseAndStoreKeys('');
+  toast('Tüm API anahtarları temizlendi.');
+};
+
+$('#btnLoadTxt').onclick = () => $('#aiFileInput').click();
+$('#aiFileInput').onchange = e => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const content = String(ev.target.result || '');
+    const existing = $('#aiKeysInput').value.trim();
+    const combined = existing ? (existing + '\n' + content) : content;
+    $('#aiKeysInput').value = combined;
+    parseAndStoreKeys(combined);
+    toast(`Dosyadan yüklendi: ${aiPool.groq.length} Grok/Groq, ${aiPool.gemini.length} Gemini.`);
+  };
+  reader.readAsText(file, 'utf-8');
+  e.target.value = '';
+};
+
+const AI_SYS_PROMPT =
+  'Sen profesyonel bir Türkçe editörsün. Kullanıcının verdiği metni Türkiye Türkçesi dilbilgisi, imla ve noktalama kurallarına uygun, akıcı ve düzgün hale getir. ' +
+  'KURALLAR:\n' +
+  '1. Metnin anlamını değiştirme.\n' +
+  '2. Metin içinde ⟦kalın⟧, ⟦/kalın⟧, ⟦hücre:1:1⟧ gibi köşeli ayraçlı özel biçim jetonları varsa bunları AYNEN olduğu yerde koru, silme.\n' +
+  '3. Asla açıklama, giriş cümlesi veya tırnak işareti ekleme; SADECE düzeltilmiş metni döndür.';
+
+async function callGroqAPI(apiKey, text) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: AI_SYS_PROMPT },
+        { role: 'user', content: text }
+      ],
+      temperature: 0.2
+    })
+  });
+  if (!res.ok) {
+    const err = new Error('Groq HTTP ' + res.status);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const out = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!out) throw new Error('Boş yanıt');
+  return out.trim();
+}
+
+async function callGeminiAPI(apiKey, text) {
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: AI_SYS_PROMPT }] },
+      contents: [{ role: 'user', parts: [{ text: text }] }],
+      generationConfig: { temperature: 0.2 }
+    })
+  });
+  if (!res.ok) {
+    const err = new Error('Gemini HTTP ' + res.status);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const out = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+              data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+  if (!out) throw new Error('Boş yanıt');
+  return out.trim();
+}
+
+async function fixGrammarWithFailover() {
+  const original = box.value.trim();
+  if (!original) {
+    toast('Düzeltilecek metin yok.');
+    return;
+  }
+  if ($('#aiKeysInput').value.trim() && (aiPool.groq.length + aiPool.gemini.length === 0)) {
+    parseAndStoreKeys($('#aiKeysInput').value);
+  }
+  if (aiPool.groq.length === 0 && aiPool.gemini.length === 0) {
+    $('#set').classList.remove('hid');
+    toast('Önce Ayarlar (⚙) bölümünden Gemini veya Grok/Groq API anahtarı ekle.');
+    return;
+  }
+
+  // Sıralı deneme planı oluştur (aktif indeksten başlayarak tüm anahtarları dener)
+  const providers = S.aiOrder === 'gemini_first' ? ['gemini', 'groq'] : ['groq', 'gemini'];
+  const attempts = [];
+  for (const p of providers) {
+    const list = aiPool[p];
+    const startIdx = p === 'groq' ? aiPool.qIdx : aiPool.gIdx;
+    for (let i = 0; i < list.length; i++) {
+      const idx = (startIdx + i) % list.length;
+      attempts.push({ provider: p, idx, key: list[idx] });
+    }
+  }
+
+  const btn = $('#aiFixBtn');
+  btn.classList.add('busy');
+  btn.textContent = '⏳...';
+
+  let lastErr = '';
+  for (let i = 0; i < attempts.length; i++) {
+    const att = attempts[i];
+    const pName = att.provider === 'groq' ? 'Grok' : 'Gemini';
+    try {
+      const fixed = att.provider === 'groq'
+        ? await callGroqAPI(att.key, original)
+        : await callGeminiAPI(att.key, original);
+
+      // Başarılı olan anahtarı aktif indeks olarak kaydet
+      if (att.provider === 'groq') aiPool.qIdx = att.idx;
+      else aiPool.gIdx = att.idx;
+
+      // Geri al (Undo) geçmişine mevcut metni kaydet
+      hist.push(box.value);
+      if (hist.length > 40) hist.shift();
+
+      box.value = fixed;
+      st.space = true;
+      updateAiStatusUI(`${pName} #${att.idx + 1} ✓`);
+      toast(`✨ ${pName} #${att.idx + 1} ile düzeltildi`);
+      if (navigator.vibrate) navigator.vibrate(20);
+      btn.classList.remove('busy');
+      btn.textContent = '✨ Düzelt';
+      return;
+    } catch (err) {
+      lastErr = err.message || 'Hata';
+      // Kota dolduysa veya hata verdiyse bir sonraki anahtara geç
+      if (att.provider === 'groq') aiPool.qIdx = (att.idx + 1) % Math.max(1, aiPool.groq.length);
+      else aiPool.gIdx = (att.idx + 1) % Math.max(1, aiPool.gemini.length);
+    }
+  }
+
+  btn.classList.remove('busy');
+  btn.textContent = '✨ Düzelt';
+  updateAiStatusUI('Tümü Hata Verdi');
+  toast('Tüm API anahtarları denendi ancak yanıt alınamadı (' + lastErr + ').');
+}
+
+$('#aiFixBtn').onclick = fixGrammarWithFailover;
 
 /* ---------- WebSocket ---------- */
 let ws = null, wsOk = false, fails = 0;
@@ -419,7 +671,7 @@ function showTab(id) {
 }
 $$('.tab[data-v]').forEach(b => b.onclick = () => showTab(b.dataset.v));
 
-/* ---------- Metin Kutusu Odak (Focus) ve Akıllı Silme (Madde 2 & 3) ---------- */
+/* ---------- Metin Kutusu Odak (Focus) ve Akıllı Silme ---------- */
 const box = $('#box');
 let boxFocused = false;
 
@@ -435,7 +687,6 @@ $('#unfocusBtn').addEventListener('pointerdown', e => {
   box.blur();
 });
 
-// Touchpad'e veya diğer kontrollere dokunulduğunda kutu odağını kaldır ki kelime silme moduna dönsün
 document.addEventListener('pointerdown', e => {
   if (!boxFocused) return;
   if (e.target === box || e.target.closest('#smartBs') || e.target.closest('#unfocusBtn')) return;
@@ -584,10 +835,8 @@ function press(k, m) {
   else if (k === 'z' && ctrl) { if (hist.length) box.value = hist.pop(); }
 }
 
-/* Akıllı Silme Fonksiyonu (Madde 3) */
 function smartBackspace() {
   if (!S.direct && boxFocused) {
-    // Metin kutusu odaklıysa: İmlecin olduğu yerden HARF sil
     const val = box.value;
     if (!val) return;
     const start = box.selectionStart;
@@ -597,7 +846,6 @@ function smartBackspace() {
         box.value = val.slice(0, start) + val.slice(end);
         box.setSelectionRange(start, start);
       } else if (start > 0) {
-        // İmlecin hemen önünde ⟦...⟧ jetonu varsa tamamını sil, yoksa 1 harf sil
         const before = val.slice(0, start);
         const tokMatch = before.match(/⟦[^⟧]*⟧$/);
         const delLen = tokMatch ? tokMatch[0].length : 1;
@@ -608,7 +856,6 @@ function smartBackspace() {
     }
     run([['bs']]);
   } else {
-    // Metin kutusu odaklı değilse: SONDAN KELİME sil
     run([['delword']]);
   }
 }
@@ -1088,7 +1335,7 @@ $('#tPrev').onclick = () => {
 };
 $('#tReset').onclick = () => { tbl.exec = { r: 1, c: 1 }; tbl.ui = { r: 1, c: 1 }; renderGrid(); toast('İmleç 1. hücre kabul edildi.'); };
 
-/* ---------- Konuşma Tanıma: Bas-Konuş (PTT) & Dokun-Kilitle (Madde 1) ---------- */
+/* ---------- Konuşma Tanıma: Bas-Konuş (PTT) & Dokun-Kilitle ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null, micLocked = false;
 
@@ -1153,7 +1400,6 @@ function endVoice() {
   setMicUI(false, false);
 }
 
-// Basılı tutunca Bas-Konuş (PTT), kısa dokununca Kilitli Aç/Kapat
 function bindPTT(btn) {
   let downTime = 0, wasListeningAtDown = false, wasLockedAtDown = false, activePointer = null;
 
@@ -1166,7 +1412,7 @@ function bindPTT(btn) {
     wasLockedAtDown = micLocked;
 
     if (!listening) {
-      beginVoice(false); // Bas-konuş olarak hemen başlat
+      beginVoice(false);
     }
   });
 
@@ -1176,17 +1422,14 @@ function bindPTT(btn) {
     const heldMs = Date.now() - downTime;
 
     if (wasListeningAtDown && wasLockedAtDown) {
-      // Zaten kilitli dinliyordu, dokununca durdur
       endVoice();
       return;
     }
 
     if (heldMs < 260) {
-      // Kısa dokunuş -> Kilitli moda geçir (parmak çekilse de dinlemeye devam etsin)
       micLocked = true;
       setMicUI(true, true);
     } else {
-      // Basılı tutulup bırakıldı (Bas-Konuş bitti) -> Dinlemeyi durdur ve son kelimeyi yaz
       endVoice();
     }
   };
@@ -1344,7 +1587,7 @@ updateFocusUI();
 showTab(S.startTab || 'vy');
 wake();
 
-window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok };
+window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok, aiPool, fixGrammarWithFailover };
 })();
 </script>
 </body>
