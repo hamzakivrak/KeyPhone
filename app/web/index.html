@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Kumanda</title>
+<style>
+:root{--bg:#0f1115;--p:#1a1d24;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font-family:system-ui,Arial,sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font-family:inherit}
+#top{display:flex;gap:6px;padding:6px;align-items:center}
+.tab{flex:1;padding:12px 2px;border-radius:12px;background:var(--p);border:1px solid var(--b);color:var(--t);font-size:16px;touch-action:manipulation}
+.tab.on{background:var(--a);color:#001;border-color:var(--a);font-weight:600}
+.ib{width:46px;flex:none;padding:12px 0}
+.ib.rec{background:#e5484d;border-color:#e5484d;color:#fff}
+#dot{width:12px;height:12px;border-radius:50%;background:#e5484d;flex:none;margin:0 4px}
+#dot.ok{background:#30a46c}
+.view{flex:1;display:none;flex-direction:column;min-height:0;padding:0 6px 6px;gap:6px}
+.view.on{display:flex}
+#vk{overflow-y:auto}
+#pad{flex:1;border-radius:18px;background:var(--p);border:2px solid var(--b);display:flex;align-items:center;justify-content:center;color:var(--m);text-align:center;touch-action:none;line-height:1.7;padding:12px;font-size:15px}
+.row{display:flex;gap:5px}
+.k{flex:1;min-width:0;padding:0;height:46px;border-radius:10px;background:var(--p);border:1px solid var(--b);color:var(--t);font-size:19px;touch-action:manipulation}
+.k.press,.k.on{background:var(--a);color:#001;border-color:var(--a)}
+.k.lock{background:#f5a524;color:#001;border-color:#f5a524}
+.k.s{font-size:15px;height:42px}
+.k.w2{flex:2}.k.w4{flex:4}
+.sc{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.sc .k{height:40px;font-size:14px}
+.hid{display:none!important}
+textarea{flex:1;min-height:110px;font-size:19px;padding:12px;border-radius:14px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit}
+.big{height:56px;font-size:18px}
+#mic{height:64px;font-size:20px;border-radius:14px}
+#mic.rec{background:#e5484d;border-color:#e5484d;color:#fff}
+#interim{min-height:22px;color:var(--m);font-size:15px;padding:0 4px}
+#set{margin:0 6px 6px;padding:12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:10px;font-size:15px}
+#set label{display:flex;align-items:center;gap:10px;justify-content:space-between}
+#set input[type=range]{flex:1;max-width:55%}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <span id="dot"></span>
+  <button class="tab on" data-v="vp">Pad</button>
+  <button class="tab" data-v="vk">Klavye</button>
+  <button class="tab" data-v="vt">Yaz / Ses</button>
+  <button class="tab ib" id="micTop" title="Sesle yaz">🎤</button>
+  <button class="tab ib" id="gear" title="Ayarlar">⚙</button>
+</div>
+
+<div id="set" class="hid">
+  <label>İmleç hızı <input type="range" id="sSpeed" min="0.5" max="4" step="0.1"></label>
+  <label>Kaydırma hızı <input type="range" id="sScroll" min="0.3" max="3" step="0.1"></label>
+  <label>Kaydırmayı ters çevir <input type="checkbox" id="sInvert"></label>
+  <label>Sesi doğrudan PC'ye yaz <input type="checkbox" id="sDirect"></label>
+  <label>Noktalama komutları (nokta, virgül, yeni satır...) <input type="checkbox" id="sPunct"></label>
+  <label>Ekran açık kalsın <input type="checkbox" id="sAwake"></label>
+</div>
+
+<!-- PAD -->
+<div class="view on" id="vp">
+  <div id="pad">Dokunmatik alan<br>1 parmak: imleç · dokun: tık<br>iki kez dokun, ikincide tut ve sürükle: sürükle-bırak<br>2 parmak dokun: sağ tık · 2 parmak kaydır: kaydırma</div>
+  <div class="row">
+    <button class="k big" data-click="l">Sol tık</button>
+    <button class="k big" data-click="m">Orta</button>
+    <button class="k big" data-click="r">Sağ tık</button>
+  </div>
+</div>
+
+<!-- KLAVYE -->
+<div class="view" id="vk">
+  <div id="keys" style="display:flex;flex-direction:column;gap:5px"></div>
+  <div class="row" id="rowMods"></div>
+  <div class="row" id="rowAct"></div>
+  <div class="row" id="rowNav1"></div>
+  <div class="row" id="rowNav2"></div>
+  <div class="row hid" id="rowF1"></div>
+  <div class="row hid" id="rowF2"></div>
+  <div class="sc" id="sc"></div>
+</div>
+
+<!-- YAZ / SES -->
+<div class="view" id="vt">
+  <textarea id="box" placeholder="Buraya yaz ya da konuş. Düzelttikten sonra PC'ye gönder."></textarea>
+  <div id="interim"></div>
+  <button class="k" id="mic">🎤 Sesle yazmayı başlat</button>
+  <div class="row">
+    <button class="k big" id="send">Gönder</button>
+    <button class="k big" id="sendEnter">Gönder + ↵</button>
+    <button class="k big" id="clr">Temizle</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ---------- PIN ---------- */
+const qs = new URLSearchParams(location.search);
+let PIN = qs.get('p') || localStorage.getItem('kpin') || '';
+if (qs.get('p')) { localStorage.setItem('kpin', PIN); history.replaceState(null, '', location.pathname); }
+
+/* ---------- Ayarlar ---------- */
+const S = Object.assign({ speed: 1.6, scroll: 1.0, invert: false, awake: false, direct: true, punct: true },
+  JSON.parse(localStorage.getItem('kset') || '{}'));
+function saveS() { localStorage.setItem('kset', JSON.stringify(S)); }
+function bindSet() {
+  $('#sSpeed').value = S.speed; $('#sScroll').value = S.scroll;
+  $('#sInvert').checked = S.invert; $('#sDirect').checked = S.direct;
+  $('#sPunct').checked = S.punct; $('#sAwake').checked = S.awake;
+  $('#sSpeed').oninput = e => { S.speed = +e.target.value; saveS(); };
+  $('#sScroll').oninput = e => { S.scroll = +e.target.value; saveS(); };
+  $('#sInvert').onchange = e => { S.invert = e.target.checked; saveS(); };
+  $('#sDirect').onchange = e => { S.direct = e.target.checked; saveS(); };
+  $('#sPunct').onchange = e => { S.punct = e.target.checked; saveS(); };
+  $('#sAwake').onchange = e => { S.awake = e.target.checked; saveS(); wake(); };
+}
+let wl = null;
+async function wake() {
+  try {
+    if (S.awake && 'wakeLock' in navigator) wl = await navigator.wakeLock.request('screen');
+    else if (wl) { await wl.release(); wl = null; }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+$('#gear').onclick = () => $('#set').classList.toggle('hid');
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+/* ---------- WebSocket ---------- */
+let ws = null, wsOk = false, fails = 0;
+function setDot() { $('#dot').classList.toggle('ok', wsOk); }
+function connect() {
+  if (!PIN) {
+    PIN = (prompt('PC ekranındaki PIN:') || '').trim();
+    if (PIN) localStorage.setItem('kpin', PIN);
+  }
+  try {
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?p=' + encodeURIComponent(PIN));
+  } catch (e) { setTimeout(connect, 1500); return; }
+  ws.onopen = () => { wsOk = true; fails = 0; setDot(); };
+  ws.onclose = () => {
+    const was = wsOk; wsOk = false; setDot();
+    if (!was) fails++;
+    if (fails >= 3) { fails = 0; toast('Bağlanamadı. PIN yanlış olabilir.'); PIN = ''; localStorage.removeItem('kpin'); }
+    setTimeout(connect, 1000);
+  };
+  ws.onerror = () => {};
+}
+function tx(o) { if (wsOk && ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+connect();
+
+/* ---------- Sekmeler ---------- */
+$$('.tab[data-v]').forEach(b => b.onclick = () => {
+  $$('.tab[data-v]').forEach(x => x.classList.toggle('on', x === b));
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === b.dataset.v));
+});
+
+/* ---------- Touchpad ---------- */
+const pad = $('#pad');
+let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0;
+const avg = (ts, k) => { let s = 0; for (const t of ts) s += t[k]; return s / ts.length; };
+function flush() {
+  raf = 0;
+  const ix = Math.trunc(acc.x), iy = Math.trunc(acc.y);
+  if (ix || iy) { acc.x -= ix; acc.y -= iy; tx({ t: 'move', dx: ix, dy: iy }); }
+  const sx = Math.trunc(scr.x), sy = Math.trunc(scr.y);
+  if (sx || sy) { scr.x -= sx; scr.y -= sy; tx({ t: 'scroll', dx: sx, dy: sy }); }
+}
+function sched() { if (!raf) raf = requestAnimationFrame(flush); }
+
+pad.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const n = e.touches.length;
+  if (!T.active) {
+    T = { active: true, t0: Date.now(), moved: 0, max: n, drag: false, pend: n === 1 && (Date.now() - lastTap < 300) };
+  }
+  T.max = Math.max(T.max, n);
+  const ts = Array.from(e.touches);
+  T.x = avg(ts, 'clientX'); T.y = avg(ts, 'clientY'); T.n = n;
+}, { passive: false });
+
+pad.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!T.active) return;
+  const ts = Array.from(e.touches), n = ts.length;
+  const x = avg(ts, 'clientX'), y = avg(ts, 'clientY');
+  if (n !== T.n) { T.n = n; T.x = x; T.y = y; return; }   // parmak sayısı değişti, sıçrama olmasın
+  const dx = x - T.x, dy = y - T.y; T.x = x; T.y = y;
+  T.moved += Math.abs(dx) + Math.abs(dy);
+  if (n === 1) {
+    if (T.pend && !T.drag && T.moved > 8) { T.drag = true; tx({ t: 'down', b: 'l' }); }
+    const f = S.speed * (1 + Math.min(Math.hypot(dx, dy) / 14, 1.4));
+    acc.x += dx * f; acc.y += dy * f;
+  } else {
+    const k = S.scroll * (S.invert ? -1 : 1) * 4;
+    scr.y += dy * k; scr.x -= dx * k;
+  }
+  sched();
+}, { passive: false });
+
+pad.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (e.touches.length !== 0 || !T.active) return;
+  const quick = Date.now() - T.t0 < 260 && T.moved < 10;
+  if (T.drag) tx({ t: 'up', b: 'l' });
+  else if (quick && T.max === 1) { tx({ t: 'click', b: 'l' }); lastTap = Date.now(); }
+  else if (quick && T.max === 2) tx({ t: 'click', b: 'r' });
+  T.active = false;
+}, { passive: false });
+pad.addEventListener('touchcancel', () => { if (T.drag) tx({ t: 'up', b: 'l' }); T.active = false; });
+
+$$('[data-click]').forEach(b => b.addEventListener('pointerdown', e => {
+  e.preventDefault(); tx({ t: 'click', b: b.dataset.click }); if (navigator.vibrate) navigator.vibrate(10);
+}));
+
+/* ---------- Klavye ---------- */
+const mods = { ctrl: false, alt: false, win: false, shift: 0 };   // shift: 0 kapalı, 1 tek harf, 2 kilitli
+let sym = false;
+const L1 = [['1','2','3','4','5','6','7','8','9','0','*','-'],
+            ['q','w','e','r','t','y','u','ı','o','p','ğ','ü'],
+            ['a','s','d','f','g','h','j','k','l','ş','i',','],
+            ['z','x','c','v','b','n','m','ö','ç','.']];
+const L2 = [['1','2','3','4','5','6','7','8','9','0'],
+            ['@','#','$','%','&','*','-','+','=','_'],
+            ['(',')','[',']','{','}','<','>','/','\\'],
+            ['!','?',':',';','"',"'",',','.','|','~']];
+
+function activeMods() {
+  const m = [];
+  if (mods.ctrl) m.push('ctrl');
+  if (mods.alt) m.push('alt');
+  if (mods.win) m.push('win');
+  if (mods.shift) m.push('shift');
+  return m;
+}
+function bindKey(el, fn, rep) {
+  let to = 0, iv = 0;
+  const stop = () => { clearTimeout(to); clearInterval(iv); to = iv = 0; el.classList.remove('press'); };
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault(); el.classList.add('press'); fn();
+    if (navigator.vibrate) navigator.vibrate(8);
+    if (rep) to = setTimeout(() => { iv = setInterval(fn, 55); }, 380);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stop));
+}
+function mk(parent, label, fn, cls, rep) {
+  const b = document.createElement('button');
+  b.className = 'k ' + (cls || ''); b.textContent = label;
+  bindKey(b, fn, rep); parent.appendChild(b); return b;
+}
+function afterKey() {
+  const need = mods.ctrl || mods.alt || mods.win || mods.shift === 1;
+  mods.ctrl = mods.alt = mods.win = false;
+  if (mods.shift === 1) mods.shift = 0;
+  if (need) { drawKeys(); refreshMods(); }
+}
+function sendChar(c) {
+  const m = activeMods();
+  if (m.some(x => x !== 'shift')) tx({ t: 'key', k: c.toLowerCase(), m });
+  else tx({ t: 'text', s: (!sym && mods.shift) ? c.toLocaleUpperCase('tr') : c });
+  afterKey();
+}
+function sendKey(k) { tx({ t: 'key', k, m: activeMods() }); afterKey(); }
+function drawKeys() {
+  const box = $('#keys'); box.innerHTML = '';
+  (sym ? L2 : L1).forEach(r => {
+    const row = document.createElement('div'); row.className = 'row';
+    r.forEach(c => mk(row, (!sym && mods.shift) ? c.toLocaleUpperCase('tr') : c, () => sendChar(c)));
+    box.appendChild(row);
+  });
+}
+const modBtn = {};
+function refreshMods() {
+  ['ctrl', 'alt', 'win'].forEach(k => modBtn[k].classList.toggle('on', mods[k]));
+  modBtn.shift.classList.toggle('on', mods.shift === 1);
+  modBtn.shift.classList.toggle('lock', mods.shift === 2);
+  modBtn.sym.classList.toggle('on', sym);
+}
+function buildKeyboard() {
+  drawKeys();
+  const rm = $('#rowMods');
+  modBtn.shift = mk(rm, '⇧', () => { mods.shift = (mods.shift + 1) % 3; drawKeys(); refreshMods(); }, 's');
+  modBtn.ctrl = mk(rm, 'Ctrl', () => { mods.ctrl = !mods.ctrl; refreshMods(); }, 's');
+  modBtn.alt = mk(rm, 'Alt', () => { mods.alt = !mods.alt; refreshMods(); }, 's');
+  modBtn.win = mk(rm, 'Win', () => { mods.win = !mods.win; refreshMods(); }, 's');
+  modBtn.sym = mk(rm, '?123', () => { sym = !sym; modBtn.sym.textContent = sym ? 'ABC' : '?123'; drawKeys(); refreshMods(); }, 's');
+  mk(rm, 'Fn', () => { $('#rowF1').classList.toggle('hid'); $('#rowF2').classList.toggle('hid'); }, 's');
+
+  const ra = $('#rowAct');
+  mk(ra, '⌫', () => sendKey('backspace'), 'w2', true);
+  mk(ra, 'Boşluk', () => sendKey('space'), 'w4');
+  mk(ra, '↵', () => sendKey('enter'), 'w2');
+
+  const n1 = $('#rowNav1'), n2 = $('#rowNav2');
+  [['Esc', 'esc'], ['Tab', 'tab'], ['Del', 'delete'], ['Home', 'home'], ['End', 'end'], ['PgUp', 'pgup'], ['PgDn', 'pgdn']]
+    .forEach(([l, k]) => mk(n1, l, () => sendKey(k), 's', k === 'delete'));
+  [['←', 'left'], ['↑', 'up'], ['↓', 'down'], ['→', 'right']]
+    .forEach(([l, k]) => mk(n2, l, () => sendKey(k), '', true));
+
+  for (let i = 1; i <= 12; i++) mk(i <= 6 ? $('#rowF1') : $('#rowF2'), 'F' + i, () => sendKey('f' + i), 's');
+
+  const SC = [['Kopyala', 'c', ['ctrl']], ['Kes', 'x', ['ctrl']], ['Yapıştır', 'v', ['ctrl']], ['Hepsi', 'a', ['ctrl']],
+    ['Geri al', 'z', ['ctrl']], ['Yinele', 'y', ['ctrl']], ['Kaydet', 's', ['ctrl']], ['Bul', 'f', ['ctrl']],
+    ['Yeni sekme', 't', ['ctrl']], ['Sekme kapat', 'w', ['ctrl']], ['Yenile', 'f5', []], ['Tam ekran', 'f11', []],
+    ['Alt+Tab', 'tab', ['alt']], ['Masaüstü', 'd', ['win']], ['Görev', 'tab', ['win']], ['Ekran alıntı', 's', ['win', 'shift']],
+    ['Pencere kapat', 'f4', ['alt']], ['Kilitle', 'l', ['win']], ['Çalıştır', 'r', ['win']], ['Ara', 'q', ['win']]];
+  SC.forEach(([l, k, m]) => mk($('#sc'), l, () => tx({ t: 'key', k, m }), ''));
+  refreshMods();
+}
+buildKeyboard();
+
+/* ---------- Yaz / Ses ---------- */
+const box = $('#box');
+$('#send').onclick = () => { if (box.value) { tx({ t: 'text', s: box.value }); box.value = ''; } };
+$('#sendEnter').onclick = () => { if (box.value) tx({ t: 'text', s: box.value }); tx({ t: 'key', k: 'enter', m: [] }); box.value = ''; };
+$('#clr').onclick = () => { box.value = ''; $('#interim').textContent = ''; };
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false;
+const W = s => new RegExp('(?<![\\p{L}])' + s + '(?![\\p{L}])', 'giu');
+function fixText(t) {
+  t = t.trim();
+  if (S.punct) {
+    t = t.replace(W('noktalı virgül'), ';').replace(W('iki nokta'), ':').replace(W('yeni satır'), '\n')
+         .replace(W('soru işareti'), '?').replace(W('ünlem'), '!').replace(W('nokta'), '.').replace(W('virgül'), ',');
+    t = t.replace(/\s+([.,;:?!])/g, '$1').replace(/[ \t]*\n[ \t]*/g, '\n');
+  }
+  return t;
+}
+function emit(s) {
+  if (!s) return;
+  const out = s.endsWith('\n') ? s : s + ' ';
+  if (S.direct) tx({ t: 'text', s: out }); else box.value += out;
+}
+function setMic(on) {
+  listening = on;
+  $('#mic').classList.toggle('rec', on);
+  $('#micTop').classList.toggle('rec', on);
+  $('#mic').textContent = on ? '⏹ Dinleniyor... (durdurmak için dokun)' : '🎤 Sesle yazmayı başlat';
+  if (!on) $('#interim').textContent = '';
+}
+function toggleVoice() {
+  if (listening) { listening = false; try { rec.stop(); } catch (e) {} setMic(false); return; }
+  if (!SR) { toast('Bu tarayıcı sesli yazmayı desteklemiyor. Chrome kullan.'); return; }
+  if (!window.isSecureContext) { toast('Sesli yazma için https adresini aç (http değil). Alternatif: klavyedeki 🎤.'); return; }
+  rec = new SR();
+  rec.lang = 'tr-TR'; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) emit(fixText(r[0].transcript)); else interim += r[0].transcript;
+    }
+    $('#interim').textContent = interim;
+  };
+  rec.onend = () => { if (listening) { try { rec.start(); } catch (e) {} } else setMic(false); };
+  rec.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { listening = false; setMic(false); toast('Mikrofon izni verilmedi.'); }
+  };
+  try { rec.start(); setMic(true); } catch (e) { toast('Mikrofon başlatılamadı.'); }
+}
+$('#mic').onclick = toggleVoice;
+$('#micTop').onclick = toggleVoice;
+
+bindSet();
+wake();
+})();
+</script>
+</body>
+</html>
