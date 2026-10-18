@@ -89,6 +89,9 @@ def type_text(text):
         if ch == "\n":
             send(key(VK["enter"]), key(VK["enter"], True))
             continue
+        if ch == "\t":
+            send(key(VK["tab"]), key(VK["tab"], True))
+            continue
         raw = ch.encode("utf-16-le")
         for n in range(0, len(raw), 2):
             unit = int.from_bytes(raw[n:n + 2], "little")
@@ -137,7 +140,11 @@ def handle(ev):
     elif t == "text":
         type_text(str(ev.get("s", ""))[:3000])
     elif t == "key":
-        press(str(ev.get("k", "")).lower(), [m for m in ev.get("m", []) if m in MODS])
+        n = max(1, min(100, int(ev.get("n", 1) or 1)))
+        k = str(ev.get("k", "")).lower()
+        m = [x for x in ev.get("m", []) if x in MODS]
+        for _ in range(n):
+            press(k, m)
 
 
 # ---------------------------------------------------------------- Ağ / HTTPS / PIN
