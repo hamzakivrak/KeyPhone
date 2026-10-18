@@ -6,67 +6,247 @@
 <meta name="theme-color" content="#0f1115">
 <title>Kumanda</title>
 <style>
-:root{--bg:#0f1115;--p:#1a1d24;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3}
+:root{--bg:#0f1115;--p:#1a1d24;--p2:#232832;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3;--w:#f5a524;--r:#e5484d;--padh:36%;--padw:38%}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font-family:system-ui,Arial,sans-serif;overscroll-behavior:none}
-body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-button{font-family:inherit}
-#top{display:flex;gap:6px;padding:6px;align-items:center}
-.tab{flex:1;padding:12px 2px;border-radius:12px;background:var(--p);border:1px solid var(--b);color:var(--t);font-size:16px;touch-action:manipulation}
-.tab.on{background:var(--a);color:#001;border-color:var(--a);font-weight:600}
-.ib{width:46px;flex:none;padding:12px 0}
-.ib.rec{background:#e5484d;border-color:#e5484d;color:#fff}
-#dot{width:12px;height:12px;border-radius:50%;background:#e5484d;flex:none;margin:0 4px}
-#dot.ok{background:#30a46c}
-.view{flex:1;display:none;flex-direction:column;min-height:0;padding:0 6px 6px;gap:6px}
-.view.on{display:flex}
-#vk{overflow-y:auto}
-#pad{flex:1;border-radius:18px;background:var(--p);border:2px solid var(--b);display:flex;align-items:center;justify-content:center;color:var(--m);text-align:center;touch-action:none;line-height:1.7;padding:12px;font-size:15px}
-.row{display:flex;gap:5px}
-.k{flex:1;min-width:0;padding:0;height:46px;border-radius:10px;background:var(--p);border:1px solid var(--b);color:var(--t);font-size:19px;touch-action:manipulation}
-.k.press,.k.on{background:var(--a);color:#001;border-color:var(--a)}
-.k.lock{background:#f5a524;color:#001;border-color:#f5a524}
-.k.s{font-size:15px;height:42px}
-.k.w2{flex:2}.k.w4{flex:4}
-.sc{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.sc .k{height:40px;font-size:14px}
+body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font-family:inherit;color:var(--t)}
 .hid{display:none!important}
-textarea{flex:1;min-height:110px;font-size:19px;padding:12px;border-radius:14px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit}
-.big{height:56px;font-size:18px}
-#mic{height:64px;font-size:20px;border-radius:14px}
-#mic.rec{background:#e5484d;border-color:#e5484d;color:#fff}
-#interim{min-height:22px;color:var(--m);font-size:15px;padding:0 4px}
-#set{margin:0 6px 6px;padding:12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:10px;font-size:15px}
+
+/* üst çubuk */
+#top{display:flex;gap:5px;padding:5px;align-items:center;flex:none}
+.tab{flex:1;padding:10px 2px;border-radius:12px;background:var(--p);border:1px solid var(--b);font-size:15px;touch-action:manipulation}
+.tab.on{background:var(--a);color:#001;border-color:var(--a);font-weight:600}
+.ib{flex:none;width:44px;padding:10px 0}
+.ib.rec{background:var(--r);border-color:var(--r);color:#fff}
+#dot{width:12px;height:12px;border-radius:50%;background:var(--r);flex:none;margin:0 3px}
+#dot.ok{background:#30a46c}
+
+/* ayarlar */
+#set{margin:0 5px 5px;padding:10px 12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:58vh;overflow-y:auto;flex:none}
+#set h4{margin:6px 0 0;font-size:13px;color:var(--a);text-transform:uppercase;letter-spacing:.5px}
 #set label{display:flex;align-items:center;gap:10px;justify-content:space-between}
-#set input[type=range]{flex:1;max-width:55%}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none}
+#set input[type=range]{flex:1;max-width:50%}
+#set select,#set input[type=number],#set input[type=text]{background:var(--p2);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:6px;font-size:14px;-webkit-user-select:text;user-select:text}
+#set input.l1{width:42px;text-align:center;text-transform:lowercase}
+.krow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.krow label{flex-direction:column;gap:2px;font-size:12px;color:var(--m)}
+.small{font-size:12px;color:var(--m);line-height:1.4}
+
+/* görünümler */
+.view{flex:1;display:none;min-height:0;padding:0 5px 5px;gap:6px}
+.view.on{display:flex;flex-direction:column}
+.row{display:flex;gap:5px;flex:none}
+.k{flex:1;min-width:0;height:46px;padding:0;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:17px;touch-action:manipulation}
+.k.press,.k.on{background:var(--a);color:#001;border-color:var(--a)}
+.k.lock{background:var(--w);color:#001;border-color:var(--w)}
+.k.s{font-size:14px;height:42px}
+.k.w2{flex:2}.k.w4{flex:4}
+.k.big{height:54px;font-size:17px}
+
+/* Yaz ekranı */
+#vy.on{flex-direction:column}
+#ycol{flex:1;min-width:0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+#box{flex:1 0 auto;min-height:92px;font-size:18px;padding:10px;border-radius:12px;border:2px solid var(--b);background:var(--p);color:var(--t);resize:none;-webkit-user-select:text;user-select:text;font-family:inherit}
+#interim{min-height:20px;color:var(--m);font-size:14px;padding:0 4px;flex:none}
+.seg{flex:1;display:flex;border:1px solid var(--b);border-radius:10px;overflow:hidden}
+.seg button{flex:1;padding:9px 4px;background:var(--p);border:0;font-size:14px;touch-action:manipulation}
+.seg button.on{background:var(--a);color:#001;font-weight:600}
+#mic{flex:2;background:#1c3354;border-color:var(--a);font-size:18px}
+#mic.rec{background:var(--r);border-color:var(--r);color:#fff}
+.mod{flex:1;height:50px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:21px;touch-action:none}
+.mod.on{background:var(--a);color:#001;border-color:var(--a)}
+.mod.once{border:2px dashed var(--w);color:var(--w)}
+.mod.lock{background:var(--w);color:#001;border-color:var(--w)}
+.chips{display:flex;gap:5px;overflow-x:auto;flex:none;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-width:44px;height:44px;padding:0 12px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:18px;touch-action:manipulation}
+.chip.sm{font-size:14px}
+.chip:active{background:var(--a);color:#001}
+details{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:6px 12px;font-size:14px;color:var(--m);flex:none;-webkit-user-select:text;user-select:text}
+summary{color:var(--t);font-size:15px;padding:6px 0}
+details p{margin:6px 0;line-height:1.5}
+details b{color:var(--t)}
+.step{display:flex;align-items:center;gap:6px;color:var(--t)}
+.step button{width:40px;height:36px;border-radius:8px;background:var(--p2);border:1px solid var(--b);font-size:18px}
+#tgrid{display:grid;gap:4px;margin:8px 0}
+#tgrid button{height:40px;border-radius:8px;background:var(--p2);border:1px solid var(--b);font-size:12px;color:var(--m);touch-action:manipulation}
+#tgrid button.cur{background:var(--a);color:#001;border-color:var(--a);font-weight:700}
+
+/* mousepad */
+#ypadwrap{flex:0 0 var(--padh);min-height:90px;display:flex;flex-direction:column;gap:4px}
+.padbox{flex:1;min-height:0;border-radius:16px;background:var(--p);border:2px solid var(--b);display:flex;align-items:center;justify-content:center;color:var(--m);text-align:center;touch-action:none;line-height:1.6;padding:8px;font-size:13px}
+.clicks{display:flex;gap:5px;flex:none}
+.clicks .k{height:40px;font-size:14px}
+body[data-clicks="off"] .clicks.opt{display:none}
+body[data-pad="off"] #ypadwrap{display:none}
+@media (orientation:portrait){
+  body[data-pp="top"] #ypadwrap{order:-1}
+}
+@media (orientation:landscape){
+  #vy.on{flex-direction:row}
+  #ypadwrap{flex:0 0 var(--padw);min-height:0}
+  body[data-pl="left"] #ypadwrap{order:-1}
+}
+#vp .padbox{font-size:15px}
+@media (orientation:landscape) and (max-height:520px){
+  .tab{padding:7px 2px}
+  .ib{padding:7px 0}
+  #box{min-height:56px;font-size:16px}
+  .k{height:40px}
+  .k.big{height:44px;font-size:15px}
+  .k.s{height:36px}
+  .mod{height:42px;font-size:18px}
+  .chip{height:38px;font-size:16px}
+  .seg button{padding:7px 4px}
+  #interim{min-height:14px}
+}
+
+/* klavye sekmesi */
+#vk{overflow-y:auto}
+.sc{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.sc .k{height:40px;font-size:13px}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
 </style>
 </head>
-<body>
+<body data-pp="bottom" data-pl="right" data-pad="on" data-clicks="on">
 
 <div id="top">
   <span id="dot"></span>
-  <button class="tab on" data-v="vp">Pad</button>
+  <button class="tab on" data-v="vy">Yaz</button>
+  <button class="tab" data-v="vp">Pad</button>
   <button class="tab" data-v="vk">Klavye</button>
-  <button class="tab" data-v="vt">Yaz / Ses</button>
   <button class="tab ib" id="micTop" title="Sesle yaz">🎤</button>
   <button class="tab ib" id="gear" title="Ayarlar">⚙</button>
 </div>
 
+<!-- AYARLAR -->
 <div id="set" class="hid">
-  <label>İmleç hızı <input type="range" id="sSpeed" min="0.5" max="4" step="0.1"></label>
-  <label>Kaydırma hızı <input type="range" id="sScroll" min="0.3" max="3" step="0.1"></label>
-  <label>Kaydırmayı ters çevir <input type="checkbox" id="sInvert"></label>
-  <label>Sesi doğrudan PC'ye yaz <input type="checkbox" id="sDirect"></label>
-  <label>Noktalama komutları (nokta, virgül, yeni satır...) <input type="checkbox" id="sPunct"></label>
-  <label>Ekran açık kalsın <input type="checkbox" id="sAwake"></label>
+  <h4>Giriş</h4>
+  <label>Sesi doğrudan PC'ye yaz (kapalıysa önce kutuya) <input type="checkbox" data-s="direct"></label>
+  <label>Sesli komutlar (nokta, tırnak, madde...) <input type="checkbox" data-s="punct"></label>
+  <label>Cümle başını büyük harf yap <input type="checkbox" data-s="cap"></label>
+  <label>Paragraf başında girinti (Tab) <input type="checkbox" data-s="indent"></label>
+  <label>Sayılar
+    <select data-s="num"><option value="auto">Olduğu gibi</option><option value="digit">Rakamla (25)</option><option value="word">Yazıyla (yirmi beş)</option></select>
+  </label>
+  <label>Açılışta ekran
+    <select data-s="startTab"><option value="vy">Yaz</option><option value="vp">Pad</option><option value="vk">Klavye</option></select>
+  </label>
+
+  <h4>Mousepad yerleşimi (Yaz ekranı)</h4>
+  <label>Yaz ekranında mousepad göster <input type="checkbox" data-s="yPad"></label>
+  <label>Dikey ekranda konum
+    <select data-s="pp"><option value="bottom">Altta</option><option value="top">Üstte</option></select>
+  </label>
+  <label>Dikey ekranda yükseklik <input type="range" data-s="padH" min="18" max="60" step="2"></label>
+  <label>Yatay ekranda konum
+    <select data-s="pl"><option value="right">Sağda</option><option value="left">Solda</option></select>
+  </label>
+  <label>Yatay ekranda genişlik <input type="range" data-s="padW" min="22" max="60" step="2"></label>
+  <label>Pad altında tık düğmeleri <input type="checkbox" data-s="clicks"></label>
+
+  <h4>Pad</h4>
+  <label>İmleç hızı <input type="range" data-s="speed" min="0.5" max="4" step="0.1"></label>
+  <label>Kaydırma hızı <input type="range" data-s="scroll" min="0.3" max="3" step="0.1"></label>
+  <label>Kaydırmayı ters çevir <input type="checkbox" data-s="invert"></label>
+  <label>Ekran açık kalsın <input type="checkbox" data-s="awake"></label>
+
+  <h4>Word kısayolları</h4>
+  <label>Word dili
+    <select data-s="wl"><option value="tr">Türkçe (K / T / A)</option><option value="en">İngilizce (B / I / U)</option><option value="custom">Özel</option></select>
+  </label>
+  <div class="krow">
+    <label>Kalın<input class="l1" type="text" maxlength="1" data-s="kb"></label>
+    <label>İtalik<input class="l1" type="text" maxlength="1" data-s="ki"></label>
+    <label>Altı çizili<input class="l1" type="text" maxlength="1" data-s="ku"></label>
+    <label>Ortala<input class="l1" type="text" maxlength="1" data-s="kc"></label>
+    <label>Sola<input class="l1" type="text" maxlength="1" data-s="kl"></label>
+    <label>Sağa<input class="l1" type="text" maxlength="1" data-s="kr"></label>
+    <label>İki yana<input class="l1" type="text" maxlength="1" data-s="kj"></label>
+  </div>
+  <div class="row">
+    <button class="k s" id="tB">Dene: kalın</button>
+    <button class="k s" id="tI">Dene: italik</button>
+    <button class="k s" id="tU">Dene: altı çizili</button>
+  </div>
+  <div class="small">Word'de bir kelime seçip "Dene" düğmelerine bas. Biçim uygulanmıyorsa ya da başka bir pencere açılıyorsa dili değiştir.</div>
+</div>
+
+<!-- YAZ -->
+<div class="view on" id="vy">
+  <div id="ycol">
+    <textarea id="box" placeholder="Konuş ya da yaz. Düzelttikten sonra Gönder'e bas."></textarea>
+    <div id="interim"></div>
+    <div class="row">
+      <div class="seg" id="segMode"><button data-direct="0">Kutuya</button><button data-direct="1">Doğrudan PC</button></div>
+      <div class="seg" id="segNum"><button data-num="auto">Sayı: oto</button><button data-num="digit">123</button><button data-num="word">Yazıyla</button></div>
+    </div>
+    <div class="row">
+      <button class="k big" id="mic">🎤 Konuş</button>
+      <button class="k big" id="send">Gönder</button>
+      <button class="k big" id="sendEnter">Gönder ↵</button>
+    </div>
+    <div class="row" id="fmtRow">
+      <button class="mod" id="mCap" title="Büyük harf">Aa</button>
+      <button class="mod" id="mUpper" title="HEPSİ BÜYÜK">AA</button>
+      <button class="mod" id="mB" title="Kalın"></button>
+      <button class="mod" id="mI" title="İtalik"></button>
+      <button class="mod" id="mU" title="Altı çizili"></button>
+    </div>
+    <div class="chips" id="chPunct"></div>
+    <div class="chips" id="chDigit"></div>
+    <div class="chips" id="chStyle"></div>
+    <div class="row">
+      <button class="k s" id="eEnter">↵ Satır</button>
+      <button class="k s" id="eTab">⇥ Tab</button>
+      <button class="k s" id="eBs">⌫</button>
+      <button class="k s" id="eWord">Kelime sil</button>
+      <button class="k s" id="eUndo">Geri al</button>
+      <button class="k s" id="eClr">Temizle</button>
+    </div>
+    <details id="tdet">
+      <summary>Tablo hücreleri</summary>
+      <p>Word'de tabloyu sen ekle ve imleci <b>ilk hücreye</b> koy, sonra "İmleç 1. hücrede" düğmesine bas. Bir hücreye dokununca imleç oraya gider, konuştuğun ya da yazdığın metin o hücreye yazılır.</p>
+      <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap">
+        <span class="step">Satır <button id="rMinus">−</button><b id="rVal">4</b><button id="rPlus">+</button></span>
+        <span class="step">Sütun <button id="cMinus">−</button><b id="cVal">3</b><button id="cPlus">+</button></span>
+      </div>
+      <div id="tgrid"></div>
+      <div class="row">
+        <button class="k s" id="tPrev">◀ Önceki hücre</button>
+        <button class="k s" id="tNext">Sonraki hücre ▶</button>
+        <button class="k s" id="tReset">İmleç 1. hücrede</button>
+      </div>
+    </details>
+    <details>
+      <summary>Sesli komutlar ve ipuçları</summary>
+      <p><b>Noktalama:</b> nokta, virgül, soru işareti, ünlem, iki nokta, noktalı virgül, üç nokta</p>
+      <p><b>Tırnak:</b> tırnak içinde ... tırnak kapat (ya da tırnak aç / tırnak kapat). Cümle sonu noktalaması gelince açık tırnak kendiliğinden kapanır. Parantez: parantez aç, parantez kapat, parantez içinde.</p>
+      <p><b>Satır:</b> yeni satır, yeni paragraf (paragraf başı), girinti</p>
+      <p><b>Liste:</b> madde numarası (1. ile başlar, Word devamını kendisi numaralar), madde işareti, yeni madde, listeyi bitir</p>
+      <p><b>Biçim:</b> kalın aç / kalın kapat, italik aç / italik kapat, altı çizili aç / altı çizili kapat. Düğmelerde: dokun = aç/kapat, basılı tut = bırakana kadar. Büyük harf: <b>Aa</b> dokun = sonraki kelimenin ilk harfi, <b>AA</b> dokun = sonraki kelime tamamen büyük, çift dokun = kilitle, basılı tut = tutarken. Sesle: büyük harfle, hepsi büyük.</p>
+      <p><b>Stil:</b> başlık bir / iki / üç, normal metin, ortala, sola yasla, sağa yasla, iki yana yasla</p>
+      <p><b>Sayı:</b> "sayıyla yirmi beş" = 25, "yazıyla 25" = yirmi beş. Üstteki Sayı düğmesiyle kalıcı yap.</p>
+      <p><b>Düzeltme:</b> geri al, kelimeyi sil (ya da yalnızca sil), harfi sil, boşluk. Tablo: sonraki hücre, önceki hücre.</p>
+    </details>
+  </div>
+  <div id="ypadwrap">
+    <div class="padbox" id="ypad">Mousepad<br>1 parmak: imleç · dokun: tık<br>2 parmak: kaydır / sağ tık</div>
+    <div class="clicks opt">
+      <button class="k" data-click="l">Sol</button>
+      <button class="k" data-click="m">Orta</button>
+      <button class="k" data-click="r">Sağ</button>
+    </div>
+  </div>
 </div>
 
 <!-- PAD -->
-<div class="view on" id="vp">
-  <div id="pad">Dokunmatik alan<br>1 parmak: imleç · dokun: tık<br>iki kez dokun, ikincide tut ve sürükle: sürükle-bırak<br>2 parmak dokun: sağ tık · 2 parmak kaydır: kaydırma</div>
-  <div class="row">
+<div class="view" id="vp">
+  <div class="padbox" id="pad">Dokunmatik alan<br>1 parmak: imleç · dokun: tık<br>iki kez dokun, ikincide tut ve sürükle: sürükle-bırak<br>2 parmak dokun: sağ tık · 2 parmak kaydır: kaydırma</div>
+  <div class="clicks">
     <button class="k big" data-click="l">Sol tık</button>
     <button class="k big" data-click="m">Orta</button>
     <button class="k big" data-click="r">Sağ tık</button>
@@ -85,18 +265,6 @@ textarea{flex:1;min-height:110px;font-size:19px;padding:12px;border-radius:14px;
   <div class="sc" id="sc"></div>
 </div>
 
-<!-- YAZ / SES -->
-<div class="view" id="vt">
-  <textarea id="box" placeholder="Buraya yaz ya da konuş. Düzelttikten sonra PC'ye gönder."></textarea>
-  <div id="interim"></div>
-  <button class="k" id="mic">🎤 Sesle yazmayı başlat</button>
-  <div class="row">
-    <button class="k big" id="send">Gönder</button>
-    <button class="k big" id="sendEnter">Gönder + ↵</button>
-    <button class="k big" id="clr">Temizle</button>
-  </div>
-</div>
-
 <div id="toast"></div>
 
 <script>
@@ -104,27 +272,30 @@ textarea{flex:1;min-height:110px;font-size:19px;padding:12px;border-radius:14px;
 'use strict';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 
 /* ---------- PIN ---------- */
 const qs = new URLSearchParams(location.search);
-let PIN = qs.get('p') || localStorage.getItem('kpin') || '';
-if (qs.get('p')) { localStorage.setItem('kpin', PIN); history.replaceState(null, '', location.pathname); }
+let PIN = qs.get('p') || lsGet('kpin') || '';
+if (qs.get('p')) { lsSet('kpin', PIN); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
 
 /* ---------- Ayarlar ---------- */
-const S = Object.assign({ speed: 1.6, scroll: 1.0, invert: false, awake: false, direct: true, punct: true },
-  JSON.parse(localStorage.getItem('kset') || '{}'));
-function saveS() { localStorage.setItem('kset', JSON.stringify(S)); }
-function bindSet() {
-  $('#sSpeed').value = S.speed; $('#sScroll').value = S.scroll;
-  $('#sInvert').checked = S.invert; $('#sDirect').checked = S.direct;
-  $('#sPunct').checked = S.punct; $('#sAwake').checked = S.awake;
-  $('#sSpeed').oninput = e => { S.speed = +e.target.value; saveS(); };
-  $('#sScroll').oninput = e => { S.scroll = +e.target.value; saveS(); };
-  $('#sInvert').onchange = e => { S.invert = e.target.checked; saveS(); };
-  $('#sDirect').onchange = e => { S.direct = e.target.checked; saveS(); };
-  $('#sPunct').onchange = e => { S.punct = e.target.checked; saveS(); };
-  $('#sAwake').onchange = e => { S.awake = e.target.checked; saveS(); wake(); };
-}
+const WL = {
+  tr: { kb: 'k', ki: 't', ku: 'a', kc: 'e', kl: 'l', kr: 'r', kj: 'j' },
+  en: { kb: 'b', ki: 'i', ku: 'u', kc: 'e', kl: 'l', kr: 'r', kj: 'j' }
+};
+const D = Object.assign({
+  speed: 1.6, scroll: 1.0, invert: false, awake: false, direct: false, punct: true, cap: true, indent: false,
+  num: 'auto', startTab: 'vy', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
+  wl: 'tr', tblR: 4, tblC: 3
+}, WL.tr);
+let saved = {};
+try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
+const S = Object.assign({}, D, saved);
+function saveS() { lsSet('kset3', JSON.stringify(S)); }
+
 let wl = null;
 async function wake() {
   try {
@@ -134,10 +305,11 @@ async function wake() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
 $('#gear').onclick = () => $('#set').classList.toggle('hid');
+document.addEventListener('contextmenu', e => { if (e.target.id !== 'box') e.preventDefault(); });
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600);
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800);
 }
 
 /* ---------- WebSocket ---------- */
@@ -146,7 +318,7 @@ function setDot() { $('#dot').classList.toggle('ok', wsOk); }
 function connect() {
   if (!PIN) {
     PIN = (prompt('PC ekranındaki PIN:') || '').trim();
-    if (PIN) localStorage.setItem('kpin', PIN);
+    if (PIN) lsSet('kpin', PIN);
   }
   try {
     ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?p=' + encodeURIComponent(PIN));
@@ -155,7 +327,7 @@ function connect() {
   ws.onclose = () => {
     const was = wsOk; wsOk = false; setDot();
     if (!was) fails++;
-    if (fails >= 3) { fails = 0; toast('Bağlanamadı. PIN yanlış olabilir.'); PIN = ''; localStorage.removeItem('kpin'); }
+    if (fails >= 3) { fails = 0; toast('Bağlanamadı. PC penceresi açık mı, PIN ve Wi-Fi doğru mu?'); PIN = ''; lsDel('kpin'); }
     setTimeout(connect, 1000);
   };
   ws.onerror = () => {};
@@ -164,71 +336,674 @@ function tx(o) { if (wsOk && ws && ws.readyState === 1) ws.send(JSON.stringify(o
 connect();
 
 /* ---------- Sekmeler ---------- */
-$$('.tab[data-v]').forEach(b => b.onclick = () => {
-  $$('.tab[data-v]').forEach(x => x.classList.toggle('on', x === b));
-  $$('.view').forEach(v => v.classList.toggle('on', v.id === b.dataset.v));
-});
-
-/* ---------- Touchpad ---------- */
-const pad = $('#pad');
-let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0;
-const avg = (ts, k) => { let s = 0; for (const t of ts) s += t[k]; return s / ts.length; };
-function flush() {
-  raf = 0;
-  const ix = Math.trunc(acc.x), iy = Math.trunc(acc.y);
-  if (ix || iy) { acc.x -= ix; acc.y -= iy; tx({ t: 'move', dx: ix, dy: iy }); }
-  const sx = Math.trunc(scr.x), sy = Math.trunc(scr.y);
-  if (sx || sy) { scr.x -= sx; scr.y -= sy; tx({ t: 'scroll', dx: sx, dy: sy }); }
+function showTab(id) {
+  $$('.tab[data-v]').forEach(x => x.classList.toggle('on', x.dataset.v === id));
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === id));
 }
-function sched() { if (!raf) raf = requestAnimationFrame(flush); }
+$$('.tab[data-v]').forEach(b => b.onclick = () => showTab(b.dataset.v));
 
-pad.addEventListener('touchstart', e => {
-  e.preventDefault();
-  const n = e.touches.length;
-  if (!T.active) {
-    T = { active: true, t0: Date.now(), moved: 0, max: n, drag: false, pend: n === 1 && (Date.now() - lastTap < 300) };
+/* ---------- Touchpad (birden çok alan için) ---------- */
+function makePad(el) {
+  let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0;
+  const avg = (ts, k) => { let s = 0; for (const t of ts) s += t[k]; return s / ts.length; };
+  function flush() {
+    raf = 0;
+    const ix = Math.trunc(acc.x), iy = Math.trunc(acc.y);
+    if (ix || iy) { acc.x -= ix; acc.y -= iy; tx({ t: 'move', dx: ix, dy: iy }); }
+    const sx = Math.trunc(scr.x), sy = Math.trunc(scr.y);
+    if (sx || sy) { scr.x -= sx; scr.y -= sy; tx({ t: 'scroll', dx: sx, dy: sy }); }
   }
-  T.max = Math.max(T.max, n);
-  const ts = Array.from(e.touches);
-  T.x = avg(ts, 'clientX'); T.y = avg(ts, 'clientY'); T.n = n;
-}, { passive: false });
-
-pad.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (!T.active) return;
-  const ts = Array.from(e.touches), n = ts.length;
-  const x = avg(ts, 'clientX'), y = avg(ts, 'clientY');
-  if (n !== T.n) { T.n = n; T.x = x; T.y = y; return; }   // parmak sayısı değişti, sıçrama olmasın
-  const dx = x - T.x, dy = y - T.y; T.x = x; T.y = y;
-  T.moved += Math.abs(dx) + Math.abs(dy);
-  if (n === 1) {
-    if (T.pend && !T.drag && T.moved > 8) { T.drag = true; tx({ t: 'down', b: 'l' }); }
-    const f = S.speed * (1 + Math.min(Math.hypot(dx, dy) / 14, 1.4));
-    acc.x += dx * f; acc.y += dy * f;
-  } else {
-    const k = S.scroll * (S.invert ? -1 : 1) * 4;
-    scr.y += dy * k; scr.x -= dx * k;
-  }
-  sched();
-}, { passive: false });
-
-pad.addEventListener('touchend', e => {
-  e.preventDefault();
-  if (e.touches.length !== 0 || !T.active) return;
-  const quick = Date.now() - T.t0 < 260 && T.moved < 10;
-  if (T.drag) tx({ t: 'up', b: 'l' });
-  else if (quick && T.max === 1) { tx({ t: 'click', b: 'l' }); lastTap = Date.now(); }
-  else if (quick && T.max === 2) tx({ t: 'click', b: 'r' });
-  T.active = false;
-}, { passive: false });
-pad.addEventListener('touchcancel', () => { if (T.drag) tx({ t: 'up', b: 'l' }); T.active = false; });
-
+  function sched() { if (!raf) raf = requestAnimationFrame(flush); }
+  el.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const n = e.touches.length;
+    if (!T.active) T = { active: true, t0: Date.now(), moved: 0, max: n, drag: false, pend: n === 1 && (Date.now() - lastTap < 300) };
+    T.max = Math.max(T.max, n);
+    const ts = Array.from(e.touches);
+    T.x = avg(ts, 'clientX'); T.y = avg(ts, 'clientY'); T.n = n;
+  }, { passive: false });
+  el.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!T.active) return;
+    const ts = Array.from(e.touches), n = ts.length;
+    const x = avg(ts, 'clientX'), y = avg(ts, 'clientY');
+    if (n !== T.n) { T.n = n; T.x = x; T.y = y; return; }
+    const dx = x - T.x, dy = y - T.y; T.x = x; T.y = y;
+    T.moved += Math.abs(dx) + Math.abs(dy);
+    if (n === 1) {
+      if (T.pend && !T.drag && T.moved > 8) { T.drag = true; tx({ t: 'down', b: 'l' }); }
+      const f = S.speed * (1 + Math.min(Math.hypot(dx, dy) / 14, 1.4));
+      acc.x += dx * f; acc.y += dy * f;
+    } else {
+      const k = S.scroll * (S.invert ? -1 : 1) * 4;
+      scr.y += dy * k; scr.x -= dx * k;
+    }
+    sched();
+  }, { passive: false });
+  el.addEventListener('touchend', e => {
+    e.preventDefault();
+    if (e.touches.length !== 0 || !T.active) return;
+    const quick = Date.now() - T.t0 < 260 && T.moved < 10;
+    if (T.drag) tx({ t: 'up', b: 'l' });
+    else if (quick && T.max === 1) { tx({ t: 'click', b: 'l' }); lastTap = Date.now(); }
+    else if (quick && T.max === 2) tx({ t: 'click', b: 'r' });
+    T.active = false;
+  }, { passive: false });
+  el.addEventListener('touchcancel', () => { if (T.drag) tx({ t: 'up', b: 'l' }); T.active = false; });
+}
+makePad($('#pad'));
+makePad($('#ypad'));
 $$('[data-click]').forEach(b => b.addEventListener('pointerdown', e => {
   e.preventDefault(); tx({ t: 'click', b: b.dataset.click }); if (navigator.vibrate) navigator.vibrate(10);
 }));
 
-/* ---------- Klavye ---------- */
-const mods = { ctrl: false, alt: false, win: false, shift: 0 };   // shift: 0 kapalı, 1 tek harf, 2 kilitli
+/* ================================================================
+   Word biçimi, jetonlar, tablo
+   ================================================================ */
+const box = $('#box');
+const FK = { b: 'kb', i: 'ki', u: 'ku' };
+const FN = { b: 'kalın', i: 'italik', u: 'altı çizili' };
+const FKEY = { 'kalın': 'b', 'italik': 'i', 'altı çizili': 'u' };
+const fmtDoc = { b: false, i: false, u: false };   // Word'de olduğu varsayılan biçim
+const want = { b: false, i: false, u: false };     // arayüzün istediği biçim
+const hist = [];
+const tbl = { exec: { r: 1, c: 1 }, ui: { r: 1, c: 1 } };
+
+function ctrlKey(letter, extra) { tx({ t: 'key', k: String(letter || '').toLowerCase(), m: ['ctrl'].concat(extra || []) }); }
+function toggleDoc(x) { ctrlKey(S[FK[x]]); fmtDoc[x] = !fmtDoc[x]; }
+function syncDoc() { ['b', 'i', 'u'].forEach(x => { if (want[x] !== fmtDoc[x]) toggleDoc(x); }); }
+function boxFmt() {
+  const s = { b: fmtDoc.b, i: fmtDoc.i, u: fmtDoc.u };
+  box.value.replace(/⟦\/?(kalın|italik|altı çizili)⟧/g, (m, n) => { const x = FKEY[n]; s[x] = !s[x]; return m; });
+  return s;
+}
+function syncFmt() {
+  if (S.direct) { syncDoc(); return; }
+  const bf = boxFmt();
+  ['b', 'i', 'u'].forEach(x => { if (want[x] !== bf[x]) box.value += '⟦' + (want[x] ? '' : '/') + FN[x] + '⟧'; });
+}
+
+function tblIdx(r, c) { return (r - 1) * S.tblC + (c - 1); }
+function tblPos(idx) { return { r: Math.floor(idx / S.tblC) + 1, c: idx % S.tblC + 1 }; }
+function tabKey(n, back) { for (let i = 0; i < n; i++) tx({ t: 'key', k: 'tab', m: back ? ['shift'] : [] }); }
+
+function execTok(name) {
+  let m;
+  if (FKEY[name.replace(/^\//, '')]) { toggleDoc(FKEY[name.replace(/^\//, '')]); return; }
+  switch (name) {
+    case 'başlık1': tx({ t: 'key', k: '1', m: ['ctrl', 'alt'] }); return;
+    case 'başlık2': tx({ t: 'key', k: '2', m: ['ctrl', 'alt'] }); return;
+    case 'başlık3': tx({ t: 'key', k: '3', m: ['ctrl', 'alt'] }); return;
+    case 'normal': tx({ t: 'key', k: 'n', m: ['ctrl', 'shift'] }); return;
+    case 'ortala': ctrlKey(S.kc); return;
+    case 'sola': ctrlKey(S.kl); return;
+    case 'sağa': ctrlKey(S.kr); return;
+    case 'yasla': ctrlKey(S.kj); return;
+    case 'hepsi': tx({ t: 'key', k: 'home', m: ['ctrl'] }); tx({ t: 'key', k: 'end', m: ['ctrl', 'shift'] }); return;
+    case 'biçim sıfırla': tx({ t: 'key', k: 'space', m: ['ctrl'] }); fmtDoc.b = fmtDoc.i = fmtDoc.u = false; return;
+    case 'sonraki hücre': tabKey(1, false); tbl.exec = tblPos(tblIdx(tbl.exec.r, tbl.exec.c) + 1); return;
+    case 'önceki hücre': {
+      const idx = tblIdx(tbl.exec.r, tbl.exec.c);
+      if (idx > 0) { tabKey(1, true); tbl.exec = tblPos(idx - 1); }
+      return;
+    }
+  }
+  if ((m = /^hücre:(\d+):(\d+)$/.exec(name))) {
+    const r = +m[1], c = +m[2];
+    const d = tblIdx(r, c) - tblIdx(tbl.exec.r, tbl.exec.c);
+    tabKey(Math.abs(d), d < 0);
+    tbl.exec = { r, c };
+  }
+}
+function runProgram(text) {
+  const re = /⟦([^⟧]*)⟧/g; let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) tx({ t: 'text', s: text.slice(last, m.index) });
+    execTok(m[1]); last = re.lastIndex;
+  }
+  if (last < text.length) tx({ t: 'text', s: text.slice(last) });
+}
+
+/* ================================================================
+   Yazma durumu ve çıktı
+   ================================================================ */
+const st = { space: false, cap: true, autos: [], quote: false, lineStart: true, lastDigit: false, numOnce: null };
+
+function rawOut(s) {
+  if (!s) return;
+  if (S.direct) tx({ t: 'text', s });
+  else { box.value += s; box.scrollTop = box.scrollHeight; }
+}
+function press(k, m) {
+  if (S.direct) { tx({ t: 'key', k, m: m || [] }); return; }
+  const ctrl = m && m.indexOf('ctrl') >= 0;
+  if (k === 'enter') box.value += '\n';
+  else if (k === 'tab') box.value += '\t';
+  else if (k === 'backspace' && ctrl) box.value = box.value.replace(/(⟦[^⟧]*⟧|\S+)\s*$/, '');
+  else if (k === 'backspace') box.value = /⟦[^⟧]*⟧$/.test(box.value) ? box.value.replace(/⟦[^⟧]*⟧$/, '') : box.value.slice(0, -1);
+  else if (k === 'z' && ctrl) { if (hist.length) box.value = hist.pop(); }
+}
+function needSp() {
+  if (!S.direct && box.value) return !/[\s(\[“⟧]$/.test(box.value);
+  return st.space;
+}
+function atLineStart() {
+  if (!S.direct && box.value) return /\n$/.test(box.value);
+  return st.lineStart;
+}
+function capWord(w) {
+  if (!st.cap) return w;
+  st.cap = false;
+  return w.charAt(0).toLocaleUpperCase('tr') + w.slice(1);
+}
+function closeAutos() {
+  while (st.autos.length) {
+    const c = st.autos.pop();
+    rawOut(c);
+    if (c === '”') st.quote = false;
+    st.space = true;
+  }
+}
+function emitTok(name) {
+  if (S.direct) execTok(name); else box.value += '⟦' + name + '⟧';
+  st.space = false; st.lineStart = false;
+  if (/^hücre:/.test(name) || name === 'sonraki hücre' || name === 'önceki hücre') { if (S.cap) st.cap = true; }
+}
+
+/* ---------- Düğme durumları: Aa, AA, K, T, A ---------- */
+const MODK = ['cap', 'upper', 'b', 'i', 'u'];
+const mod = {};
+MODK.forEach(k => mod[k] = { latch: false, held: false, once: false, pend: false, down: false, t0: 0, last: 0 });
+const modEl = { cap: $('#mCap'), upper: $('#mUpper'), b: $('#mB'), i: $('#mI'), u: $('#mU') };
+let lastSpeech = 0, listening = false;
+
+function renderMods() {
+  MODK.forEach(k => {
+    const m = mod[k], el = modEl[k];
+    el.classList.toggle('lock', m.latch && (k === 'cap' || k === 'upper'));
+    el.classList.toggle('on', (k === 'b' || k === 'i' || k === 'u') ? (m.latch || m.held) : (m.held && !m.latch));
+    el.classList.toggle('once', m.once);
+  });
+}
+function recomputeMods() {
+  ['b', 'i', 'u'].forEach(x => { want[x] = mod[x].latch || mod[x].held; });
+  renderMods();
+  if (S.direct) syncDoc();
+}
+function tapMod(k) {
+  const m = mod[k], now = Date.now();
+  if (k === 'b' || k === 'i' || k === 'u') { m.latch = !m.latch; return; }
+  if (m.latch) { m.latch = false; m.once = false; }
+  else if (m.once && now - m.last < 350) { m.once = false; m.latch = true; }
+  else m.once = !m.once;
+  m.last = now;
+}
+function releaseHold(k) {
+  const m = mod[k];
+  const speaking = listening && ($('#interim').textContent || Date.now() - lastSpeech < 1800);
+  if (speaking) {
+    m.pend = true;
+    setTimeout(() => { if (m.pend) { m.pend = false; m.held = false; recomputeMods(); syncFmt(); } }, 4500);
+  } else m.held = false;
+}
+function bindMod(k) {
+  const el = modEl[k], m = mod[k];
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { el.setPointerCapture(e.pointerId); } catch (x) {}
+    m.down = true; m.t0 = Date.now(); m.pend = false; m.held = true;
+    recomputeMods();
+    if (navigator.vibrate) navigator.vibrate(8);
+  });
+  const up = () => {
+    if (!m.down) return;
+    m.down = false;
+    if (Date.now() - m.t0 < 350) { m.held = false; tapMod(k); } else releaseHold(k);
+    recomputeMods();
+  };
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+}
+MODK.forEach(bindMod);
+function caseNow() {
+  let r = null;
+  if (mod.upper.latch || mod.upper.held || mod.upper.once) r = 'upper';
+  else if (mod.cap.latch || mod.cap.held || mod.cap.once) r = 'cap';
+  if (r && (mod.upper.once || mod.cap.once)) { mod.upper.once = false; mod.cap.once = false; renderMods(); }
+  return r;
+}
+function finishCommit() {
+  let ch = false;
+  MODK.forEach(k => { if (mod[k].pend) { mod[k].pend = false; mod[k].held = false; ch = true; } });
+  if (ch) recomputeMods();
+  syncFmt();
+}
+
+/* ---------- Sayılar ---------- */
+const ONES = ['sıfır', 'bir', 'iki', 'üç', 'dört', 'beş', 'altı', 'yedi', 'sekiz', 'dokuz'];
+const TENS = ['', 'on', 'yirmi', 'otuz', 'kırk', 'elli', 'altmış', 'yetmiş', 'seksen', 'doksan'];
+const NUMW = { sıfır: 0, bir: 1, iki: 2, üç: 3, dört: 4, beş: 5, altı: 6, yedi: 7, sekiz: 8, dokuz: 9,
+  on: 10, yirmi: 20, otuz: 30, kırk: 40, elli: 50, altmış: 60, yetmiş: 70, seksen: 80, doksan: 90 };
+const SCALE = { bin: 1e3, milyon: 1e6, milyar: 1e9 };
+function below1000(n) {
+  const h = Math.floor(n / 100), t = Math.floor(n % 100 / 10), o = n % 10, p = [];
+  if (h) p.push(h === 1 ? 'yüz' : ONES[h] + ' yüz');
+  if (t) p.push(TENS[t]);
+  if (o) p.push(ONES[o]);
+  return p.join(' ');
+}
+function numToWords(n) {
+  if (n === 0) return 'sıfır';
+  const p = [];
+  const mil = Math.floor(n / 1e9); n %= 1e9;
+  const mi = Math.floor(n / 1e6); n %= 1e6;
+  const th = Math.floor(n / 1e3); n %= 1e3;
+  if (mil) p.push(below1000(mil) + ' milyar');
+  if (mi) p.push(below1000(mi) + ' milyon');
+  if (th) p.push(th === 1 ? 'bin' : below1000(th) + ' bin');
+  if (n) p.push(below1000(n));
+  return p.join(' ');
+}
+function numStrToWords(s) {
+  let str = s;
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(str)) str = str.replace(/\./g, '');
+  if (!/^\d+([.,]\d+)?$/.test(str)) return null;
+  const parts = str.replace(',', '.').split('.');
+  if (parts[0].length > 12) return null;
+  let out = numToWords(parseInt(parts[0], 10));
+  if (parts[1]) out += ' virgül ' + parts[1].split('').map(d => ONES[+d]).join(' ');
+  return out;
+}
+function parseNumWords(nw, i) {
+  let j = i, total = 0, lastScale = Infinity;
+  let g = { h: 0, t: 0, u: 0, sh: false, st: false, su: false };
+  const gv = () => g.h + g.t + g.u;
+  const empty = () => !g.sh && !g.st && !g.su;
+  while (j < nw.length) {
+    const t = nw[j];
+    if (t in NUMW) {
+      const v = NUMW[t];
+      if (v < 10) { if (g.su) break; g.u = v; g.su = true; }
+      else { if (g.st || g.su) break; g.t = v; g.st = true; }
+    } else if (t === 'yüz') {
+      if (g.sh || g.st) break;
+      if (g.su) { g.h = g.u * 100; g.u = 0; g.su = false; } else g.h = 100;
+      g.sh = true;
+    } else if (t in SCALE) {
+      const sc = SCALE[t];
+      if (sc >= lastScale) break;
+      total += (empty() ? 1 : gv()) * sc;
+      lastScale = sc;
+      g = { h: 0, t: 0, u: 0, sh: false, st: false, su: false };
+    } else break;
+    j++;
+  }
+  if (j === i) return null;
+  return { value: total + gv(), len: j - i };
+}
+
+/* ---------- Sesli komutlar ---------- */
+const CMDS = [
+  ['noktalı virgül', ['punct', ';']],
+  ['iki nokta üst üste', ['punct', ':']],
+  ['iki nokta', ['punct', ':']],
+  ['üç nokta', ['punct', '...']],
+  ['soru işareti', ['punct', '?']],
+  ['ünlem işareti', ['punct', '!']],
+  ['ünlem', ['punct', '!']],
+  ['nokta', ['punct', '.']],
+  ['virgül', ['punct', ',']],
+  ['tırnak içinde', ['open', '“', '”', true]],
+  ['tırnak aç', ['open', '“', '”', false]],
+  ['tırnağı aç', ['open', '“', '”', false]],
+  ['tırnak kapat', ['close', '”']],
+  ['tırnağı kapat', ['close', '”']],
+  ['tırnak sonu', ['close', '”']],
+  ['tırnak işareti', ['toggleq']],
+  ['tırnak', ['toggleq']],
+  ['parantez içinde', ['open', '(', ')', true]],
+  ['parantez aç', ['open', '(', ')', false]],
+  ['parantez kapat', ['close', ')']],
+  ['yeni paragraf', ['para']],
+  ['paragraf başına geç', ['para']],
+  ['paragraf başı', ['para']],
+  ['yeni satır', ['nl']],
+  ['alt satıra geç', ['nl']],
+  ['alt satır', ['nl']],
+  ['satır başı', ['nl']],
+  ['girinti', ['tab']],
+  ['sekme', ['tab']],
+  ['madde numaralarıyla yaz', ['num']],
+  ['madde numarasıyla yaz', ['num']],
+  ['madde numaraları', ['num']],
+  ['madde numarası', ['num']],
+  ['numaralı madde', ['num']],
+  ['numaralı liste', ['num']],
+  ['madde işaretleriyle yaz', ['bullet']],
+  ['madde işaretiyle yaz', ['bullet']],
+  ['madde işaretleri', ['bullet']],
+  ['madde işareti', ['bullet']],
+  ['madde imi', ['bullet']],
+  ['maddeli liste', ['bullet']],
+  ['bir sonraki madde', ['item']],
+  ['sonraki madde', ['item']],
+  ['yeni madde', ['item']],
+  ['madde ekle', ['item']],
+  ['listeyi bitir', ['endlist']],
+  ['listeyi kapat', ['endlist']],
+  ['liste sonu', ['endlist']],
+  ['maddeleri bitir', ['endlist']],
+  ['son kelimeyi sil', ['delword']],
+  ['kelimeyi sil', ['delword']],
+  ['bir harf sil', ['bs']],
+  ['harfi sil', ['bs']],
+  ['geri al', ['undo']],
+  ['büyük harfle', ['cap']],
+  ['büyük harf', ['cap']],
+  ['hepsi büyük', ['upper']],
+  ['tamamı büyük', ['upper']],
+  ['boşluk', ['space']],
+  ['kalın aç', ['fmt', 'b', true]], ['kalın başla', ['fmt', 'b', true]],
+  ['kalın kapat', ['fmt', 'b', false]], ['kalın bitir', ['fmt', 'b', false]],
+  ['italik aç', ['fmt', 'i', true]], ['italik başla', ['fmt', 'i', true]],
+  ['italik kapat', ['fmt', 'i', false]], ['italik bitir', ['fmt', 'i', false]],
+  ['altı çizili aç', ['fmt', 'u', true]], ['altı çizili başla', ['fmt', 'u', true]],
+  ['altı çizili kapat', ['fmt', 'u', false]], ['altı çizili bitir', ['fmt', 'u', false]],
+  ['başlık bir', ['tok', 'başlık1']], ['başlık 1', ['tok', 'başlık1']],
+  ['başlık iki', ['tok', 'başlık2']], ['başlık 2', ['tok', 'başlık2']],
+  ['başlık üç', ['tok', 'başlık3']], ['başlık 3', ['tok', 'başlık3']],
+  ['normal metin', ['tok', 'normal']],
+  ['ortala', ['tok', 'ortala']],
+  ['sola yasla', ['tok', 'sola']],
+  ['sağa yasla', ['tok', 'sağa']],
+  ['iki yana yasla', ['tok', 'yasla']],
+  ['sonraki hücre', ['tok', 'sonraki hücre']],
+  ['önceki hücre', ['tok', 'önceki hücre']],
+  ['sayıyla', ['numonce', 'digit']],
+  ['rakamla', ['numonce', 'digit']],
+  ['yazıyla', ['numonce', 'word']],
+  ['sil', ['delword'], true]
+].map(c => ({ w: c[0].split(' '), a: c[1], solo: !!c[2] })).sort((x, y) => y.w.length - x.w.length);
+
+const norm = w => w.toLocaleLowerCase('tr').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+
+function parse(txt) {
+  const words = txt.trim().split(/\s+/).filter(Boolean);
+  const nw = words.map(norm);
+  const acts = [];
+  const onceAtStart = st.numOnce;
+  let i = 0;
+  while (i < words.length) {
+    let hit = null;
+    if (S.punct) {
+      for (const c of CMDS) {
+        if (c.solo && words.length !== c.w.length) continue;
+        if (i + c.w.length > words.length) continue;
+        let ok = true;
+        for (let j = 0; j < c.w.length; j++) if (nw[i + j] !== c.w[j]) { ok = false; break; }
+        if (ok) { hit = c; break; }
+      }
+    }
+    if (hit) {
+      if (hit.a[0] === 'numonce') st.numOnce = hit.a[1];
+      else acts.push(hit.a);
+      i += hit.w.length; continue;
+    }
+    const mode = st.numOnce || S.num;
+    if (mode === 'digit') {
+      let pct = false, k = i;
+      if (nw[k] === 'yüzde') { pct = true; k++; }
+      const r = parseNumWords(nw, k);
+      if (r && !(r.len === 1 && nw[k] === 'bir' && !st.numOnce)) {
+        acts.push(['word', (pct ? '%' : '') + r.value]);
+        i = k + r.len; st.numOnce = null; continue;
+      }
+    } else if (mode === 'word') {
+      const w = numStrToWords(words[i]);
+      if (w !== null) { acts.push(['word', w]); i++; st.numOnce = null; continue; }
+    }
+    acts.push(['word', words[i]]); i++;
+  }
+  if (onceAtStart && st.numOnce === onceAtStart) st.numOnce = null;
+  return acts;
+}
+
+function apply1(a) {
+  const wasDigit = st.lastDigit;
+  st.lastDigit = false;
+  switch (a[0]) {
+    case 'word': {
+      let w = a[1];
+      const cm = caseNow();
+      if (cm === 'upper') { w = w.toLocaleUpperCase('tr'); st.cap = false; }
+      else if (cm === 'cap') { w = w.charAt(0).toLocaleUpperCase('tr') + w.slice(1); st.cap = false; }
+      else w = capWord(w);
+      if (needSp()) rawOut(' ');
+      syncFmt();
+      rawOut(w);
+      st.space = true; st.lineStart = false; break;
+    }
+    case 'punct':
+      closeAutos(); syncFmt();
+      rawOut(a[1]);
+      st.space = true; st.lineStart = false;
+      if (S.cap && (a[1] === '.' || a[1] === '?' || a[1] === '!')) st.cap = true;
+      break;
+    case 'open':
+      if (needSp()) rawOut(' ');
+      syncFmt(); rawOut(a[1]);
+      st.space = false; st.lineStart = false;
+      if (a[1] === '“') st.quote = true;
+      if (a[3]) st.autos.push(a[2]);
+      break;
+    case 'close': {
+      const i = st.autos.lastIndexOf(a[1]);
+      if (i >= 0) st.autos.splice(i, 1);
+      syncFmt(); rawOut(a[1]);
+      if (a[1] === '”') st.quote = false;
+      st.space = true; st.lineStart = false; break;
+    }
+    case 'toggleq':
+      st.lastDigit = false;
+      apply1(st.quote ? ['close', '”'] : ['open', '“', '”', false]); break;
+    case 'raw':
+      syncFmt(); rawOut(a[1]);
+      st.space = a[3]; st.lineStart = false; break;
+    case 'digit':
+      if (!wasDigit && needSp()) rawOut(' ');
+      syncFmt(); rawOut(a[1]);
+      st.space = true; st.lineStart = false; st.lastDigit = true; break;
+    case 'decimal':
+      syncFmt(); rawOut(a[1]);
+      st.space = false; st.lineStart = false; st.lastDigit = true; break;
+    case 'nl':
+      closeAutos(); press('enter');
+      st.space = false; st.lineStart = true; if (S.cap) st.cap = true; break;
+    case 'para':
+      closeAutos(); press('enter'); if (S.indent) press('tab');
+      st.space = false; st.lineStart = true; if (S.cap) st.cap = true; break;
+    case 'tab':
+      press('tab'); st.space = false; st.lineStart = false; break;
+    case 'num':
+    case 'bullet':
+      closeAutos();
+      if (!atLineStart()) press('enter');
+      rawOut(a[0] === 'num' ? '1. ' : '- ');
+      st.space = false; st.lineStart = false; break;
+    case 'item':
+      closeAutos(); press('enter');
+      st.space = false; st.lineStart = true; if (S.cap) st.cap = true; break;
+    case 'endlist':
+      closeAutos(); press('enter'); press('enter');
+      st.space = false; st.lineStart = true; if (S.cap) st.cap = true; break;
+    case 'delword':
+      press('backspace', ['ctrl']); st.space = false; break;
+    case 'bs':
+      press('backspace'); break;
+    case 'space':
+      rawOut(' '); st.space = false; break;
+    case 'cap':
+      mod.cap.once = true; renderMods(); break;
+    case 'upper':
+      mod.upper.once = true; renderMods(); break;
+    case 'fmt':
+      mod[a[1]].latch = a[2]; recomputeMods(); break;
+    case 'tok':
+      if (/^başlık/.test(a[1]) && !atLineStart()) { closeAutos(); press('enter'); st.lineStart = true; }
+      emitTok(a[1]); break;
+    case 'undo':
+      press('z', ['ctrl']); st.space = false; break;
+  }
+}
+function run(acts) {
+  if (!S.direct) {
+    const onlyUndo = acts.length === 1 && acts[0][0] === 'undo';
+    if (!onlyUndo) { hist.push(box.value); if (hist.length > 40) hist.shift(); }
+  }
+  acts.forEach(apply1);
+  finishCommit();
+}
+function commit(txt) {
+  txt = (txt || '').trim();
+  if (!txt) return;
+  run(parse(txt));
+}
+
+/* ---------- Düğme satırları ---------- */
+const PUNCT = [
+  ['.', ['punct', '.']], [',', ['punct', ',']], ['?', ['punct', '?']], ['!', ['punct', '!']],
+  [':', ['punct', ':']], [';', ['punct', ';']], ['…', ['punct', '...']],
+  ['“', ['open', '“', '”', false]], ['”', ['close', '”']], ['(', ['open', '(', ')', false]], [')', ['close', ')']],
+  ['–', ['raw', ' – ', false, false]], ['-', ['raw', '-', false, false]], ['/', ['raw', '/', false, false]],
+  ['%', ['raw', '%', false, true]], ["'", ['raw', "'", false, false]], ['@', ['raw', '@', false, false]]
+];
+const DIGITS = '0123456789'.split('').map(d => [d, ['digit', d]]).concat([[',', ['decimal', ',']]]);
+const STYLES = [
+  ['H1', ['tok', 'başlık1']], ['H2', ['tok', 'başlık2']], ['H3', ['tok', 'başlık3']], ['Normal', ['tok', 'normal']],
+  ['⇤ Sola', ['tok', 'sola']], ['↔ Ortala', ['tok', 'ortala']], ['⇥ Sağa', ['tok', 'sağa']], ['☰ İki yana', ['tok', 'yasla']],
+  ['• Madde', ['bullet']], ['1. Numara', ['num']], ['Yeni madde', ['item']], ['Listeyi bitir', ['endlist']],
+  ['Girinti', ['tab']], ['Biçimi sıfırla', ['tok', 'biçim sıfırla']]
+];
+function buildChips(el, list, small) {
+  list.forEach(([label, act]) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (small ? ' sm' : ''); b.textContent = label;
+    b.addEventListener('click', () => { run([act]); if (navigator.vibrate) navigator.vibrate(6); });
+    el.appendChild(b);
+  });
+}
+buildChips($('#chPunct'), PUNCT, false);
+buildChips($('#chDigit'), DIGITS, false);
+buildChips($('#chStyle'), STYLES, true);
+
+function holdRepeat(el, fn) {
+  let to = 0, iv = 0;
+  const stop = () => { clearTimeout(to); clearInterval(iv); to = iv = 0; el.classList.remove('press'); };
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault(); el.classList.add('press'); fn();
+    to = setTimeout(() => { iv = setInterval(fn, 55); }, 380);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stop));
+}
+$('#eEnter').onclick = () => run([['nl']]);
+$('#eTab').onclick = () => run([['tab']]);
+holdRepeat($('#eBs'), () => run([['bs']]));
+$('#eWord').onclick = () => run([['delword']]);
+$('#eUndo').onclick = () => run([['undo']]);
+$('#eClr').onclick = () => { box.value = ''; hist.length = 0; $('#interim').textContent = ''; };
+
+function sendBox(enter) {
+  const txt = box.value;
+  if (txt) runProgram(txt);
+  if (enter) { tx({ t: 'key', k: 'enter', m: [] }); st.space = false; st.lineStart = true; if (S.cap) st.cap = true; }
+  box.value = ''; hist.length = 0;
+  syncDoc();
+}
+$('#send').onclick = () => sendBox(false);
+$('#sendEnter').onclick = () => sendBox(true);
+
+/* ---------- Tablo ---------- */
+function renderGrid() {
+  const g = $('#tgrid');
+  g.style.gridTemplateColumns = 'repeat(' + S.tblC + ',1fr)';
+  g.innerHTML = '';
+  for (let r = 1; r <= S.tblR; r++) for (let c = 1; c <= S.tblC; c++) {
+    const b = document.createElement('button');
+    b.textContent = r + '.' + c;
+    if (r === tbl.ui.r && c === tbl.ui.c) b.className = 'cur';
+    b.addEventListener('click', () => { tbl.ui = { r, c }; emitTok('hücre:' + r + ':' + c); renderGrid(); });
+    g.appendChild(b);
+  }
+  $('#rVal').textContent = S.tblR; $('#cVal').textContent = S.tblC;
+}
+function stepSize(key, d, lo, hi) {
+  S[key] = Math.max(lo, Math.min(hi, S[key] + d)); saveS();
+  tbl.ui.r = Math.min(tbl.ui.r, S.tblR); tbl.ui.c = Math.min(tbl.ui.c, S.tblC);
+  renderGrid();
+}
+$('#rMinus').onclick = () => stepSize('tblR', -1, 1, 30);
+$('#rPlus').onclick = () => stepSize('tblR', 1, 1, 30);
+$('#cMinus').onclick = () => stepSize('tblC', -1, 1, 10);
+$('#cPlus').onclick = () => stepSize('tblC', 1, 1, 10);
+$('#tNext').onclick = () => {
+  emitTok('sonraki hücre');
+  tbl.ui = tblPos(Math.min(tblIdx(tbl.ui.r, tbl.ui.c) + 1, S.tblR * S.tblC - 1)); renderGrid();
+};
+$('#tPrev').onclick = () => {
+  emitTok('önceki hücre');
+  tbl.ui = tblPos(Math.max(tblIdx(tbl.ui.r, tbl.ui.c) - 1, 0)); renderGrid();
+};
+$('#tReset').onclick = () => { tbl.exec = { r: 1, c: 1 }; tbl.ui = { r: 1, c: 1 }; renderGrid(); toast('İmleç 1. hücre kabul edildi.'); };
+
+/* ---------- Konuşma tanıma ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+function setMic(on) {
+  $('#mic').classList.toggle('rec', on);
+  $('#micTop').classList.toggle('rec', on);
+  $('#mic').textContent = on ? '⏹ Dinleniyor... (durdur)' : '🎤 Konuş';
+  if (!on) $('#interim').textContent = '';
+}
+function startRec() {
+  if (!listening) return;
+  rec = new SR();
+  rec.lang = 'tr-TR'; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
+  let last = '', done = false;
+  rec.onresult = e => {
+    lastSpeech = Date.now();
+    let t = '';
+    for (let i = 0; i < e.results.length; i++) t += ' ' + e.results[i][0].transcript;
+    t = t.trim(); last = t;
+    $('#interim').textContent = t;
+    if (e.results[e.results.length - 1].isFinal && !done) { done = true; commit(t); }
+  };
+  rec.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { listening = false; setMic(false); toast('Mikrofon izni verilmedi.'); }
+    else if (e.error === 'network') { listening = false; setMic(false); toast('Sesli yazma için internet gerekli.'); }
+  };
+  rec.onend = () => {
+    if (!done && last) { done = true; commit(last); }
+    $('#interim').textContent = '';
+    if (listening) setTimeout(startRec, 120); else setMic(false);
+  };
+  try { rec.start(); } catch (e) { setTimeout(startRec, 500); }
+}
+function toggleVoice() {
+  if (listening) { listening = false; try { rec.stop(); } catch (e) {} setMic(false); return; }
+  if (!SR) { toast('Bu tarayıcı sesli yazmayı desteklemiyor. Chrome kullan.'); return; }
+  if (!window.isSecureContext) { toast('Sesli yazma için https adresini aç (http değil).'); return; }
+  listening = true; st.autos = [];
+  setMic(true);
+  startRec();
+}
+$('#mic').onclick = toggleVoice;
+$('#micTop').onclick = () => {
+  if (!listening && !S.direct) showTab('vy');
+  toggleVoice();
+};
+
+/* ---------- Klavye sekmesi (QWERTY) ---------- */
+const kmods = { ctrl: false, alt: false, win: false, shift: 0 };
 let sym = false;
 const L1 = [['1','2','3','4','5','6','7','8','9','0','*','-'],
             ['q','w','e','r','t','y','u','ı','o','p','ğ','ü'],
@@ -238,13 +1013,12 @@ const L2 = [['1','2','3','4','5','6','7','8','9','0'],
             ['@','#','$','%','&','*','-','+','=','_'],
             ['(',')','[',']','{','}','<','>','/','\\'],
             ['!','?',':',';','"',"'",',','.','|','~']];
-
-function activeMods() {
+function activeKMods() {
   const m = [];
-  if (mods.ctrl) m.push('ctrl');
-  if (mods.alt) m.push('alt');
-  if (mods.win) m.push('win');
-  if (mods.shift) m.push('shift');
+  if (kmods.ctrl) m.push('ctrl');
+  if (kmods.alt) m.push('alt');
+  if (kmods.win) m.push('win');
+  if (kmods.shift) m.push('shift');
   return m;
 }
 function bindKey(el, fn, rep) {
@@ -263,121 +1037,115 @@ function mk(parent, label, fn, cls, rep) {
   bindKey(b, fn, rep); parent.appendChild(b); return b;
 }
 function afterKey() {
-  const need = mods.ctrl || mods.alt || mods.win || mods.shift === 1;
-  mods.ctrl = mods.alt = mods.win = false;
-  if (mods.shift === 1) mods.shift = 0;
-  if (need) { drawKeys(); refreshMods(); }
+  const need = kmods.ctrl || kmods.alt || kmods.win || kmods.shift === 1;
+  kmods.ctrl = kmods.alt = kmods.win = false;
+  if (kmods.shift === 1) kmods.shift = 0;
+  if (need) { drawKeys(); refreshKMods(); }
 }
 function sendChar(c) {
-  const m = activeMods();
+  const m = activeKMods();
   if (m.some(x => x !== 'shift')) tx({ t: 'key', k: c.toLowerCase(), m });
-  else tx({ t: 'text', s: (!sym && mods.shift) ? c.toLocaleUpperCase('tr') : c });
+  else tx({ t: 'text', s: (!sym && kmods.shift) ? c.toLocaleUpperCase('tr') : c });
   afterKey();
 }
-function sendKey(k) { tx({ t: 'key', k, m: activeMods() }); afterKey(); }
+function sendKey(k) { tx({ t: 'key', k, m: activeKMods() }); afterKey(); }
 function drawKeys() {
-  const box = $('#keys'); box.innerHTML = '';
+  const kb = $('#keys'); kb.innerHTML = '';
   (sym ? L2 : L1).forEach(r => {
     const row = document.createElement('div'); row.className = 'row';
-    r.forEach(c => mk(row, (!sym && mods.shift) ? c.toLocaleUpperCase('tr') : c, () => sendChar(c)));
-    box.appendChild(row);
+    r.forEach(c => mk(row, (!sym && kmods.shift) ? c.toLocaleUpperCase('tr') : c, () => sendChar(c)));
+    kb.appendChild(row);
   });
 }
-const modBtn = {};
-function refreshMods() {
-  ['ctrl', 'alt', 'win'].forEach(k => modBtn[k].classList.toggle('on', mods[k]));
-  modBtn.shift.classList.toggle('on', mods.shift === 1);
-  modBtn.shift.classList.toggle('lock', mods.shift === 2);
-  modBtn.sym.classList.toggle('on', sym);
+const kBtn = {};
+function refreshKMods() {
+  ['ctrl', 'alt', 'win'].forEach(k => kBtn[k].classList.toggle('on', kmods[k]));
+  kBtn.shift.classList.toggle('on', kmods.shift === 1);
+  kBtn.shift.classList.toggle('lock', kmods.shift === 2);
+  kBtn.sym.classList.toggle('on', sym);
 }
 function buildKeyboard() {
   drawKeys();
   const rm = $('#rowMods');
-  modBtn.shift = mk(rm, '⇧', () => { mods.shift = (mods.shift + 1) % 3; drawKeys(); refreshMods(); }, 's');
-  modBtn.ctrl = mk(rm, 'Ctrl', () => { mods.ctrl = !mods.ctrl; refreshMods(); }, 's');
-  modBtn.alt = mk(rm, 'Alt', () => { mods.alt = !mods.alt; refreshMods(); }, 's');
-  modBtn.win = mk(rm, 'Win', () => { mods.win = !mods.win; refreshMods(); }, 's');
-  modBtn.sym = mk(rm, '?123', () => { sym = !sym; modBtn.sym.textContent = sym ? 'ABC' : '?123'; drawKeys(); refreshMods(); }, 's');
+  kBtn.shift = mk(rm, '⇧', () => { kmods.shift = (kmods.shift + 1) % 3; drawKeys(); refreshKMods(); }, 's');
+  kBtn.ctrl = mk(rm, 'Ctrl', () => { kmods.ctrl = !kmods.ctrl; refreshKMods(); }, 's');
+  kBtn.alt = mk(rm, 'Alt', () => { kmods.alt = !kmods.alt; refreshKMods(); }, 's');
+  kBtn.win = mk(rm, 'Win', () => { kmods.win = !kmods.win; refreshKMods(); }, 's');
+  kBtn.sym = mk(rm, '?123', () => { sym = !sym; kBtn.sym.textContent = sym ? 'ABC' : '?123'; drawKeys(); refreshKMods(); }, 's');
   mk(rm, 'Fn', () => { $('#rowF1').classList.toggle('hid'); $('#rowF2').classList.toggle('hid'); }, 's');
-
   const ra = $('#rowAct');
   mk(ra, '⌫', () => sendKey('backspace'), 'w2', true);
   mk(ra, 'Boşluk', () => sendKey('space'), 'w4');
   mk(ra, '↵', () => sendKey('enter'), 'w2');
-
   const n1 = $('#rowNav1'), n2 = $('#rowNav2');
   [['Esc', 'esc'], ['Tab', 'tab'], ['Del', 'delete'], ['Home', 'home'], ['End', 'end'], ['PgUp', 'pgup'], ['PgDn', 'pgdn']]
     .forEach(([l, k]) => mk(n1, l, () => sendKey(k), 's', k === 'delete'));
-  [['←', 'left'], ['↑', 'up'], ['↓', 'down'], ['→', 'right']]
-    .forEach(([l, k]) => mk(n2, l, () => sendKey(k), '', true));
-
+  [['←', 'left'], ['↑', 'up'], ['↓', 'down'], ['→', 'right']].forEach(([l, k]) => mk(n2, l, () => sendKey(k), '', true));
   for (let i = 1; i <= 12; i++) mk(i <= 6 ? $('#rowF1') : $('#rowF2'), 'F' + i, () => sendKey('f' + i), 's');
-
-  const SC = [['Kopyala', 'c', ['ctrl']], ['Kes', 'x', ['ctrl']], ['Yapıştır', 'v', ['ctrl']], ['Hepsi', 'a', ['ctrl']],
+  const SC = [['Kopyala', 'c', ['ctrl']], ['Kes', 'x', ['ctrl']], ['Yapıştır', 'v', ['ctrl']], ['Hepsi', null, null, () => execTok('hepsi')],
     ['Geri al', 'z', ['ctrl']], ['Yinele', 'y', ['ctrl']], ['Kaydet', 's', ['ctrl']], ['Bul', 'f', ['ctrl']],
     ['Yeni sekme', 't', ['ctrl']], ['Sekme kapat', 'w', ['ctrl']], ['Yenile', 'f5', []], ['Tam ekran', 'f11', []],
     ['Alt+Tab', 'tab', ['alt']], ['Masaüstü', 'd', ['win']], ['Görev', 'tab', ['win']], ['Ekran alıntı', 's', ['win', 'shift']],
     ['Pencere kapat', 'f4', ['alt']], ['Kilitle', 'l', ['win']], ['Çalıştır', 'r', ['win']], ['Ara', 'q', ['win']]];
-  SC.forEach(([l, k, m]) => mk($('#sc'), l, () => tx({ t: 'key', k, m }), ''));
-  refreshMods();
+  SC.forEach(([l, k, m, fn]) => mk($('#sc'), l, fn || (() => tx({ t: 'key', k, m })), ''));
+  refreshKMods();
 }
 buildKeyboard();
 
-/* ---------- Yaz / Ses ---------- */
-const box = $('#box');
-$('#send').onclick = () => { if (box.value) { tx({ t: 'text', s: box.value }); box.value = ''; } };
-$('#sendEnter').onclick = () => { if (box.value) tx({ t: 'text', s: box.value }); tx({ t: 'key', k: 'enter', m: [] }); box.value = ''; };
-$('#clr').onclick = () => { box.value = ''; $('#interim').textContent = ''; };
-
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, listening = false;
-const W = s => new RegExp('(?<![\\p{L}])' + s + '(?![\\p{L}])', 'giu');
-function fixText(t) {
-  t = t.trim();
-  if (S.punct) {
-    t = t.replace(W('noktalı virgül'), ';').replace(W('iki nokta'), ':').replace(W('yeni satır'), '\n')
-         .replace(W('soru işareti'), '?').replace(W('ünlem'), '!').replace(W('nokta'), '.').replace(W('virgül'), ',');
-    t = t.replace(/\s+([.,;:?!])/g, '$1').replace(/[ \t]*\n[ \t]*/g, '\n');
-  }
-  return t;
+/* ---------- Ayar bağlama ---------- */
+function setFmtLabels() {
+  const set = (el, key, style) => { el.textContent = (S[key] || '?').toUpperCase(); el.style.cssText = style; };
+  set(modEl.b, 'kb', 'font-weight:800'); set(modEl.i, 'ki', 'font-style:italic;font-weight:600'); set(modEl.u, 'ku', 'text-decoration:underline;font-weight:600');
+  modEl.cap.textContent = 'Aa'; modEl.upper.textContent = 'AA';
 }
-function emit(s) {
-  if (!s) return;
-  const out = s.endsWith('\n') ? s : s + ' ';
-  if (S.direct) tx({ t: 'text', s: out }); else box.value += out;
+function applyPrefs() {
+  document.body.dataset.pp = S.pp; document.body.dataset.pl = S.pl;
+  document.body.dataset.pad = S.yPad ? 'on' : 'off';
+  document.body.dataset.clicks = S.clicks ? 'on' : 'off';
+  document.documentElement.style.setProperty('--padh', S.padH + '%');
+  document.documentElement.style.setProperty('--padw', S.padW + '%');
+  $$('#segMode button').forEach(b => b.classList.toggle('on', (b.dataset.direct === '1') === !!S.direct));
+  $$('#segNum button').forEach(b => b.classList.toggle('on', b.dataset.num === S.num));
+  setFmtLabels();
 }
-function setMic(on) {
-  listening = on;
-  $('#mic').classList.toggle('rec', on);
-  $('#micTop').classList.toggle('rec', on);
-  $('#mic').textContent = on ? '⏹ Dinleniyor... (durdurmak için dokun)' : '🎤 Sesle yazmayı başlat';
-  if (!on) $('#interim').textContent = '';
+function loadSettingsUI() {
+  $$('[data-s]').forEach(el => {
+    const v = S[el.dataset.s];
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+  });
 }
-function toggleVoice() {
-  if (listening) { listening = false; try { rec.stop(); } catch (e) {} setMic(false); return; }
-  if (!SR) { toast('Bu tarayıcı sesli yazmayı desteklemiyor. Chrome kullan.'); return; }
-  if (!window.isSecureContext) { toast('Sesli yazma için https adresini aç (http değil). Alternatif: klavyedeki 🎤.'); return; }
-  rec = new SR();
-  rec.lang = 'tr-TR'; rec.continuous = true; rec.interimResults = true;
-  rec.onresult = e => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i];
-      if (r.isFinal) emit(fixText(r[0].transcript)); else interim += r[0].transcript;
-    }
-    $('#interim').textContent = interim;
-  };
-  rec.onend = () => { if (listening) { try { rec.start(); } catch (e) {} } else setMic(false); };
-  rec.onerror = e => {
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { listening = false; setMic(false); toast('Mikrofon izni verilmedi.'); }
-  };
-  try { rec.start(); setMic(true); } catch (e) { toast('Mikrofon başlatılamadı.'); }
+function bindSettings() {
+  $$('[data-s]').forEach(el => {
+    const k = el.dataset.s;
+    el.addEventListener(el.type === 'range' ? 'input' : 'change', () => {
+      let v;
+      if (el.type === 'checkbox') v = el.checked;
+      else if (el.type === 'range' || el.type === 'number') v = +el.value;
+      else v = el.value;
+      S[k] = v;
+      if (k === 'wl' && WL[v]) Object.assign(S, WL[v]);
+      else if (/^k[bi uclrj]$/.test(k) || ['kb', 'ki', 'ku', 'kc', 'kl', 'kr', 'kj'].indexOf(k) >= 0) {
+        S.wl = Object.keys(WL).find(n => Object.keys(WL[n]).every(f => WL[n][f] === S[f])) || 'custom';
+      }
+      saveS(); applyPrefs(); loadSettingsUI();
+      if (k === 'awake') wake();
+    });
+  });
+  $$('#segMode button').forEach(b => b.onclick = () => { S.direct = b.dataset.direct === '1'; saveS(); applyPrefs(); loadSettingsUI(); });
+  $$('#segNum button').forEach(b => b.onclick = () => { S.num = b.dataset.num; saveS(); applyPrefs(); loadSettingsUI(); });
+  $('#tB').onclick = () => ctrlKey(S.kb);
+  $('#tI').onclick = () => ctrlKey(S.ki);
+  $('#tU').onclick = () => ctrlKey(S.ku);
 }
-$('#mic').onclick = toggleVoice;
-$('#micTop').onclick = toggleVoice;
-
-bindSet();
+bindSettings();
+loadSettingsUI();
+applyPrefs();
+renderGrid();
+renderMods();
+showTab(S.startTab || 'vy');
 wake();
+
+window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok };
 })();
 </script>
 </body>
