@@ -1,7 +1,7 @@
 """Kumanda sunucusu (Windows). Telefondan gelen fare/klavye olaylarını PC'ye uygular.
 
-1:1 Native çözünürlükte (BitBlt) keskin görüntü, GDI+ yüksek kaliteli JPEG akışı
-ve PC'de seçilen metni (kullanıcı panosunu bozmadan) telefona aktarma desteği sağlar.
+1:1 Native çözünürlükte (BitBlt) keskin görüntü, GDI+ yüksek kaliteli JPEG akışı,
+PC'de seçilen metni telefona aktarma ve seçilen ekran bölgesini kırpma (/crop.jpg) desteği sağlar.
 """
 import base64
 import ctypes
@@ -122,6 +122,37 @@ _cached_frame = b""
 _cached_time = 0.0
 
 
+def _hbitmap_to_jpeg(hbmp, quality=88):
+    gp_bmp = ctypes.c_void_p()
+    gdiplus.GdipCreateBitmapFromHBITMAP(hbmp, 0, ctypes.byref(gp_bmp))
+
+    stream = ctypes.c_void_p()
+    ole32.CreateStreamOnHGlobal(0, True, ctypes.byref(stream))
+
+    q_val = ctypes.c_ulong(max(40, min(98, int(quality))))
+    ep = EncoderParameters()
+    ep.Count = 1
+    ep.Parameter[0].Guid = GUID_QUALITY
+    ep.Parameter[0].NumberOfValues = 1
+    ep.Parameter[0].Type = 4
+    ep.Parameter[0].Value = ctypes.cast(ctypes.byref(q_val), ctypes.c_void_p)
+
+    gdiplus.GdipSaveImageToStream(gp_bmp, stream, ctypes.byref(CLSID_JPEG), ctypes.byref(ep))
+
+    hglob = wintypes.HGLOBAL()
+    ole32.GetHGlobalFromStream(stream, ctypes.byref(hglob))
+    size = kernel32.GlobalSize(hglob)
+    ptr = kernel32.GlobalLock(hglob)
+    jpg_bytes = ctypes.string_at(ptr, size) if (ptr and size) else b""
+    kernel32.GlobalUnlock(hglob)
+
+    vtable = ctypes.cast(stream, ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p))).contents
+    release_fn = ctypes.WINFUNCTYPE(ctypes.c_ulong, ctypes.c_void_p)(vtable[2])
+    release_fn(stream)
+    gdiplus.GdipDisposeImage(gp_bmp)
+    return jpg_bytes
+
+
 def capture_screen_jpeg(scale=1.0, quality=88):
     """Ekranı 1:1 (BitBlt) veya HALFTONE ile pikselleştirmeden cam gibi net yakalar."""
     global _cached_frame, _cached_time
@@ -154,33 +185,7 @@ def capture_screen_jpeg(scale=1.0, quality=88):
             cy = int(ci.ptScreenPos.y * scale)
             user32.DrawIconEx(hdc_mem, cx, cy, ci.hCursor, 24, 24, 0, 0, 3)
 
-        gp_bmp = ctypes.c_void_p()
-        gdiplus.GdipCreateBitmapFromHBITMAP(hbmp, 0, ctypes.byref(gp_bmp))
-
-        stream = ctypes.c_void_p()
-        ole32.CreateStreamOnHGlobal(0, True, ctypes.byref(stream))
-
-        q_val = ctypes.c_ulong(max(40, min(98, int(quality))))
-        ep = EncoderParameters()
-        ep.Count = 1
-        ep.Parameter[0].Guid = GUID_QUALITY
-        ep.Parameter[0].NumberOfValues = 1
-        ep.Parameter[0].Type = 4
-        ep.Parameter[0].Value = ctypes.cast(ctypes.byref(q_val), ctypes.c_void_p)
-
-        gdiplus.GdipSaveImageToStream(gp_bmp, stream, ctypes.byref(CLSID_JPEG), ctypes.byref(ep))
-
-        hglob = wintypes.HGLOBAL()
-        ole32.GetHGlobalFromStream(stream, ctypes.byref(hglob))
-        size = kernel32.GlobalSize(hglob)
-        ptr = kernel32.GlobalLock(hglob)
-        jpg_bytes = ctypes.string_at(ptr, size) if (ptr and size) else b""
-        kernel32.GlobalUnlock(hglob)
-
-        vtable = ctypes.cast(stream, ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p))).contents
-        release_fn = ctypes.WINFUNCTYPE(ctypes.c_ulong, ctypes.c_void_p)(vtable[2])
-        release_fn(stream)
-        gdiplus.GdipDisposeImage(gp_bmp)
+        jpg_bytes = _hbitmap_to_jpeg(hbmp, quality)
 
         gdi32.SelectObject(hdc_mem, old)
         gdi32.DeleteObject(hbmp)
@@ -189,6 +194,38 @@ def capture_screen_jpeg(scale=1.0, quality=88):
 
         _cached_frame = jpg_bytes
         _cached_time = time.monotonic()
+        return jpg_bytes
+
+
+def capture_crop_jpeg(x1=0.0, y1=0.0, x2=1.0, y2=1.0, quality=92):
+    """OCR için ekranda seçilen dikdörtgen alanı (veya tam ekranı) imleçsiz ve yüksek netlikte kırpar."""
+    with _cap_lock:
+        sw = user32.GetSystemMetrics(0)
+        sh = user32.GetSystemMetrics(1)
+        rx1, rx2 = sorted((max(0.0, min(1.0, float(x1))), max(0.0, min(1.0, float(x2)))))
+        ry1, ry2 = sorted((max(0.0, min(1.0, float(y1))), max(0.0, min(1.0, float(y2)))))
+
+        # Çok küçük bir dokunuşsa tam ekranı al
+        if (rx2 - rx1) < 0.04 or (ry2 - ry1) < 0.03:
+            rx1, ry1, rx2, ry2 = 0.0, 0.0, 1.0, 1.0
+
+        px = int(rx1 * sw)
+        py = int(ry1 * sh)
+        pw = max(64, int((rx2 - rx1) * sw))
+        ph = max(40, int((ry2 - ry1) * sh))
+
+        hdc_scr = user32.GetDC(0)
+        hdc_mem = gdi32.CreateCompatibleDC(hdc_scr)
+        hbmp = gdi32.CreateCompatibleBitmap(hdc_scr, pw, ph)
+        old = gdi32.SelectObject(hdc_mem, hbmp)
+
+        gdi32.BitBlt(hdc_mem, 0, 0, pw, ph, hdc_scr, px, py, 0x00CC0020)
+        jpg_bytes = _hbitmap_to_jpeg(hbmp, quality)
+
+        gdi32.SelectObject(hdc_mem, old)
+        gdi32.DeleteObject(hbmp)
+        gdi32.DeleteDC(hdc_mem)
+        user32.ReleaseDC(0, hdc_scr)
         return jpg_bytes
 
 
@@ -330,7 +367,6 @@ def probe_selected_text(send_ws_fn):
                 if user32.GetClipboardSequenceNumber() != seq0:
                     sel_text = get_clipboard_text()
                     break
-            # Kullanıcının eski panosunu geri yükle
             if old_text:
                 set_clipboard_text(old_text)
             send_ws_fn({"t": "sel", "s": sel_text.strip() if sel_text else ""})
@@ -350,14 +386,12 @@ def handle(ev, send_ws_fn=None):
         b = ev.get("b", "l")
         d, u = BTN.get(b, BTN["l"])
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d), mouse(u))
-        # Sol tıklama genellikle seçimi kaldırır, kontrol et
         if b == "l" and send_ws_fn:
             probe_selected_text(send_ws_fn)
     elif t == "abs_dclick":
         ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
         d, u = BTN["l"]
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d), mouse(u), mouse(d), mouse(u))
-        # Çift tıklama kelime seçer, yakala ve telefona gönder
         if send_ws_fn:
             probe_selected_text(send_ws_fn)
     elif t == "abs_down":
@@ -369,7 +403,6 @@ def handle(ev, send_ws_fn=None):
         b = ev.get("b", "l")
         _, u = BTN.get(b, BTN["l"])
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(u))
-        # Sürükleme bırakıldığında metin seçilmiş olabilir, yakala ve telefona gönder
         if b == "l" and send_ws_fn:
             probe_selected_text(send_ws_fn)
     elif t == "probe_sel":
@@ -551,6 +584,21 @@ class H(BaseHTTPRequestHandler):
             fps_delay = max(0.025, min(0.5, int(qs.get("d", ["45"])[0]) / 1000.0))
             self.mjpeg_stream(sc, ql, fps_delay)
             return
+        if u.path == "/crop.jpg":
+            pin = qs.get("p", [""])[0]
+            if not hmac.compare_digest(pin.encode(), PIN.encode()):
+                self.reply(403, b"PIN yanlis")
+                return
+            try:
+                x1 = float(qs.get("x1", ["0"])[0])
+                y1 = float(qs.get("y1", ["0"])[0])
+                x2 = float(qs.get("x2", ["1"])[0])
+                y2 = float(qs.get("y2", ["1"])[0])
+                jpg = capture_crop_jpeg(x1, y1, x2, y2, 92)
+                self.reply(200, jpg, "image/jpeg")
+            except Exception as e:
+                self.reply(500, str(e).encode("utf-8"))
+            return
         if u.path in ("/screen.jpg", "/screen.bmp"):
             pin = qs.get("p", [""])[0]
             if not hmac.compare_digest(pin.encode(), PIN.encode()):
@@ -680,7 +728,7 @@ def main():
     except Exception as e:
         print("HTTPS açılamadı (%s). HTTP ile devam ediliyor, sesli yazma çalışmayabilir." % e)
     print("\n" + "=" * 60)
-    print(" KUMANDA HAZIR (1:1 HD + Seçili Metin Yakalama Destekli)")
+    print(" KUMANDA HAZIR (1:1 HD + Seçili Metin & Görsel OCR Destekli)")
     print("=" * 60)
     print(" Telefonda (aynı Wi-Fi) şu adresi aç:\n")
     print("     %s://%s:%d/?p=%s\n" % (scheme, ip, PORT, PIN))
