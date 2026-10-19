@@ -25,7 +25,6 @@ DATA = os.environ.get("KUMANDA_DATA") or os.path.join(HERE, "data")
 PORT = 8765
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-# Yüksek DPI ekranlarda koordinat kaymasını önle
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
 except Exception:
@@ -34,7 +33,6 @@ except Exception:
     except Exception:
         pass
 
-# ---------------------------------------------------------------- Windows girdi & GDI Ekran Yakalama
 user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
 ULONG_PTR = ctypes.c_size_t
@@ -79,8 +77,8 @@ class CURSORINFO(ctypes.Structure):
 _cap_lock = threading.Lock()
 
 
-def capture_screen_bmp(scale=0.55):
-    """Ekranı yakalar, fare imlecini çizer ve hızlı 16-bit (RGB565) BMP olarak döndürür."""
+def capture_screen_bmp(scale=0.65):
+    """Ekranı yakalar, fare imlecini çizer ve hızlı 16-bit BMP olarak döndürür."""
     with _cap_lock:
         sw = user32.GetSystemMetrics(0)
         sh = user32.GetSystemMetrics(1)
@@ -92,11 +90,9 @@ def capture_screen_bmp(scale=0.55):
         hbmp = gdi32.CreateCompatibleBitmap(hdc_scr, tw, th)
         old = gdi32.SelectObject(hdc_mem, hbmp)
 
-        # HALFTONE (4) ile daha net ölçekleme
         gdi32.SetStretchBltMode(hdc_mem, 4)
         gdi32.StretchBlt(hdc_mem, 0, 0, tw, th, hdc_scr, 0, 0, sw, sh, 0x00CC0020)
 
-        # Fare imlecini görünür şekilde çiz
         ci = CURSORINFO()
         ci.cbSize = ctypes.sizeof(CURSORINFO)
         if user32.GetCursorInfo(ctypes.byref(ci)) and (ci.flags & 1):
@@ -109,7 +105,7 @@ def capture_screen_bmp(scale=0.55):
         bmi.biWidth = tw
         bmi.biHeight = th
         bmi.biPlanes = 1
-        bmi.biBitCount = 16  # 16-bit RGB555: ağda %50 daha az veri, sıfır gecikme
+        bmi.biBitCount = 16
         bmi.biCompression = 0
 
         stride = ((tw * 2 + 3) & ~3)
@@ -255,7 +251,6 @@ def handle(ev):
             press(k, m)
 
 
-# ---------------------------------------------------------------- Ağ / HTTPS / PIN
 def local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -313,6 +308,13 @@ def ensure_cert(ip):
 
 
 PIN = ""
+
+ICON_SVG = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+<rect width="192" height="192" rx="38" fill="#0f1115"/>
+<rect x="22" y="34" width="148" height="96" rx="12" fill="#1a1d24" stroke="#4da3ff" stroke-width="8"/>
+<circle cx="96" cy="82" r="22" fill="#4da3ff"/>
+<path d="M64 154h64" stroke="#4da3ff" stroke-width="10" stroke-linecap="round"/>
+</svg>"""
 
 
 def read_exact(rfile, n):
@@ -376,11 +378,31 @@ class H(BaseHTTPRequestHandler):
                 self.reply(403, b"PIN yanlis")
                 return
             try:
-                sc = max(0.25, min(1.0, float(qs.get("s", ["0.55"])[0])))
+                sc = max(0.25, min(1.0, float(qs.get("s", ["0.65"])[0])))
                 bmp = capture_screen_bmp(sc)
                 self.reply(200, bmp, "image/bmp")
             except Exception as e:
                 self.reply(500, str(e).encode("utf-8"))
+            return
+        if u.path == "/manifest.json":
+            manifest = json.dumps({
+                "name": "Kumanda PC Ekran",
+                "short_name": "Kumanda",
+                "start_url": "/?p=" + PIN,
+                "display": "fullscreen",
+                "orientation": "any",
+                "background_color": "#000000",
+                "theme_color": "#000000",
+                "icons": [{"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+            }).encode("utf-8")
+            self.reply(200, manifest, "application/manifest+json; charset=utf-8")
+            return
+        if u.path == "/icon.svg":
+            self.reply(200, ICON_SVG, "image/svg+xml")
+            return
+        if u.path == "/sw.js":
+            sw_code = b"self.addEventListener('fetch', function(e){});"
+            self.reply(200, sw_code, "application/javascript; charset=utf-8")
             return
         if u.path in ("/", "/index.html"):
             try:
@@ -406,7 +428,7 @@ class H(BaseHTTPRequestHandler):
             pass
         try:
             while True:
-                op, payload = ws_read(self.rfile)
+                op, payload = ws_read(rfile=self.rfile)
                 if op == 8:
                     break
                 if op == 9:
@@ -437,15 +459,13 @@ def main():
     except Exception as e:
         print("HTTPS açılamadı (%s). HTTP ile devam ediliyor, sesli yazma çalışmayabilir." % e)
     print("\n" + "=" * 60)
-    print(" KUMANDA HAZIR (Canlı Ekran Destekli)")
+    print(" KUMANDA HAZIR (Tam Ekran & PWA Uygulama Destekli)")
     print("=" * 60)
     print(" Telefonda (aynı Wi-Fi) şu adresi aç:\n")
     print("     %s://%s:%d/?p=%s\n" % (scheme, ip, PORT, PIN))
     print(" PIN: %s" % PIN)
-    if scheme == "https":
-        print(" İlk açılışta tarayıcı uyarı verir: 'Gelişmiş' > 'Devam et' de.")
-    print(" Windows güvenlik duvarı sorarsa 'Özel ağlar'a izin ver.")
-    print(" Kapatmak için bu pencereyi kapat.")
+    print(" İPUCU: Telefonda tarayıcı menüsünden 'Ana ekrana ekle' yaparsan")
+    print("        adres çubuğu olmadan gerçek tam ekran uygulama gibi açılır.")
     print("=" * 60 + "\n")
     httpd.serve_forever()
 
