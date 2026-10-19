@@ -82,6 +82,16 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
 }
 #pcScreen.fit-contain{object-fit:contain}
 
+/* OCR Bölge Seçim Çerçevesi */
+#ocrRect{
+  position:fixed;
+  border:2px dashed #38bdf8;
+  background:rgba(56,189,248,.18);
+  pointer-events:none;
+  z-index:115;
+  display:none;
+}
+
 /* Sağ Üst Minimal Şeffaf Hap Menü */
 #scrMiniBar{
   position:fixed;
@@ -90,16 +100,18 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
   display:flex;
   gap:3px;
   z-index:95;
-  background:rgba(12,14,20,.65);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
+  background:rgba(12,14,20,.45);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
   padding:3px 5px;
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.14);
   align-items:center;
-  transition:opacity .18s;
+  opacity:0.45;
+  transition:opacity .2s;
 }
-#scrMiniBar.ghost{opacity:.18;pointer-events:none}
+#scrMiniBar:active, #scrMiniBar:hover{opacity:1}
+#scrMiniBar.ghost{opacity:.12;pointer-events:none}
 #scrMiniBar button{
   height:25px;
   padding:0 7px;
@@ -114,47 +126,49 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
 #dotMini.ok{background:#30a46c}
 
 /* ================================================================
-   KOLAY TAŞINABİLİR, BOYUTLANDIRILABİLİR & OTOMATİK ŞEFFAFLAŞAN KONSOL
+   VARSAYILAN OLARAK ŞEFFAF, SADECE İŞLEM YAPARKEN MATLAŞAN KONSOL (Madde 3)
    ================================================================ */
 #floatPod{
   position:fixed;
   left:10px;
   bottom:10px;
-  width:280px;
-  height:146px;
-  min-width:205px;
-  min-height:112px;
+  width:296px;
+  height:148px;
+  min-width:215px;
+  min-height:114px;
   max-width:95vw;
   max-height:82vh;
-  background:rgba(16,19,26,.84);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  border:1.5px solid rgba(77,163,255,.7);
+  background:rgba(14,17,24,.32);
+  border:1.5px solid rgba(77,163,255,.35);
   border-radius:16px;
-  box-shadow:0 8px 28px rgba(0,0,0,.75);
   z-index:105;
   display:flex;
   flex-direction:column;
   gap:4px;
   padding:6px;
   touch-action:none;
-  transition:opacity .18s ease, border-color .15s;
+  opacity:0.28; /* Varsayılan: Her zaman şeffaf, arkaplan görünür */
+  transition:opacity .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-/* PC Ekranına dokunulurken arkaplanı görmek için şeffaflaşan Hayalet Modu */
+/* Üzerine dokunulduğunda, kutuda işlem yapılırken veya ses kaydında matlaşır */
+#floatPod.active-pod,
+#floatPod.dragging{
+  opacity:0.97!important;
+  background:rgba(16,19,26,.94)!important;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-color:var(--a);
+  box-shadow:0 10px 32px rgba(0,0,0,.8);
+}
+/* PC Ekranına dokunulurken tamamen hayalet olur */
 #floatPod.ghost{
-  opacity:0.14!important;
+  opacity:0.12!important;
   pointer-events:none!important;
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
 }
-#floatPod.dragging{
-  opacity:.96!important;
-  border-color:#fff;
-  box-shadow:0 14px 36px rgba(77,163,255,.45);
-}
 #floatPod.sel-mode{
   border-color:#38bdf8;
-  box-shadow:0 0 20px rgba(56,189,248,.35);
 }
 /* Küçültülmüş (Mini Hap) Modu */
 #floatPod.mini{
@@ -164,21 +178,20 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
   min-height:0;
   border-radius:30px;
   padding:5px 8px;
-  background:rgba(16,19,26,.9);
 }
 #floatPod.mini #podBody,
 #floatPod.mini #podResizeHandle,
 #floatPod.mini #podClrBtn,
+#floatPod.mini #podKbToggleBtn,
 #floatPod.mini #podTitleText,
 #floatPod.mini #podSourceBadge{display:none!important}
 #floatPod.mini #podHeader{padding:2px 4px;background:transparent;gap:8px;min-height:32px}
 
-/* Çok Daha Rahat Tutulan Üst Taşıma Başlığı */
 #podHeader{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:6px;
+  gap:5px;
   min-height:32px;
   padding:4px 8px;
   background:rgba(255,255,255,.08);
@@ -194,43 +207,42 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
   color:var(--t);
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:5px;
   pointer-events:none;
-  font-size:12px;
+  font-size:11px;
   flex:1;
+  overflow:hidden;
+  white-space:nowrap;
 }
-.grip-dots{
-  font-size:15px;
-  color:var(--a);
-  letter-spacing:1px;
-  line-height:1;
-}
+.grip-dots{font-size:15px;color:var(--a);letter-spacing:1px;line-height:1}
 #podSourceBadge{
   font-size:10px;
-  padding:2px 6px;
+  padding:2px 5px;
   border-radius:6px;
-  background:rgba(56,189,248,.2);
+  background:rgba(56,189,248,.22);
   color:#7dd3fc;
-  border:1px solid rgba(56,189,248,.4);
+  border:1px solid rgba(56,189,248,.45);
   font-weight:600;
 }
 #podSourceBadge.user{
-  background:rgba(48,164,108,.2);
+  background:rgba(48,164,108,.22);
   color:#86efac;
-  border-color:rgba(48,164,108,.4);
+  border-color:rgba(48,164,108,.45);
 }
-#podHeaderBtns{display:flex;gap:5px;align-items:center}
+#podHeaderBtns{display:flex;gap:4px;align-items:center}
 #podHeaderBtns button{
   background:var(--p2);
   border:1px solid rgba(255,255,255,.18);
   border-radius:8px;
-  padding:0 10px;
-  font-size:12px;
+  padding:0 8px;
+  font-size:11px;
   font-weight:700;
-  height:28px;
-  min-width:32px;
+  height:27px;
+  min-width:28px;
   touch-action:none;
 }
+#podHeaderBtns button.on{background:var(--a);color:#001;border-color:var(--a)}
+#podClrBtn{background:rgba(229,72,77,.25)!important;border-color:rgba(229,72,77,.55)!important;color:#fca5a5!important}
 #podMiniMicBtn{display:none;background:#1c3354!important;border-color:var(--a)!important;color:#fff;font-weight:700}
 #floatPod.mini #podMiniMicBtn{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 13px;border-radius:18px;font-size:13px}
 #podMiniMicBtn.rec{background:var(--r)!important;border-color:#fff!important}
@@ -261,7 +273,7 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
 }
 #podMem:focus{outline:none;border-color:var(--a)}
 #podInterim{font-size:10px;color:var(--a);font-style:italic;min-height:12px;line-height:12px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;flex:none}
-#podBtns{display:flex;gap:4px;flex:none;padding-right:26px}
+#podBtns{display:flex;gap:3px;flex:none;padding-right:26px}
 #podBtns button{
   flex:1;
   height:34px;
@@ -278,17 +290,18 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
   padding:0 2px;
 }
 #podBtns button.press{background:var(--a)!important;color:#001!important}
-#podMic{background:#1c3354!important;border-color:var(--a)!important;flex:1.15!important}
+#podMic{background:#1c3354!important;border-color:var(--a)!important;flex:1.05!important}
 #podMic.rec{background:var(--r)!important;border-color:#ff8b8e!important;color:#fff}
 #podMic.lock{background:var(--w)!important;color:#001!important}
-#podAiCmd{background:linear-gradient(135deg,#4c1d95,#7c3aed)!important;border-color:#a78bfa!important;color:#fff!important;flex:1.15!important}
+#podAiCmd{background:linear-gradient(135deg,#4c1d95,#7c3aed)!important;border-color:#a78bfa!important;color:#fff!important;flex:1.05!important}
 #podAiCmd.rec{background:var(--r)!important;border-color:#fff!important}
-#podSend{background:#15422e!important;border-color:#30a46c!important;color:#a7f3d0!important;flex:1.15!important}
-#podBs{flex:0.75!important;font-size:15px!important}
-#podEnter{flex:0.75!important;font-size:15px!important;background:#1e293b!important;border-color:#475569!important}
-#podUndo{flex:0.55!important;font-size:13px!important}
+#podOcrBtn{background:#0f3d5e!important;border-color:#38bdf8!important;color:#bae6fd!important;flex:1.05!important}
+#podOcrBtn.on{background:#38bdf8!important;color:#001!important}
+#podSend{background:#15422e!important;border-color:#30a46c!important;color:#a7f3d0!important;flex:1.1!important}
+#podBs{flex:0.7!important;font-size:15px!important}
+#podEnter{flex:0.65!important;font-size:15px!important;background:#1e293b!important;border-color:#475569!important}
+#podClearBottom{flex:0.65!important;font-size:13px!important;background:rgba(229,72,77,.2)!important;border-color:rgba(229,72,77,.5)!important;color:#fca5a5!important}
 
-/* Genişletilmiş Kolay Yakalanan Boyutlandırma (Resize) Köşesi */
 #podResizeHandle{
   position:absolute;
   right:0;
@@ -415,7 +428,7 @@ body[data-pad="off"] #ypadwrap{display:none}
 <!-- AYARLAR -->
 <div id="set" class="hid">
   <div class="row" style="justify-content:space-between;align-items:center">
-    <h4 style="margin:0">Yapay Zeka (Dilbilgisi & Sesli Komut)</h4>
+    <h4 style="margin:0">Yapay Zeka (Dilbilgisi, Sesli Komut & OCR)</h4>
     <button class="k s" id="closeSetBtn" style="flex:0 0 70px;height:28px">Kapat ✕</button>
   </div>
   <div class="ai-stat">
@@ -438,8 +451,8 @@ body[data-pad="off"] #ypadwrap{display:none}
 
   <h4>Akıllı Kutu & Seçili Metin Ayarları</h4>
   <label>Kutu küçültülmüşken (Mini) sesi doğrudan PC'ye yaz <input type="checkbox" data-s="miniDirect"></label>
-  <label>PC'de seçilen metni otomatik kutuya çek <input type="checkbox" data-s=" grabSel"></label>
-  <label>PC ekranına dokunurken kutuyu şeffaflaştır <input type="checkbox" data-s="ghostPod"></label>
+  <label>PC'de seçilen metni otomatik kutuya çek <input type="checkbox" data-s="grabSel"></label>
+  <label>Kutuya dokununca telefon klavyesini açma <input type="checkbox" data-s="noSoftKb"></label>
 
   <h4>Canlı Ekran Netlik & Hız Ayarları</h4>
   <label>Görüntü Çözünürlüğü
@@ -511,8 +524,8 @@ body[data-pad="off"] #ypadwrap{display:none}
     <button id="scrFitBtn" title="Ekranı Tam Doldur / Orijinal Oran">↔</button>
     <button id="scrModeScroll" title="Tek parmakla tekerlek kaydırma modu">↕</button>
     <button id="scrModeRight" title="Sağ Tık modu">🖱</button>
-    <button id="scrTopBsBtn" title="PC'de Sil (Backspace)">⌫</button>
-    <button id="scrTopEnterBtn" title="PC'de Satır Atla (Enter)">↵</button>
+    <button id="scrDeskLeftBtn" title="Önceki Masaüstü (Ctrl+Win+Sol)">◀🖥</button>
+    <button id="scrDeskRightBtn" title="Sonraki Masaüstü (Ctrl+Win+Sağ)">🖥▶</button>
     <button id="scrFsBtn" title="Tam Ekran">⛶</button>
     <button id="scrGearBtn" title="Ayarlar & Netlik">⚙</button>
     <button id="scrMenuBtn" title="Sekme Menüsü">☰</button>
@@ -521,8 +534,9 @@ body[data-pad="off"] #ypadwrap{display:none}
   <div id="screenViewport">
     <img id="pcScreen" alt="PC Ekranı">
   </div>
+  <div id="ocrRect"></div>
 
-  <!-- KOLAY TAŞINIR, BOYUTLANDIRILIR & OTOMATİK ŞEFFAFLAŞIR SES/AI KUTUSU -->
+  <!-- VARSAYILAN ŞEFFAF, İŞLEM ANINDA MATLAŞAN AKILLI KUTU -->
   <div id="floatPod">
     <div id="podHeader">
       <span id="podDragTitle">
@@ -532,20 +546,23 @@ body[data-pad="off"] #ypadwrap{display:none}
       </span>
       <button id="podMiniMicBtn" title="Bas-Konuş (Doğrudan PC'ye yazar)">🎤 Konuş</button>
       <div id="podHeaderBtns">
-        <button id="podClrBtn" title="Kutuyu Temizle">✕</button>
+        <button id="podKbToggleBtn" title="Telefon klavyesini aç/kapat">⌨</button>
+        <button id="podClrBtn" title="Kutuyu Temizle">🗑</button>
         <button id="podMinBtn" title="Küçült / Büyüt">−</button>
       </div>
     </div>
     <div id="podBody">
-      <textarea id="podMem" placeholder="🎤 Konuş veya PC'de metin seç -> ✨ AI -> 📤 Yaz"></textarea>
+      <!-- inputmode="none" sayesinde içine dokunulsa bile telefon klavyesi açılmaz, ama imleç yerleşir! -->
+      <textarea id="podMem" inputmode="none" placeholder="🎤 Konuş | 📋 Metin Seç | 📷 Fotoğraftan OCR -> ✨ AI -> 📤 Yaz"></textarea>
       <div id="podInterim"></div>
       <div id="podBtns">
         <button id="podMic" title="Bas-Konuş / Dokun-Kilitle">🎤</button>
         <button id="podAiCmd" title="Sesli AI Düzeltme Komutu">✨ AI</button>
-        <button id="podBs" title="Kutuda yazı varsa onu siler, yoksa doğrudan PC'de Backspace yapar">⌫</button>
+        <button id="podOcrBtn" title="Fotoğraftan/Ekrandan Metin Çıkar (Görsel OCR)">📷 OCR</button>
+        <button id="podBs" title="Kutuda imleç varsa harf, yoksa kelime siler; kutu boşsa PC'de siler">⌫</button>
+        <button id="podClearBottom" title="Kutuyu tamamen temizle">🗑</button>
         <button id="podEnter" title="PC'de Enter (Satır atla)">↵</button>
-        <button id="podUndo" title="Geri Al (Ctrl+Z)">↩</button>
-        <button id="podSend" title="Kutudaki metni PC'ye yazdır">📤 Yaz</button>
+        <button id="podSend" title="Seçili metnin üzerine veya imlece yazdır">📤 Yaz</button>
       </div>
     </div>
     <div id="podResizeHandle" title="Boyutlandırmak için köşeden tut ve çek">⤡</div>
@@ -558,7 +575,7 @@ body[data-pad="off"] #ypadwrap{display:none}
     <div id="stickyTop">
       <div id="boxWrap">
         <div id="boxContainer">
-          <textarea id="box" placeholder="Basılı tutup konuş ya da yaz..."></textarea>
+          <textarea id="box" inputmode="none" placeholder="Basılı tutup konuş ya da yaz..."></textarea>
           <span id="delModeBadge">⌫ Kelime siler</span>
         </div>
         <div id="boxSide">
@@ -618,7 +635,7 @@ body[data-pad="off"] #ypadwrap{display:none}
   </div>
 
   <div id="ypadwrap">
-    <div class="padbox" id="ypad">Mousepad<br>1 parmak: imleç · dokun: tık<br>2 parmak: kaydır / sağ tık</div>
+    <div class="padbox" id="ypad">Mousepad<br>1 parmak: imleç · dokun: tık<br>2 parmak: kaydır / sağ tık<br>4 parmak: masaüstü değiştir</div>
     <div class="clicks opt">
       <button class="k" data-click="l">Sol</button>
       <button class="k" data-click="m">Orta</button>
@@ -629,7 +646,7 @@ body[data-pad="off"] #ypadwrap{display:none}
 
 <!-- PAD -->
 <div class="view" id="vp">
-  <div class="padbox" id="pad">Dokunmatik alan<br>1 parmak: imleç · dokun: tık<br>2 parmak dokun: sağ tık · 2 parmak kaydır: kaydırma</div>
+  <div class="padbox" id="pad">Dokunmatik alan<br>1 parmak: imleç · dokun: tık<br>2 parmak dokun: sağ tık · 2 parmak kaydır: kaydırma<br>4 parmak sola/sağa: masaüstleri arası geçiş</div>
   <div class="clicks">
     <button class="k big" data-click="l">Sol tık</button>
     <button class="k big" data-click="m">Orta</button>
@@ -678,22 +695,22 @@ const WL = {
 };
 const D = Object.assign({
   speed: 1.6, scroll: 1.0, invert: false, awake: true, direct: false,
-  miniDirect: true, grabSel: true, ghostPod: true,
+  miniDirect: true, grabSel: true, noSoftKb: true,
   showFab: true, punct: true, cap: true, indent: false,
   num: 'auto', startTab: 'vs', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
   wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '1.0', scrFps: '40', scrQual: '90', scrFit: 'fill'
 }, WL.tr);
 let saved = {};
 try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
-if (!lsGet('k_hd_v4')) {
+if (!lsGet('k_hd_v5')) {
   saved.startTab = 'vs';
   saved.scrScale = '1.0';
   saved.scrQual = '90';
   saved.scrFps = '40';
   saved.miniDirect = true;
   saved.grabSel = true;
-  saved.ghostPod = true;
-  lsSet('k_hd_v4', '1');
+  saved.noSoftKb = true;
+  lsSet('k_hd_v5', '1');
 }
 const S = Object.assign({}, D, saved);
 function saveS() { lsSet('kset3', JSON.stringify(S)); }
@@ -715,10 +732,10 @@ document.addEventListener('contextmenu', e => {
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2200);
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2300);
 }
 
-/* ---------- Tam Ekran (Fullscreen API) ---------- */
+/* ---------- Tam Ekran ve Masaüstü Geçiş Kısayolları ---------- */
 function toggleFullScreen() {
   const docEl = document.documentElement;
   const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
@@ -731,13 +748,11 @@ function toggleFullScreen() {
 }
 $('#scrFsBtn').onclick = toggleFullScreen;
 $('#scrMenuBtn').onclick = () => document.body.classList.toggle('show-top');
+$('#scrDeskLeftBtn').onclick = () => { tx({ t: 'key', k: 'left', m: ['ctrl', 'win'] }); toast('◀ Önceki Masaüstü'); };
+$('#scrDeskRightBtn').onclick = () => { tx({ t: 'key', k: 'right', m: ['ctrl', 'win'] }); toast('Sonraki Masaüstü ▶'); };
 
 /* ================================================================
-   SENKRONİZE KUTULAR & SEÇİLİ METİN / SES KORUMA MANTIĞI (Madde 2)
-   boxSource:
-   - 'none'   : Kutu boş
-   - 'pc_sel' : PC'de seçilen metin otomatik düştü (seçim kalkarsa silinir)
-   - 'user'   : Sesle veya elle/AI ile oluşturuldu (seçim kalksa bile SİLİNMEZ!)
+   SENKRONİZE KUTULAR, KLAVYESİZ ODAK & ŞEFFAFLIK YÖNETİMİ (Madde 1, 2, 3)
    ================================================================ */
 const box = $('#box');
 const podMem = $('#podMem');
@@ -746,6 +761,47 @@ const podBadge = $('#podSourceBadge');
 let boxFocused = false;
 let podFocused = false;
 let boxSource = 'none'; // 'none' | 'pc_sel' | 'user'
+let pcHasActiveSelection = false; // PC'de şu an seçili metin olup olmadığını takip eder
+let podTouchActive = false;
+let podFadeTimer = 0;
+let listening = false;
+let aiBusy = false;
+
+// Madde 3: Kutu yalnızca üzerinde işlem yapılırken, odaklandığında veya ses kaydında matlaşır; diğer her zaman şeffaftır!
+function refreshPodOpacity() {
+  const isActive = podFocused || boxFocused || listening || aiBusy || podTouchActive;
+  floatPod.classList.toggle('active-pod', isActive);
+}
+
+function touchPodWake(ms) {
+  podTouchActive = true;
+  refreshPodOpacity();
+  clearTimeout(podFadeTimer);
+  podFadeTimer = setTimeout(() => {
+    podTouchActive = false;
+    refreshPodOpacity();
+  }, ms || 2400);
+}
+
+// Madde 2: Kutuya dokunulsa bile telefon klavyesi açılmasın (inputmode="none")
+let allowSoftKeyboard = false;
+function applyKeyboardMode() {
+  const mode = (S.noSoftKb && !allowSoftKeyboard) ? 'none' : 'text';
+  podMem.setAttribute('inputmode', mode);
+  box.setAttribute('inputmode', mode);
+  $('#podKbToggleBtn').classList.toggle('on', mode === 'text');
+}
+$('#podKbToggleBtn').onclick = () => {
+  allowSoftKeyboard = !allowSoftKeyboard;
+  applyKeyboardMode();
+  if (allowSoftKeyboard) {
+    podMem.focus();
+    toast('⌨ Telefon klavyesi açıldı');
+  } else {
+    podMem.blur();
+    toast('⌨ Telefon klavyesi gizlendi (Sadece imleç modu)');
+  }
+};
 
 function setBoxSource(src) {
   boxSource = box.value.trim() ? src : 'none';
@@ -754,12 +810,21 @@ function setBoxSource(src) {
     podBadge.textContent = '📋 PC Seçimi';
     podBadge.classList.remove('hid', 'user');
   } else if (boxSource === 'user') {
-    podBadge.textContent = '🔒 Ses/Metin';
+    podBadge.textContent = '🔒 Korumalı';
     podBadge.classList.remove('hid');
     podBadge.classList.add('user');
   } else {
     podBadge.classList.add('hid');
   }
+}
+
+function clearAllBox() {
+  box.value = '';
+  podMem.value = '';
+  setBoxSource('none');
+  hist.length = 0;
+  $('#interim').textContent = '';
+  $('#podInterim').textContent = '';
 }
 
 function syncBoxes(fromPod, markAsUser) {
@@ -774,21 +839,20 @@ function syncBoxes(fromPod, markAsUser) {
 box.addEventListener('input', () => syncBoxes(false, true));
 podMem.addEventListener('input', () => syncBoxes(true, true));
 
-// PC'den gelen seçili metin olayı (WebSocket üzerinden)
 function handlePcSelectionEvent(selText) {
-  if (!S.grabSel) return;
   const clean = (selText || '').trim();
+  pcHasActiveSelection = clean.length > 0;
+  if (!S.grabSel) return;
 
   if (clean) {
-    // Eğer kullanıcı sesle/elle kendi metnini oluşturduysa ('user'), yanlışlıkla yapılan PC seçimi onu EZMESİN!
     if (boxSource === 'user' && box.value.trim().length > 0) {
       return;
     }
     box.value = clean;
     syncBoxes(false, false);
     setBoxSource('pc_sel');
+    touchPodWake(2800);
   } else {
-    // PC'deki seçim kaldırıldıysa: Sadece 'pc_sel' kaynaklıysa temizle, 'user' ise DOKUNMA!
     if (boxSource === 'pc_sel') {
       box.value = '';
       syncBoxes(false, false);
@@ -798,7 +862,7 @@ function handlePcSelectionEvent(selText) {
 }
 
 /* ================================================================
-   Yapay Zeka (Gemini & Grok/Groq) Anahtar Havuzu ve Kota Rotasyonu
+   Yapay Zeka (Gemini & Grok/Groq) + GÖRSEL OCR (Madde 5)
    ================================================================ */
 const aiPool = { gemini: [], groq: [], gIdx: 0, qIdx: 0 };
 
@@ -917,6 +981,154 @@ async function callGeminiAPI(apiKey, sysPrompt, userText) {
   return out.trim();
 }
 
+// Görsel OCR Çağrıları (Gemini Vision & Groq Vision)
+async function callGeminiVisionOCR(apiKey, base64Jpeg) {
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(apiKey);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: 'Bu görüntüdeki tüm yazıları (metinleri) olduğu gibi, satır yapısını koruyarak çıkar. Açıklama veya yorum yazma, SADECE görüntüdeki metni döndür.' },
+          { inlineData: { mimeType: 'image/jpeg', data: base64Jpeg } }
+        ]
+      }],
+      generationConfig: { temperature: 0.1 }
+    })
+  });
+  if (!res.ok) throw new Error('Gemini OCR ' + res.status);
+  const data = await res.json();
+  const out = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+              data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+  if (!out) throw new Error('Metin bulunamadı');
+  return out.trim();
+}
+
+async function callGroqVisionOCR(apiKey, base64Jpeg) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Bu görüntüdeki tüm metinleri olduğu gibi çıkar. Hiçbir açıklama ekleme, sadece okunan metni döndür.' },
+          { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64Jpeg } }
+        ]
+      }],
+      temperature: 0.1
+    })
+  });
+  if (!res.ok) throw new Error('Groq OCR ' + res.status);
+  const data = await res.json();
+  const out = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!out) throw new Error('Metin bulunamadı');
+  return out.trim();
+}
+
+// Son sürüklenen dikdörtgen bölgeyi OCR için sakla
+let lastDragRegion = { x1: 0, y1: 0, x2: 1, y2: 1, time: 0 };
+let ocrSelectMode = false;
+
+async function extractTextFromScreenRegion(region) {
+  if ($('#aiKeysInput').value.trim() && (aiPool.groq.length + aiPool.gemini.length === 0)) {
+    parseAndStoreKeys($('#aiKeysInput').value);
+  }
+  if (aiPool.gemini.length === 0 && aiPool.groq.length === 0) {
+    $('#set').classList.remove('hid');
+    toast('OCR için önce ⚙ Ayarlar\'dan Gemini veya Grok API anahtarı ekle.');
+    return;
+  }
+
+  const btn = $('#podOcrBtn');
+  aiBusy = true; refreshPodOpacity();
+  btn.textContent = '⏳ OCR';
+
+  try {
+    const r = region || ((Date.now() - lastDragRegion.time < 15000) ? lastDragRegion : { x1: 0, y1: 0, x2: 1, y2: 1 });
+    const cropUrl = `/crop.jpg?p=${encodeURIComponent(PIN)}&x1=${r.x1.toFixed(3)}&y1=${r.y1.toFixed(3)}&x2=${r.x2.toFixed(3)}&y2=${r.y2.toFixed(3)}&t=${Date.now()}`;
+    const imgRes = await fetch(cropUrl);
+    if (!imgRes.ok) throw new Error('Ekran görüntüsü alınamadı');
+    const blob = await imgRes.blob();
+
+    const base64Jpeg = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const resStr = String(reader.result || '');
+        resolve(resStr.split(',')[1] || '');
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    // Görsel OCR için önce Gemini (çok güçlü), yoksa/biterse Groq Vision dene
+    const providers = aiPool.gemini.length > 0 ? ['gemini', 'groq'] : ['groq', 'gemini'];
+    const attempts = [];
+    for (const p of providers) {
+      const list = aiPool[p];
+      const startIdx = p === 'groq' ? aiPool.qIdx : aiPool.gIdx;
+      for (let i = 0; i < list.length; i++) {
+        const idx = (startIdx + i) % list.length;
+        attempts.push({ provider: p, idx, key: list[idx] });
+      }
+    }
+
+    let extracted = '';
+    let usedLabel = '';
+    for (const att of attempts) {
+      try {
+        extracted = att.provider === 'gemini'
+          ? await callGeminiVisionOCR(att.key, base64Jpeg)
+          : await callGroqVisionOCR(att.key, base64Jpeg);
+        if (att.provider === 'groq') aiPool.qIdx = att.idx;
+        else aiPool.gIdx = att.idx;
+        usedLabel = `${att.provider === 'gemini' ? 'Gemini' : 'Grok'} #${att.idx + 1}`;
+        break;
+      } catch (err) {
+        if (att.provider === 'groq') aiPool.qIdx = (att.idx + 1) % Math.max(1, aiPool.groq.length);
+        else aiPool.gIdx = (att.idx + 1) % Math.max(1, aiPool.gemini.length);
+      }
+    }
+
+    if (!extracted) throw new Error('OCR yanıt vermedi');
+
+    hist.push(box.value);
+    if (hist.length > 40) hist.shift();
+    box.value = extracted;
+    syncBoxes(false, true); // Korumalı kullanıcı metni olarak kutuya koy
+    toast(`📷 Metin çıkarıldı (${usedLabel})`);
+    if (navigator.vibrate) navigator.vibrate(30);
+  } catch (e) {
+    toast('OCR Hatası: ' + (e.message || 'Okunamadı'));
+  } finally {
+    aiBusy = false;
+    btn.classList.remove('on');
+    btn.textContent = '📷 OCR';
+    touchPodWake(4000);
+  }
+}
+
+// 📷 OCR Butonu: Tıklandığında eğer son 10 saniyede ekranda bir alan sürüklendiyse hemen onu okur;
+// yoksa "Ekranda fotoğrafın olduğu alanı parmağınla çerçeve içine al" modunu açar (veya tekrar basılırsa tam ekranı okur).
+$('#podOcrBtn').onclick = () => {
+  if (ocrSelectMode) {
+    ocrSelectMode = false;
+    $('#podOcrBtn').classList.remove('on');
+    extractTextFromScreenRegion({ x1: 0, y1: 0, x2: 1, y2: 1 });
+    return;
+  }
+  if (Date.now() - lastDragRegion.time < 10000) {
+    extractTextFromScreenRegion(lastDragRegion);
+  } else {
+    ocrSelectMode = true;
+    $('#podOcrBtn').classList.add('on');
+    toast('📷 Ekranda okunacak fotoğraf/yazı alanını parmağınla sürükleyerek seç (Tam ekran için tekrar 📷 OCR\'a bas)');
+  }
+};
+
 async function runAiWithInstruction(customInstruction) {
   const original = box.value.trim();
   if (!original && !customInstruction) {
@@ -952,6 +1164,7 @@ async function runAiWithInstruction(customInstruction) {
   }
 
   const btn1 = $('#aiFixBtn'), btn2 = $('#podAiCmd');
+  aiBusy = true; refreshPodOpacity();
   btn1.classList.add('busy'); btn1.textContent = '⏳';
   btn2.textContent = '⏳';
 
@@ -971,12 +1184,12 @@ async function runAiWithInstruction(customInstruction) {
       if (hist.length > 40) hist.shift();
 
       box.value = resultText;
-      // AI ile müdahale edildiği an metin artık korumalı 'user' metni olur (seçim kalksa da silinmez)
       syncBoxes(false, true);
       st.space = true;
       updateAiStatusUI(`${pName} #${att.idx + 1} ✓`);
-      toast(`✨ ${pName} #${att.idx + 1} ile hazır (📤 Yaz ile üzerine yazdırabilirsin)`);
+      toast(`✨ ${pName} #${att.idx + 1} ile hazır (📤 Yaz ile seçili metnin üzerine yazdırabilirsin)`);
       if (navigator.vibrate) navigator.vibrate(25);
+      aiBusy = false; touchPodWake(4000);
       btn1.classList.remove('busy'); btn1.textContent = '✨ Düzelt';
       btn2.textContent = '✨ AI';
       return;
@@ -987,6 +1200,7 @@ async function runAiWithInstruction(customInstruction) {
     }
   }
 
+  aiBusy = false; refreshPodOpacity();
   btn1.classList.remove('busy'); btn1.textContent = '✨ Düzelt';
   btn2.textContent = '✨ AI';
   updateAiStatusUI('Hata');
@@ -995,7 +1209,7 @@ async function runAiWithInstruction(customInstruction) {
 
 $('#aiFixBtn').onclick = () => runAiWithInstruction('');
 
-/* ---------- WebSocket (Çift Yönlü: PC'den Seçili Metni Alır) ---------- */
+/* ---------- WebSocket ---------- */
 let ws = null, wsOk = false, fails = 0;
 function setDot() {
   $('#dot').classList.toggle('ok', wsOk);
@@ -1071,13 +1285,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ================================================================
-   CANLI EKRAN: PINCH-TO-ZOOM + 2 PARMAK SCROLL + DOKUNURKEN ŞEFFAF KUTU
+   CANLI EKRAN: PINCH-TO-ZOOM + 2 PARMAK SCROLL + 4 PARMAK MASAÜSTÜ GEÇİŞİ (Madde 4)
    ================================================================ */
 let scrTouchMode = 'l';
 let zScale = 1, zTx = 0, zTy = 0;
 
 function setGhostMode(on) {
-  if (!S.ghostPod) return;
   floatPod.classList.toggle('ghost', on);
   $('#scrMiniBar').classList.toggle('ghost', on);
 }
@@ -1160,28 +1373,58 @@ function getActualImageCoords(clientX, clientY) {
 
 (function bindMultiTouchScreen() {
   const vp = $('#screenViewport');
-  let mode = 'none';
+  const ocrRectEl = $('#ocrRect');
+  let mode = 'none'; // 'one' | 'two' | 'four' | 'ocr'
   let p1 = { x: 0, y: 0, startX: 0, startY: 0, moved: 0, t0: 0 };
   let draggingLeft = false, holdTimer = 0, lastTapAt = 0;
   let two = { startDist: 0, lastDist: 0, lastMidX: 0, lastMidY: 0, totalMove: 0, t0: 0, scrollAccY: 0, scrollAccX: 0 };
+  let four = { startX: 0, startY: 0, done: false };
 
   const dist2 = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
   const mid2 = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+  const avgTouch = ts => {
+    let sx = 0, sy = 0;
+    for (let i = 0; i < ts.length; i++) { sx += ts[i].clientX; sy += ts[i].clientY; }
+    return { x: sx / ts.length, y: sy / ts.length };
+  };
 
   vp.addEventListener('touchstart', e => {
     e.preventDefault();
     if (podFocused) podMem.blur();
     if (document.body.classList.contains('show-top')) document.body.classList.remove('show-top');
-
-    // PC ekranına dokunulduğu an kutuyu şeffaflaştır ki arkaplan net görünsün (Madde 3)
     setGhostMode(true);
+
+    // Madde 4: 4 Parmak Masaüstleri Arası Geçiş Algılama
+    if (e.touches.length >= 4) {
+      clearTimeout(holdTimer);
+      if (draggingLeft) {
+        const c = getActualImageCoords(p1.x, p1.y);
+        if (c) tx({ t: 'abs_up', x: c.x, y: c.y, b: 'l' });
+        draggingLeft = false;
+      }
+      mode = 'four';
+      const center = avgTouch(e.touches);
+      four = { startX: center.x, startY: center.y, done: false };
+      return;
+    }
 
     if (e.touches.length === 1 && mode === 'none') {
       const t = e.touches[0];
-      mode = 'one';
       p1 = { x: t.clientX, y: t.clientY, startX: t.clientX, startY: t.clientY, moved: 0, t0: Date.now() };
       draggingLeft = false;
 
+      // Eğer kullanıcı 📷 OCR tuşuna basıp bölge seçme moduna girdiyse
+      if (ocrSelectMode) {
+        mode = 'ocr';
+        ocrRectEl.style.display = 'block';
+        ocrRectEl.style.left = t.clientX + 'px';
+        ocrRectEl.style.top = t.clientY + 'px';
+        ocrRectEl.style.width = '0px';
+        ocrRectEl.style.height = '0px';
+        return;
+      }
+
+      mode = 'one';
       clearTimeout(holdTimer);
       if (scrTouchMode === 'l') {
         holdTimer = setTimeout(() => {
@@ -1197,7 +1440,7 @@ function getActualImageCoords(clientX, clientY) {
           }
         }, 500);
       }
-    } else if (e.touches.length >= 2) {
+    } else if (e.touches.length === 2 && mode !== 'four') {
       clearTimeout(holdTimer);
       if (draggingLeft) {
         const c = getActualImageCoords(p1.x, p1.y);
@@ -1213,6 +1456,48 @@ function getActualImageCoords(clientX, clientY) {
 
   vp.addEventListener('touchmove', e => {
     e.preventDefault();
+
+    // Madde 4: 4 Parmak Kaydırma ile Masaüstleri Arası Geçiş
+    if (mode === 'four' && e.touches.length >= 4 && !four.done) {
+      const center = avgTouch(e.touches);
+      const dx = center.x - four.startX;
+      const dy = center.y - four.startY;
+      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) {
+        four.done = true;
+        // Sola çekince sonraki masaüstü, sağa çekince önceki masaüstü
+        const keyDir = dx < 0 ? 'right' : 'left';
+        tx({ t: 'key', k: keyDir, m: ['ctrl', 'win'] });
+        if (navigator.vibrate) navigator.vibrate(30);
+        toast(dx < 0 ? '🖥▶ Sonraki Masaüstü' : '◀🖥 Önceki Masaüstü');
+      } else if (Math.abs(dy) > 55 && Math.abs(dy) > Math.abs(dx)) {
+        four.done = true;
+        if (dy < 0) {
+          tx({ t: 'key', k: 'tab', m: ['win'] });
+          toast('🖥 Görev Görünümü (Win+Tab)');
+        } else {
+          tx({ t: 'key', k: 'd', m: ['win'] });
+          toast('🖥 Masaüstünü Göster (Win+D)');
+        }
+        if (navigator.vibrate) navigator.vibrate(30);
+      }
+      return;
+    }
+
+    // Madde 5: Görsel OCR İçin Çerçeve Çizimi
+    if (mode === 'ocr' && e.touches.length === 1) {
+      const t = e.touches[0];
+      p1.x = t.clientX; p1.y = t.clientY;
+      const l = Math.min(p1.startX, p1.x);
+      const top = Math.min(p1.startY, p1.y);
+      const w = Math.abs(p1.x - p1.startX);
+      const h = Math.abs(p1.y - p1.startY);
+      ocrRectEl.style.left = l + 'px';
+      ocrRectEl.style.top = top + 'px';
+      ocrRectEl.style.width = w + 'px';
+      ocrRectEl.style.height = h + 'px';
+      return;
+    }
+
     if (mode === 'one' && e.touches.length === 1) {
       const t = e.touches[0];
       const dx = t.clientX - p1.x;
@@ -1279,14 +1564,27 @@ function getActualImageCoords(clientX, clientY) {
     clearTimeout(holdTimer);
 
     if (e.touches.length === 0) {
-      // Parmak ekrandan kalkınca kutuyu tekrar görünür yap
       setGhostMode(false);
+    }
+
+    if (mode === 'ocr' && e.touches.length === 0) {
+      ocrRectEl.style.display = 'none';
+      ocrSelectMode = false;
+      $('#podOcrBtn').classList.remove('on');
+      const c1 = getActualImageCoords(p1.startX, p1.startY) || { x: 0, y: 0 };
+      const c2 = getActualImageCoords(p1.x, p1.y) || { x: 1, y: 1 };
+      lastDragRegion = { x1: c1.x, y1: c1.y, x2: c2.x, y2: c2.y, time: Date.now() };
+      extractTextFromScreenRegion(lastDragRegion);
+      mode = 'none';
+      return;
     }
 
     if (mode === 'one' && e.touches.length === 0) {
       const c = getActualImageCoords(p1.x, p1.y) || getActualImageCoords(p1.startX, p1.startY);
       if (scrTouchMode !== 'scroll' && c) {
         if (draggingLeft) {
+          const c0 = getActualImageCoords(p1.startX, p1.startY) || c;
+          lastDragRegion = { x1: c0.x, y1: c0.y, x2: c.x, y2: c.y, time: Date.now() };
           tx({ t: 'abs_up', x: c.x, y: c.y, b: 'l' });
           draggingLeft = false;
         } else if (p1.moved < 16) {
@@ -1325,7 +1623,7 @@ function getActualImageCoords(clientX, clientY) {
 })();
 
 /* ================================================================
-   KOLAY TAŞINABİLİR & BOYUTLANDIRILABİLİR KONSOL (#floatPod - Madde 3)
+   KOLAY TAŞINABİLİR & BOYUTLANDIRILABİLİR KONSOL (#floatPod)
    ================================================================ */
 (function initPodDragAndResize() {
   const pod = $('#floatPod');
@@ -1351,10 +1649,10 @@ function getActualImageCoords(clientX, clientY) {
     lsSet('k_pod_rect', JSON.stringify({ l: Math.round(r.left), t: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }));
   }
 
-  // Sağ alt köşeden kolay boyutlandırma
   resizer.addEventListener('pointerdown', e => {
     e.preventDefault();
     e.stopPropagation();
+    touchPodWake(3500);
     try { resizer.setPointerCapture(e.pointerId); } catch (err) {}
     pId = e.pointerId;
     action = 'resize';
@@ -1368,8 +1666,8 @@ function getActualImageCoords(clientX, clientY) {
     if (navigator.vibrate) navigator.vibrate(10);
   });
 
-  // Kutunun üst barından veya çerçevesinden kolay sürükleme
   pod.addEventListener('pointerdown', e => {
+    touchPodWake(3500);
     if (e.target === podMem || e.target === resizer) return;
     pId = e.pointerId;
     action = 'drag';
@@ -1386,8 +1684,8 @@ function getActualImageCoords(clientX, clientY) {
 
     if (action === 'resize') {
       e.preventDefault();
-      pod.style.width = Math.max(205, Math.min(window.innerWidth - 12, startW + dx)) + 'px';
-      pod.style.height = Math.max(112, Math.min(window.innerHeight - 12, startH + dy)) + 'px';
+      pod.style.width = Math.max(215, Math.min(window.innerWidth - 12, startW + dx)) + 'px';
+      pod.style.height = Math.max(114, Math.min(window.innerHeight - 12, startH + dy)) + 'px';
       return;
     }
 
@@ -1431,16 +1729,23 @@ function getActualImageCoords(clientX, clientY) {
   };
   $('#podClrBtn').onclick = () => {
     if (moved) return;
-    box.value = ''; syncBoxes(false, false); setBoxSource('none'); hist.length = 0; $('#podInterim').textContent = '';
+    clearAllBox();
+    toast('🗑 Kutu temizlendi');
+  };
+  $('#podClearBottom').onclick = () => {
+    if (moved) return;
+    clearAllBox();
+    toast('🗑 Kutu temizlendi');
   };
 })();
 
-/* ---------- Metin Kutusu Odak (Focus) ve Akıllı Silme ---------- */
+/* ---------- Metin Kutusu Odak (Focus) ve Şeffaflık ---------- */
 function updateFocusUI() {
   const anyFocus = boxFocused || podFocused;
   $('#delModeBadge').textContent = anyFocus ? '⌫ Harf siler' : '⌫ Kelime siler';
   $('#bsSub').textContent = anyFocus ? 'Harf' : 'Kelime';
   $('#unfocusBtn').classList.toggle('hid', !boxFocused);
+  refreshPodOpacity();
 }
 box.addEventListener('focus', () => { boxFocused = true; updateFocusUI(); });
 box.addEventListener('blur', () => { boxFocused = false; updateFocusUI(); });
@@ -1451,14 +1756,14 @@ $('#unfocusBtn').addEventListener('pointerdown', e => { e.preventDefault(); box.
 
 document.addEventListener('pointerdown', e => {
   if (!boxFocused && !podFocused) return;
-  if (e.target === box || e.target === podMem || e.target.closest('#smartBs') || e.target.closest('#podBs') || e.target.closest('#unfocusBtn')) return;
+  if (e.target === box || e.target === podMem || e.target.closest('#smartBs') || e.target.closest('#podBs') || e.target.closest('#unfocusBtn') || e.target.closest('#podKbToggleBtn')) return;
   if (boxFocused) box.blur();
   if (podFocused) podMem.blur();
 });
 
-/* ---------- Klasik Touchpad ---------- */
+/* ---------- Klasik Touchpad (4 Parmak Masaüstü Geçişi Dahil) ---------- */
 function makePad(el) {
-  let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0;
+  let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0, fourDone = false;
   const avg = (ts, k) => { let s = 0; for (const t of ts) s += t[k]; return s / ts.length; };
   function flush() {
     raf = 0;
@@ -1476,12 +1781,23 @@ function makePad(el) {
     T.max = Math.max(T.max, n);
     const ts = Array.from(e.touches);
     T.x = avg(ts, 'clientX'); T.y = avg(ts, 'clientY'); T.n = n;
+    if (n >= 4) { T.fx = T.x; T.fy = T.y; fourDone = false; }
   }, { passive: false });
   el.addEventListener('touchmove', e => {
     e.preventDefault();
     if (!T.active) return;
     const ts = Array.from(e.touches), n = ts.length;
     const x = avg(ts, 'clientX'), y = avg(ts, 'clientY');
+    if (n >= 4 && !fourDone) {
+      const fdx = x - (T.fx || x);
+      if (Math.abs(fdx) > 45) {
+        fourDone = true;
+        tx({ t: 'key', k: fdx < 0 ? 'right' : 'left', m: ['ctrl', 'win'] });
+        if (navigator.vibrate) navigator.vibrate(25);
+        toast(fdx < 0 ? '🖥▶ Sonraki Masaüstü' : '◀🖥 Önceki Masaüstü');
+      }
+      return;
+    }
     if (n !== T.n) { T.n = n; T.x = x; T.y = y; return; }
     const dx = x - T.x, dy = y - T.y; T.x = x; T.y = y;
     T.moved += Math.abs(dx) + Math.abs(dy);
@@ -1489,7 +1805,7 @@ function makePad(el) {
       if (T.pend && !T.drag && T.moved > 8) { T.drag = true; tx({ t: 'down', b: 'l' }); }
       const f = S.speed * (1 + Math.min(Math.hypot(dx, dy) / 14, 1.4));
       acc.x += dx * f; acc.y += dy * f;
-    } else {
+    } else if (n === 2) {
       const k = S.scroll * (S.invert ? -1 : 1) * 4;
       scr.y += dy * k; scr.x -= dx * k;
     }
@@ -1580,7 +1896,7 @@ function runProgram(text) {
 }
 
 /* ================================================================
-   Yazma durumu, Mini Modda Doğrudan Yazma (Madde 1), Akıllı Silme (⌫) ve (↵)
+   Yazma durumu, Mini Modda Doğrudan Yazma, Akıllı Silme (⌫) ve Üzerine Yazdırma (Madde 1)
    ================================================================ */
 const st = { space: false, cap: true, autos: [], quote: false, lineStart: true, lastDigit: false, numOnce: null };
 
@@ -1588,7 +1904,6 @@ function isPodMini() {
   return activeTab === 'vs' && floatPod.classList.contains('mini');
 }
 
-// Madde 1: Kutu küçültülmüşken (Mini modda) ve miniDirect ayarı açıkken sesi doğrudan PC'ye yazar!
 function useDirectNow() {
   if (activeTab === 'vs') {
     return isPodMini() && !!S.miniDirect;
@@ -1601,8 +1916,6 @@ function rawOut(s) {
   if (useDirectNow()) {
     tx({ t: 'text', s });
   } else {
-    // Eğer kutuda PC'den seçilmiş geçici metin varsa ve kullanıcı yeni bir ses diktesi başlattıysa,
-    // seçili metni temizleyip kullanıcının kendi ses metnini ('user') başlat
     if (boxSource === 'pc_sel') {
       box.value = '';
     }
@@ -1633,6 +1946,7 @@ function press(k, m) {
 }
 
 function smartBackspace() {
+  touchPodWake(3000);
   const activeBox = podFocused ? podMem : (boxFocused ? box : null);
   if (!useDirectNow() && activeBox && activeBox.value.length > 0) {
     const val = activeBox.value;
@@ -1664,6 +1978,7 @@ function smartBackspace() {
 }
 
 function smartEnter() {
+  touchPodWake(2500);
   const activeBox = podFocused ? podMem : (boxFocused ? box : null);
   if (activeBox) {
     const start = activeBox.selectionStart || activeBox.value.length;
@@ -1712,7 +2027,7 @@ const MODK = ['cap', 'upper', 'b', 'i', 'u'];
 const mod = {};
 MODK.forEach(k => mod[k] = { latch: false, held: false, once: false, pend: false, down: false, t0: 0, last: 0 });
 const modEl = { cap: $('#mCap'), upper: $('#mUpper'), b: $('#mB'), i: $('#mI'), u: $('#mU') };
-let lastSpeech = 0, listening = false;
+let lastSpeech = 0;
 
 function renderMods() {
   MODK.forEach(k => {
@@ -2113,19 +2428,23 @@ $('#eTab').onclick = () => run([['tab']]);
 holdRepeat($('#eBs'), () => run([['bs']]));
 holdRepeat($('#smartBs'), smartBackspace);
 holdRepeat($('#podBs'), smartBackspace);
-holdRepeat($('#scrTopBsBtn'), () => tx({ t: 'key', k: 'backspace', m: [] }));
 holdRepeat($('#podEnter'), smartEnter);
-holdRepeat($('#scrTopEnterBtn'), () => tx({ t: 'key', k: 'enter', m: [] }));
 holdRepeat($('#eWord'), () => run([['delword']]));
 $('#eUndo').onclick = () => run([['undo']]);
-$('#podUndo').onclick = () => run([['undo']]);
-$('#eClr').onclick = () => { box.value = ''; syncBoxes(false, false); setBoxSource('none'); hist.length = 0; $('#interim').textContent = ''; };
+$('#eClr').onclick = clearAllBox;
 
+// Madde 1: Yazdır (📤 Yaz) denildiğinde eğer PC'de seçili metin varsa önce onu siler, sonra yenisini yazar!
 function sendBox(enter) {
   const txt = box.value;
-  if (txt) runProgram(txt);
+  if (txt) {
+    if (pcHasActiveSelection || boxSource === 'pc_sel') {
+      tx({ t: 'key', k: 'backspace', m: [] });
+      pcHasActiveSelection = false;
+    }
+    runProgram(txt);
+  }
   if (enter) { tx({ t: 'key', k: 'enter', m: [] }); st.space = false; st.lineStart = true; if (S.cap) st.cap = true; }
-  box.value = ''; syncBoxes(false, false); setBoxSource('none'); hist.length = 0;
+  clearAllBox();
   syncDoc();
   if (activeTab === 'vs' && txt) toast('📤 PC ekranındaki konuma yazdırıldı.');
 }
@@ -2193,6 +2512,7 @@ function setMicUI(on, locked) {
     $('#interim').textContent = '';
     $('#podInterim').textContent = '';
   }
+  refreshPodOpacity();
 }
 
 function startRec() {
@@ -2260,6 +2580,7 @@ function endVoice() {
   if (navigator.vibrate) navigator.vibrate(15);
   try { if (rec) rec.stop(); } catch (e) {}
   setMicUI(false, false);
+  touchPodWake(3000);
 }
 
 function bindPTT(btn, targetMode) {
@@ -2424,6 +2745,7 @@ function applyPrefs() {
   $('#fabMic').classList.toggle('hid', !S.showFab || activeTab === 'vs');
   $$('#segMode button').forEach(b => b.classList.toggle('on', (b.dataset.direct === '1') === !!S.direct));
   $$('#segNum button').forEach(b => b.classList.toggle('on', b.dataset.num === S.num));
+  applyKeyboardMode();
   setFmtLabels();
   if (activeTab === 'vs') startScreenLoop();
 }
@@ -2466,7 +2788,7 @@ updateFocusUI();
 showTab(S.startTab || 'vs');
 wake();
 
-window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok, aiPool, runAiWithInstruction };
+window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok, aiPool, runAiWithInstruction, extractTextFromScreenRegion };
 })();
 </script>
 </body>
