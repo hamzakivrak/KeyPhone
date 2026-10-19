@@ -1,7 +1,7 @@
 """Kumanda sunucusu (Windows). Telefondan gelen fare/klavye olaylarını PC'ye uygular.
 
-Telefon tarayıcıdan https://<pc-ip>:8765 adresini açar ve WebSocket ile bağlanır.
-1:1 Native çözünürlükte (BitBlt) keskin görüntü ve GDI+ yüksek kaliteli JPEG akışı sağlar.
+1:1 Native çözünürlükte (BitBlt) keskin görüntü, GDI+ yüksek kaliteli JPEG akışı
+ve PC'de seçilen metni (kullanıcı panosunu bozmadan) telefona aktarma desteği sağlar.
 """
 import base64
 import ctypes
@@ -44,8 +44,23 @@ ULONG_PTR = ctypes.c_size_t
 kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
 kernel32.GlobalLock.restype = ctypes.c_void_p
 kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+kernel32.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+kernel32.GlobalAlloc.restype = wintypes.HGLOBAL
 kernel32.GlobalSize.argtypes = [wintypes.HGLOBAL]
 kernel32.GlobalSize.restype = ctypes.c_size_t
+
+user32.OpenClipboard.argtypes = [wintypes.HWND]
+user32.OpenClipboard.restype = wintypes.BOOL
+user32.GetClipboardData.argtypes = [wintypes.UINT]
+user32.GetClipboardData.restype = wintypes.HANDLE
+user32.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
+user32.SetClipboardData.restype = wintypes.HANDLE
+user32.EmptyClipboard.restype = wintypes.BOOL
+user32.CloseClipboard.restype = wintypes.BOOL
+user32.GetClipboardSequenceNumber.restype = wintypes.DWORD
+
+CF_UNICODETEXT = 13
+GMEM_MOVEABLE = 0x0002
 
 
 class MOUSEINPUT(ctypes.Structure):
@@ -126,10 +141,8 @@ def capture_screen_jpeg(scale=1.0, quality=88):
         old = gdi32.SelectObject(hdc_mem, hbmp)
 
         if abs(scale - 1.0) < 0.02:
-            # 1:1 Tam Çözünürlük: BitBlt hem çok hızlıdır hem de sıfır bulanıklık/pikselleşme yapar
             gdi32.BitBlt(hdc_mem, 0, 0, tw, th, hdc_scr, 0, 0, 0x00CC0020)
         else:
-            # Ölçekleme seçildiyse yazılar bozulmasın diye HALFTONE (4) kullan
             gdi32.SetStretchBltMode(hdc_mem, 4)
             gdi32.SetBrushOrgEx(hdc_mem, 0, 0, None)
             gdi32.StretchBlt(hdc_mem, 0, 0, tw, th, hdc_scr, 0, 0, sw, sh, 0x00CC0020)
@@ -177,6 +190,50 @@ def capture_screen_jpeg(scale=1.0, quality=88):
         _cached_frame = jpg_bytes
         _cached_time = time.monotonic()
         return jpg_bytes
+
+
+# ---------------------------------------------------------------- Pano (Clipboard) & Seçili Metin Yakalama
+_clip_lock = threading.Lock()
+
+
+def get_clipboard_text():
+    text = ""
+    for _ in range(5):
+        if user32.OpenClipboard(0):
+            try:
+                h = user32.GetClipboardData(CF_UNICODETEXT)
+                if h:
+                    p = kernel32.GlobalLock(h)
+                    if p:
+                        try:
+                            text = ctypes.wstring_at(p)
+                        finally:
+                            kernel32.GlobalUnlock(h)
+            finally:
+                user32.CloseClipboard()
+            break
+        time.sleep(0.01)
+    return text
+
+
+def set_clipboard_text(text):
+    for _ in range(5):
+        if user32.OpenClipboard(0):
+            try:
+                user32.EmptyClipboard()
+                if text:
+                    raw = (text + "\0").encode("utf-16-le")
+                    h = kernel32.GlobalAlloc(GMEM_MOVEABLE, len(raw))
+                    if h:
+                        p = kernel32.GlobalLock(h)
+                        if p:
+                            ctypes.memmove(p, raw, len(raw))
+                            kernel32.GlobalUnlock(h)
+                            user32.SetClipboardData(CF_UNICODETEXT, h)
+            finally:
+                user32.CloseClipboard()
+            break
+        time.sleep(0.01)
 
 
 def send(*items):
@@ -258,7 +315,30 @@ def clamp(v, lim=3000):
     return max(-lim, min(lim, int(v)))
 
 
-def handle(ev):
+def probe_selected_text(send_ws_fn):
+    """PC'de seçili metin olup olmadığını panoyu bozmadan kontrol eder ve telefona gönderir."""
+    def _worker():
+        with _clip_lock:
+            time.sleep(0.04)
+            old_text = get_clipboard_text()
+            set_clipboard_text("")
+            seq0 = user32.GetClipboardSequenceNumber()
+            press("c", ["ctrl"])
+            sel_text = ""
+            for _ in range(12):
+                time.sleep(0.015)
+                if user32.GetClipboardSequenceNumber() != seq0:
+                    sel_text = get_clipboard_text()
+                    break
+            # Kullanıcının eski panosunu geri yükle
+            if old_text:
+                set_clipboard_text(old_text)
+            send_ws_fn({"t": "sel", "s": sel_text.strip() if sel_text else ""})
+
+    threading.Thread(target=_worker, daemon=True).start()
+
+
+def handle(ev, send_ws_fn=None):
     t = ev.get("t")
     if t == "move":
         send(mouse(MOVE, clamp(ev.get("dx", 0)), clamp(ev.get("dy", 0))))
@@ -267,30 +347,52 @@ def handle(ev):
         send(mouse(MOVE | ABSOLUTE, ax, ay))
     elif t == "abs_click":
         ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
-        d, u = BTN.get(ev.get("b", "l"), BTN["l"])
+        b = ev.get("b", "l")
+        d, u = BTN.get(b, BTN["l"])
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d), mouse(u))
+        # Sol tıklama genellikle seçimi kaldırır, kontrol et
+        if b == "l" and send_ws_fn:
+            probe_selected_text(send_ws_fn)
     elif t == "abs_dclick":
         ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
         d, u = BTN["l"]
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d), mouse(u), mouse(d), mouse(u))
+        # Çift tıklama kelime seçer, yakala ve telefona gönder
+        if send_ws_fn:
+            probe_selected_text(send_ws_fn)
     elif t == "abs_down":
         ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
         d, _ = BTN.get(ev.get("b", "l"), BTN["l"])
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d))
     elif t == "abs_up":
         ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
-        _, u = BTN.get(ev.get("b", "l"), BTN["l"])
+        b = ev.get("b", "l")
+        _, u = BTN.get(b, BTN["l"])
         send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(u))
+        # Sürükleme bırakıldığında metin seçilmiş olabilir, yakala ve telefona gönder
+        if b == "l" and send_ws_fn:
+            probe_selected_text(send_ws_fn)
+    elif t == "probe_sel":
+        if send_ws_fn:
+            probe_selected_text(send_ws_fn)
     elif t == "click":
-        d, u = BTN.get(ev.get("b", "l"), BTN["l"])
+        b = ev.get("b", "l")
+        d, u = BTN.get(b, BTN["l"])
         send(mouse(d), mouse(u))
+        if b == "l" and send_ws_fn:
+            probe_selected_text(send_ws_fn)
     elif t == "dclick":
         d, u = BTN["l"]
         send(mouse(d), mouse(u), mouse(d), mouse(u))
+        if send_ws_fn:
+            probe_selected_text(send_ws_fn)
     elif t == "down":
         send(mouse(BTN.get(ev.get("b", "l"), BTN["l"])[0]))
     elif t == "up":
-        send(mouse(BTN.get(ev.get("b", "l"), BTN["l"])[1]))
+        b = ev.get("b", "l")
+        send(mouse(BTN.get(b, BTN["l"])[1]))
+        if b == "l" and send_ws_fn:
+            probe_selected_text(send_ws_fn)
     elif t == "scroll":
         if ev.get("dy"):
             send(mouse(WHEEL, data=clamp(ev["dy"], 1200)))
@@ -391,6 +493,18 @@ def ws_read(rfile):
     if masked:
         payload = bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
     return opcode, payload
+
+
+def ws_pack(obj):
+    raw = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+    ln = len(raw)
+    if ln < 126:
+        hdr = bytes([0x81, ln])
+    elif ln < 65536:
+        hdr = struct.pack(">BBH", 0x81, 126, ln)
+    else:
+        hdr = struct.pack(">BBQ", 0x81, 127, ln)
+    return hdr + raw
 
 
 class QuietServer(ThreadingHTTPServer):
@@ -518,6 +632,16 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Sec-WebSocket-Accept", accept)
         self.end_headers()
         self.close_connection = True
+        wlock = threading.Lock()
+
+        def send_ws(obj):
+            with wlock:
+                try:
+                    self.wfile.write(ws_pack(obj))
+                    self.wfile.flush()
+                except Exception:
+                    pass
+
         try:
             self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         except OSError:
@@ -528,11 +652,12 @@ class H(BaseHTTPRequestHandler):
                 if op == 8:
                     break
                 if op == 9:
-                    self.wfile.write(bytes([0x8A, len(payload)]) + payload)
-                    self.wfile.flush()
+                    with wlock:
+                        self.wfile.write(bytes([0x8A, len(payload)]) + payload)
+                        self.wfile.flush()
                 elif op == 1:
                     try:
-                        handle(json.loads(payload.decode("utf-8")))
+                        handle(json.loads(payload.decode("utf-8")), send_ws)
                     except Exception as e:
                         print("olay hatası:", e)
         except (ConnectionError, OSError, ssl.SSLError):
@@ -555,7 +680,7 @@ def main():
     except Exception as e:
         print("HTTPS açılamadı (%s). HTTP ile devam ediliyor, sesli yazma çalışmayabilir." % e)
     print("\n" + "=" * 60)
-    print(" KUMANDA HAZIR (1:1 Cam Gibi Net & Hızlı Akış)")
+    print(" KUMANDA HAZIR (1:1 HD + Seçili Metin Yakalama Destekli)")
     print("=" * 60)
     print(" Telefonda (aynı Wi-Fi) şu adresi aç:\n")
     print("     %s://%s:%d/?p=%s\n" % (scheme, ip, PORT, PIN))
