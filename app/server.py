@@ -15,6 +15,7 @@ import random
 import socket
 import ssl
 import struct
+import threading
 from ctypes import wintypes
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -24,8 +25,18 @@ DATA = os.environ.get("KUMANDA_DATA") or os.path.join(HERE, "data")
 PORT = 8765
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-# ---------------------------------------------------------------- Windows girdi
+# Yüksek DPI ekranlarda koordinat kaymasını önle
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+# ---------------------------------------------------------------- Windows girdi & GDI Ekran Yakalama
 user32 = ctypes.windll.user32
+gdi32 = ctypes.windll.gdi32
 ULONG_PTR = ctypes.c_size_t
 
 
@@ -47,12 +58,84 @@ class INPUT(ctypes.Structure):
     _fields_ = [("type", wintypes.DWORD), ("u", _U)]
 
 
+class BITMAPINFOHEADER(ctypes.Structure):
+    _fields_ = [
+        ("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
+        ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+        ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG),
+        ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD)
+    ]
+
+
+class POINT(ctypes.Structure):
+    _fields_ = [("x", wintypes.LONG), ("y", wintypes.LONG)]
+
+
+class CURSORINFO(ctypes.Structure):
+    _fields_ = [("cbSize", wintypes.DWORD), ("flags", wintypes.DWORD),
+                ("hCursor", wintypes.HANDLE), ("ptScreenPos", POINT)]
+
+
+_cap_lock = threading.Lock()
+
+
+def capture_screen_bmp(scale=0.55):
+    """Ekranı yakalar, fare imlecini çizer ve hızlı 16-bit (RGB565) BMP olarak döndürür."""
+    with _cap_lock:
+        sw = user32.GetSystemMetrics(0)
+        sh = user32.GetSystemMetrics(1)
+        tw = max(320, int(sw * scale) & ~3)
+        th = max(200, int(sh * scale))
+
+        hdc_scr = user32.GetDC(0)
+        hdc_mem = gdi32.CreateCompatibleDC(hdc_scr)
+        hbmp = gdi32.CreateCompatibleBitmap(hdc_scr, tw, th)
+        old = gdi32.SelectObject(hdc_mem, hbmp)
+
+        # HALFTONE (4) ile daha net ölçekleme
+        gdi32.SetStretchBltMode(hdc_mem, 4)
+        gdi32.StretchBlt(hdc_mem, 0, 0, tw, th, hdc_scr, 0, 0, sw, sh, 0x00CC0020)
+
+        # Fare imlecini görünür şekilde çiz
+        ci = CURSORINFO()
+        ci.cbSize = ctypes.sizeof(CURSORINFO)
+        if user32.GetCursorInfo(ctypes.byref(ci)) and (ci.flags & 1):
+            cx = int(ci.ptScreenPos.x * scale)
+            cy = int(ci.ptScreenPos.y * scale)
+            user32.DrawIconEx(hdc_mem, cx, cy, ci.hCursor, 20, 20, 0, 0, 3)
+
+        bmi = BITMAPINFOHEADER()
+        bmi.biSize = ctypes.sizeof(BITMAPINFOHEADER)
+        bmi.biWidth = tw
+        bmi.biHeight = th
+        bmi.biPlanes = 1
+        bmi.biBitCount = 16  # 16-bit RGB555: ağda %50 daha az veri, sıfır gecikme
+        bmi.biCompression = 0
+
+        stride = ((tw * 2 + 3) & ~3)
+        img_size = stride * th
+        bmi.biSizeImage = img_size
+
+        buf = ctypes.create_string_buffer(img_size)
+        gdi32.GetDIBits(hdc_mem, hbmp, 0, th, buf, ctypes.byref(bmi), 0)
+
+        gdi32.SelectObject(hdc_mem, old)
+        gdi32.DeleteObject(hbmp)
+        gdi32.DeleteDC(hdc_mem)
+        user32.ReleaseDC(0, hdc_scr)
+
+        bfh = struct.pack("<2sIHHI", b"BM", 14 + 40 + img_size, 0, 0, 14 + 40)
+        return bfh + bytes(bmi) + buf.raw
+
+
 def send(*items):
     arr = (INPUT * len(items))(*items)
     user32.SendInput(len(items), arr, ctypes.sizeof(INPUT))
 
 
-MOVE, LDOWN, LUP, RDOWN, RUP, MDOWN, MUP, WHEEL, HWHEEL = 0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x800, 0x1000
+MOVE, LDOWN, LUP, RDOWN, RUP, MDOWN, MUP, WHEEL, HWHEEL, ABSOLUTE = (
+    0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x800, 0x1000, 0x8000
+)
 BTN = {"l": (LDOWN, LUP), "r": (RDOWN, RUP), "m": (MDOWN, MUP)}
 
 VK = {"enter": 0x0D, "backspace": 0x08, "tab": 0x09, "esc": 0x1B, "space": 0x20, "delete": 0x2E,
@@ -69,6 +152,12 @@ def mouse(flags, dx=0, dy=0, data=0):
     i = INPUT(type=0)
     i.u.mi = MOUSEINPUT(dx, dy, data & 0xFFFFFFFF, flags, 0, 0)
     return i
+
+
+def abs_xy(rx, ry):
+    rx = max(0.0, min(1.0, float(rx)))
+    ry = max(0.0, min(1.0, float(ry)))
+    return int(rx * 65535), int(ry * 65535)
 
 
 def key(vk, up=False):
@@ -122,6 +211,25 @@ def handle(ev):
     t = ev.get("t")
     if t == "move":
         send(mouse(MOVE, clamp(ev.get("dx", 0)), clamp(ev.get("dy", 0))))
+    elif t == "abs_move":
+        ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
+        send(mouse(MOVE | ABSOLUTE, ax, ay))
+    elif t == "abs_click":
+        ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
+        d, u = BTN.get(ev.get("b", "l"), BTN["l"])
+        send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d), mouse(u))
+    elif t == "abs_dclick":
+        ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
+        d, u = BTN["l"]
+        send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d), mouse(u), mouse(d), mouse(u))
+    elif t == "abs_down":
+        ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
+        d, _ = BTN.get(ev.get("b", "l"), BTN["l"])
+        send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(d))
+    elif t == "abs_up":
+        ax, ay = abs_xy(ev.get("x", 0), ev.get("y", 0))
+        _, u = BTN.get(ev.get("b", "l"), BTN["l"])
+        send(mouse(MOVE | ABSOLUTE, ax, ay), mouse(u))
     elif t == "click":
         d, u = BTN.get(ev.get("b", "l"), BTN["l"])
         send(mouse(d), mouse(u))
@@ -232,7 +340,6 @@ class QuietServer(ThreadingHTTPServer):
     daemon_threads = True
 
     def handle_error(self, request, client_address):
-        # Telefon bağlantıyı kapatınca / sertifika uyarısında oluşan gürültülü hataları gizle.
         import sys
         if isinstance(sys.exc_info()[1], (ConnectionError, OSError, ssl.SSLError)):
             return
@@ -255,12 +362,25 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
+        qs = parse_qs(u.query)
         if u.path == "/ws" and self.headers.get("Upgrade", "").lower() == "websocket":
-            pin = parse_qs(u.query).get("p", [""])[0]
+            pin = qs.get("p", [""])[0]
             if not hmac.compare_digest(pin.encode(), PIN.encode()):
                 self.reply(403, b"PIN yanlis")
                 return
             self.websocket()
+            return
+        if u.path == "/screen.bmp":
+            pin = qs.get("p", [""])[0]
+            if not hmac.compare_digest(pin.encode(), PIN.encode()):
+                self.reply(403, b"PIN yanlis")
+                return
+            try:
+                sc = max(0.25, min(1.0, float(qs.get("s", ["0.55"])[0])))
+                bmp = capture_screen_bmp(sc)
+                self.reply(200, bmp, "image/bmp")
+            except Exception as e:
+                self.reply(500, str(e).encode("utf-8"))
             return
         if u.path in ("/", "/index.html"):
             try:
@@ -289,13 +409,13 @@ class H(BaseHTTPRequestHandler):
                 op, payload = ws_read(self.rfile)
                 if op == 8:
                     break
-                if op == 9:  # ping -> pong
+                if op == 9:
                     self.wfile.write(bytes([0x8A, len(payload)]) + payload)
                     self.wfile.flush()
                 elif op == 1:
                     try:
                         handle(json.loads(payload.decode("utf-8")))
-                    except Exception as e:  # tek bir hatalı mesaj bağlantıyı düşürmesin
+                    except Exception as e:
                         print("olay hatası:", e)
         except (ConnectionError, OSError, ssl.SSLError):
             pass
@@ -317,7 +437,7 @@ def main():
     except Exception as e:
         print("HTTPS açılamadı (%s). HTTP ile devam ediliyor, sesli yazma çalışmayabilir." % e)
     print("\n" + "=" * 60)
-    print(" KUMANDA HAZIR")
+    print(" KUMANDA HAZIR (Canlı Ekran Destekli)")
     print("=" * 60)
     print(" Telefonda (aynı Wi-Fi) şu adresi aç:\n")
     print("     %s://%s:%d/?p=%s\n" % (scheme, ip, PORT, PIN))
