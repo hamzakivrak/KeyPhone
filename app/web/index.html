@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#0f1115">
+<meta name="theme-color" content="#050608">
 <title>Kumanda</title>
 <style>
 :root{--bg:#0f1115;--p:#1a1d24;--p2:#232832;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3;--w:#f5a524;--r:#e5484d;--ai:#8b5cf6;--padh:36%;--padw:38%}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font-family:system-ui,Arial,sans-serif;overscroll-behavior:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--t);font-family:system-ui,Arial,sans-serif;overscroll-behavior:none;overflow:hidden}
 body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 button{font-family:inherit;color:var(--t)}
 .hid{display:none!important}
 
-/* üst çubuk */
-#top{display:flex;gap:4px;padding:5px;align-items:center;flex:none;z-index:20}
+/* Üst çubuk (Ekran sekmesinde gizlenir, tam ekran deneyimi sağlar) */
+#top{display:flex;gap:4px;padding:5px;align-items:center;flex:none;z-index:40;background:var(--bg);border-bottom:1px solid var(--b)}
+body.fullscreen-mode #top{display:none}
+body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:env(safe-area-inset-top);left:0;right:0;background:rgba(15,17,21,.95);backdrop-filter:blur(8px)}
 .tab{flex:1;padding:9px 2px;border-radius:12px;background:var(--p);border:1px solid var(--b);font-size:14px;touch-action:manipulation}
 .tab.on{background:var(--a);color:#001;border-color:var(--a);font-weight:600}
 .ib{flex:none;width:40px;padding:9px 0}
@@ -22,8 +24,8 @@ button{font-family:inherit;color:var(--t)}
 #dot{width:11px;height:11px;border-radius:50%;background:var(--r);flex:none;margin:0 2px}
 #dot.ok{background:#30a46c}
 
-/* ayarlar */
-#set{margin:0 5px 5px;padding:10px 12px;border-radius:14px;background:var(--p);border:1px solid var(--b);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:68vh;overflow-y:auto;flex:none;z-index:25}
+/* Ayarlar */
+#set{position:fixed;top:52px;left:6px;right:6px;padding:12px;border-radius:14px;background:rgba(26,29,36,.97);backdrop-filter:blur(12px);border:1px solid var(--a);display:flex;flex-direction:column;gap:9px;font-size:14px;max-height:78vh;overflow-y:auto;z-index:150;box-shadow:0 12px 36px rgba(0,0,0,.8)}
 #set h4{margin:6px 0 0;font-size:13px;color:var(--a);text-transform:uppercase;letter-spacing:.5px}
 #set label{display:flex;align-items:center;gap:10px;justify-content:space-between}
 #set input[type=range]{flex:1;max-width:50%}
@@ -36,7 +38,7 @@ button{font-family:inherit;color:var(--t)}
 .ai-stat{display:flex;gap:8px;font-size:12px;background:var(--p2);padding:6px 10px;border-radius:8px;border:1px solid var(--b);justify-content:space-between;align-items:center}
 .ai-badge{padding:2px 8px;border-radius:6px;background:rgba(139,92,246,.2);color:#c4b5fd;font-weight:600}
 
-/* görünümler */
+/* Görünümler */
 .view{flex:1;display:none;min-height:0;padding:0 5px 5px;gap:6px}
 .view.on{display:flex;flex-direction:column}
 .row{display:flex;gap:5px;flex:none}
@@ -47,10 +49,154 @@ button{font-family:inherit;color:var(--t)}
 .k.w2{flex:2}.k.w4{flex:4}
 .k.big{height:52px;font-size:16px}
 
+/* ================================================================
+   TAM EKRAN CANLI PC GÖRÜNÜMÜ (#vs)
+   ================================================================ */
+#vs{position:fixed;inset:0;padding:0;margin:0;width:100vw;height:100dvh;background:#050608;z-index:10;overflow:hidden}
+#screenViewport{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:none;
+  background:#050608;
+}
+#pcScreen{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  transform-origin:0 0;
+  user-select:none;
+  -webkit-user-drag:none;
+  touch-action:none;
+  will-change:transform;
+}
+
+/* Sağ Üst Mini Yüzen Menü Çubuğu */
+#scrMiniBar{
+  position:fixed;
+  top:calc(8px + env(safe-area-inset-top));
+  right:calc(8px + env(safe-area-inset-right));
+  display:flex;
+  gap:5px;
+  z-index:95;
+  background:rgba(18,20,28,.82);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  padding:4px 6px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  align-items:center;
+}
+#scrMiniBar button{
+  height:30px;
+  padding:0 8px;
+  border-radius:8px;
+  background:var(--p2);
+  border:1px solid var(--b);
+  font-size:12px;
+  touch-action:manipulation;
+}
+#scrMiniBar button.on{background:var(--a);color:#001;border-color:var(--a);font-weight:700}
+#dotMini{width:9px;height:9px;border-radius:50%;background:var(--r);display:inline-block}
+#dotMini.ok{background:#30a46c}
+
+/* Her Yerinden Tutulup Kaydırılabilir Yüzen AI & Ses Konsolu */
+#floatPod{
+  position:fixed;
+  left:12px;
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  width:min(350px, calc(100vw - 24px));
+  background:rgba(20,23,31,.90);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1.5px solid var(--a);
+  border-radius:18px;
+  box-shadow:0 10px 32px rgba(0,0,0,.75);
+  z-index:105;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:7px;
+  touch-action:none;
+}
+#floatPod.dragging{
+  opacity:.92;
+  box-shadow:0 16px 42px rgba(77,163,255,.35);
+  border-color:#fff;
+}
+#floatPod.mini{width:auto;border-radius:30px;padding:5px 10px}
+#floatPod.mini #podBody{display:none}
+#podHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:4px 8px;
+  background:rgba(255,255,255,.06);
+  border-radius:11px;
+  cursor:grab;
+  touch-action:none;
+  font-size:12px;
+  color:var(--m);
+}
+#podDragTitle{font-weight:600;color:var(--t);display:flex;align-items:center;gap:5px;pointer-events:none}
+#podHeaderBtns{display:flex;gap:4px}
+#podHeaderBtns button{background:var(--p2);border:1px solid var(--b);border-radius:7px;padding:3px 8px;font-size:11px;touch-action:none}
+#podBody{display:flex;flex-direction:column;gap:5px}
+#podMem{
+  width:100%;
+  height:56px;
+  border-radius:10px;
+  border:1px solid var(--b);
+  background:rgba(10,12,16,.88);
+  color:var(--t);
+  font-size:14px;
+  padding:6px 8px;
+  resize:none;
+  font-family:inherit;
+  -webkit-user-select:text;
+  user-select:text;
+  touch-action:pan-y;
+}
+#podMem:focus{outline:none;border-color:var(--a)}
+#podInterim{font-size:12px;color:var(--a);font-style:italic;min-height:15px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#podBtns{display:flex;gap:4px}
+#podBtns button{
+  flex:1;
+  height:40px;
+  border-radius:10px;
+  border:1px solid var(--b);
+  background:var(--p2);
+  font-size:12px;
+  font-weight:600;
+  touch-action:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  padding:0 4px;
+}
+#podMic{background:#1c3354!important;border-color:var(--a)!important;flex:1.25!important}
+#podMic.rec{background:var(--r)!important;border-color:#ff8b8e!important;color:#fff}
+#podMic.lock{background:var(--w)!important;color:#001!important}
+#podAiCmd{background:linear-gradient(135deg,#4c1d95,#7c3aed)!important;border-color:#a78bfa!important;color:#fff!important;flex:1.25!important}
+#podAiCmd.rec{background:var(--r)!important;border-color:#fff!important;transform:scale(1.04)}
+#podSend{background:#15422e!important;border-color:#30a46c!important;color:#a7f3d0!important;flex:1.1!important}
+#podBs{flex:0.65!important;font-size:16px!important}
+#podUndo{flex:0.55!important;font-size:14px!important}
+
+#tapRipple{position:fixed;width:28px;height:28px;border-radius:50%;border:2px solid var(--a);background:rgba(77,163,255,.25);transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:120;transition:transform .25s ease-out,opacity .25s}
+#tapRipple.show{transform:translate(-50%,-50%) scale(1.2);opacity:0}
+#tapRipple.rclick{border-color:var(--w);background:rgba(245,165,36,.3)}
+
 /* Yaz ekranı & Sabit Üst Kutu */
 #vy.on{flex-direction:column}
 #ymain{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:4px}
-
 #stickyTop{flex:none;display:flex;flex-direction:column;gap:4px;background:var(--bg);padding-bottom:4px;border-bottom:1px solid var(--b);z-index:10}
 #boxWrap{display:flex;gap:5px;align-items:stretch}
 #boxContainer{flex:1;position:relative;display:flex}
@@ -58,25 +204,18 @@ button{font-family:inherit;color:var(--t)}
 #box:focus{outline:none;border-color:var(--a)}
 #delModeBadge{position:absolute;right:8px;bottom:4px;font-size:11px;padding:2px 6px;border-radius:6px;background:var(--p2);color:var(--m);pointer-events:none;border:1px solid var(--b);transition:all .15s}
 #box:focus ~ #delModeBadge{background:rgba(77,163,255,.18);color:var(--a);border-color:var(--a)}
-
 #boxSide{display:flex;flex-direction:column;gap:4px;width:62px;flex:none}
 #smartBs{flex:1.2;border-radius:10px;background:var(--p2);border:1px solid var(--b);font-size:19px;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;padding:0}
 #smartBs span{font-size:9px;color:var(--m);margin-top:-2px}
 #smartBs.press{background:var(--r);color:#fff;border-color:var(--r)}
 #smartBs.press span{color:#fff}
 #aiFixBtn{flex:1;border-radius:10px;background:linear-gradient(135deg,#4c1d95,#7c3aed);border:1px solid #a78bfa;color:#fff;font-size:12px;font-weight:600;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:2px}
-#aiFixBtn:active{transform:scale(.96)}
 #aiFixBtn.busy{opacity:.65;pointer-events:none}
 #quickSend{flex:1;border-radius:10px;background:#1c3354;border:1px solid var(--a);font-size:12px;font-weight:600;touch-action:manipulation}
-#quickSend:active{background:var(--a);color:#001}
-
 #interimBar{display:flex;align-items:center;justify-content:space-between;min-height:20px;padding:0 4px;gap:6px}
 #interim{color:var(--a);font-size:14px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
 #unfocusBtn{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--p2);border:1px solid var(--b);color:var(--m)}
-
-/* Kaydırılabilir alt kontroller */
 #ycol{flex:1;min-width:0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-top:2px;padding-bottom:76px;-webkit-overflow-scrolling:touch}
-
 .seg{flex:1;display:flex;border:1px solid var(--b);border-radius:10px;overflow:hidden}
 .seg button{flex:1;padding:9px 4px;background:var(--p);border:0;font-size:14px;touch-action:manipulation}
 .seg button.on{background:var(--a);color:#001;font-weight:600}
@@ -90,7 +229,6 @@ button{font-family:inherit;color:var(--t)}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;min-width:44px;height:42px;padding:0 12px;border-radius:10px;background:var(--p);border:1px solid var(--b);font-size:18px;touch-action:manipulation}
 .chip.sm{font-size:14px}
-.chip:active{background:var(--a);color:#001}
 details{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:6px 12px;font-size:14px;color:var(--m);flex:none;-webkit-user-select:text;user-select:text}
 summary{color:var(--t);font-size:15px;padding:6px 0}
 details p{margin:6px 0;line-height:1.5}
@@ -108,9 +246,7 @@ details b{color:var(--t)}
 .clicks .k{height:40px;font-size:14px}
 body[data-clicks="off"] .clicks.opt{display:none}
 body[data-pad="off"] #ypadwrap{display:none}
-@media (orientation:portrait){
-  body[data-pp="top"] #ypadwrap{order:-1}
-}
+@media (orientation:portrait){body[data-pp="top"] #ypadwrap{order:-1}}
 @media (orientation:landscape){
   #vy.on{flex-direction:row}
   #ypadwrap{flex:0 0 var(--padw);min-height:0}
@@ -118,104 +254,12 @@ body[data-pad="off"] #ypadwrap{display:none}
 }
 #vp .padbox{font-size:15px}
 
-/* ================================================================
-   CANLI PC EKRANI SEKMESİ (#vs) & YÜZEN SÜRÜKLENEBİLİR KONSOL
-   ================================================================ */
-#vs{position:relative;padding:0;overflow:hidden;background:#050608}
-#screenTopBar{display:flex;gap:4px;padding:4px 6px;background:var(--p);border-bottom:1px solid var(--b);align-items:center;flex:none;font-size:12px}
-#screenTopBar button{height:32px;padding:0 9px;border-radius:8px;background:var(--p2);border:1px solid var(--b);font-size:12px}
-#screenTopBar button.on{background:var(--a);color:#001;border-color:var(--a);font-weight:600}
-#screenViewport{flex:1;position:relative;overflow:auto;display:flex;align-items:center;justify-content:center;touch-action:none;background:#050608}
-#screenViewport.pan{touch-action:pan-x pan-y}
-#pcScreen{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;touch-action:none}
-#screenViewport.zoom2 #pcScreen{max-width:none;max-height:none;width:185%}
-#tapRipple{position:fixed;width:28px;height:28px;border-radius:50%;border:2px solid var(--a);background:rgba(77,163,255,.25);transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:120;transition:transform .25s ease-out,opacity .25s}
-#tapRipple.show{transform:translate(-50%,-50%) scale(1.2);opacity:0}
-
-/* Oynatılabilir / Sürüklenebilir Yüzen Konsol */
-#floatPod{
-  position:fixed;
-  left:10px;
-  bottom:calc(14px + env(safe-area-inset-bottom));
-  width:min(340px, calc(100vw - 20px));
-  background:rgba(22,25,34,.92);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  border:1.5px solid var(--a);
-  border-radius:16px;
-  box-shadow:0 8px 28px rgba(0,0,0,.65);
-  z-index:105;
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  padding:6px;
-}
-#floatPod.mini{width:auto;border-radius:30px;padding:5px 8px}
-#floatPod.mini #podBody{display:none}
-#podHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:6px;
-  padding:3px 6px;
-  background:rgba(255,255,255,.05);
-  border-radius:10px;
-  cursor:grab;
-  touch-action:none;
-  font-size:12px;
-  color:var(--m);
-}
-#podDragTitle{font-weight:600;color:var(--t);display:flex;align-items:center;gap:5px}
-#podHeaderBtns{display:flex;gap:4px}
-#podHeaderBtns button{background:var(--p2);border:1px solid var(--b);border-radius:7px;padding:3px 8px;font-size:11px}
-#podBody{display:flex;flex-direction:column;gap:5px}
-#podMem{
-  width:100%;
-  height:56px;
-  border-radius:10px;
-  border:1px solid var(--b);
-  background:rgba(10,12,16,.85);
-  color:var(--t);
-  font-size:14px;
-  padding:6px 8px;
-  resize:none;
-  font-family:inherit;
-  -webkit-user-select:text;
-  user-select:text;
-}
-#podMem:focus{outline:none;border-color:var(--a)}
-#podInterim{font-size:12px;color:var(--a);font-style:italic;min-height:15px;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#podBtns{display:flex;gap:4px}
-#podBtns button{
-  flex:1;
-  height:40px;
-  border-radius:10px;
-  border:1px solid var(--b);
-  background:var(--p2);
-  font-size:12px;
-  font-weight:600;
-  touch-action:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:3px;
-  padding:0 4px;
-}
-#podMic{background:#1c3354!important;border-color:var(--a)!important;flex:1.3!important}
-#podMic.rec{background:var(--r)!important;border-color:#ff8b8e!important;color:#fff}
-#podMic.lock{background:var(--w)!important;color:#001!important}
-#podAiCmd{background:linear-gradient(135deg,#4c1d95,#7c3aed)!important;border-color:#a78bfa!important;color:#fff!important;flex:1.3!important}
-#podAiCmd.rec{background:var(--r)!important;border-color:#fff!important;transform:scale(1.04)}
-#podSend{background:#15422e!important;border-color:#30a46c!important;color:#a7f3d0!important;flex:1.1!important}
-#podBs{flex:0.65!important;font-size:16px!important}
-#podUndo{flex:0.6!important;font-size:14px!important}
-
 /* klavye sekmesi */
 #vk{overflow-y:auto;padding-bottom:76px}
 .sc{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .sc .k{height:40px;font-size:13px}
 
-/* Her Zaman Görünen Yüzen Bas-Konuş Mikrofon (FAB) */
+/* Yüzen Bas-Konuş Mikrofon (Diğer sekmeler için) */
 #fabMic{
   position:fixed;
   right:16px;
@@ -234,31 +278,21 @@ body[data-pad="off"] #ypadwrap{display:none}
   box-shadow:0 6px 20px rgba(0,0,0,.55);
   z-index:100;
   touch-action:none;
-  transition:transform .12s,background .15s,box-shadow .15s;
 }
 #fabMic small{font-size:8px;font-weight:700;letter-spacing:.3px;margin-top:1px;opacity:.9}
-#fabMic.rec{
-  background:var(--r);
-  border-color:#ff8b8e;
-  transform:scale(1.12);
-  box-shadow:0 0 24px rgba(229,72,77,.75);
-}
-#fabMic.lock{
-  background:var(--w);
-  color:#001;
-  border-color:#ffe0a3;
-}
+#fabMic.rec{background:var(--r);border-color:#ff8b8e;transform:scale(1.12)}
+#fabMic.lock{background:var(--w);color:#001;border-color:#ffe0a3}
 
-#toast{position:fixed;left:50%;top:58px;transform:translateX(-50%);background:#000e;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:92%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:130;border:1px solid var(--b)}
+#toast{position:fixed;left:50%;top:54px;transform:translateX(-50%);background:#000e;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:92%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:160;border:1px solid var(--b)}
 #toast.on{opacity:1}
 </style>
 </head>
-<body data-pp="bottom" data-pl="right" data-pad="on" data-clicks="on">
+<body data-pp="bottom" data-pl="right" data-pad="on" data-clicks="on" class="fullscreen-mode">
 
 <div id="top">
   <span id="dot"></span>
-  <button class="tab on" data-v="vy">Yaz</button>
-  <button class="tab" data-v="vs">🖥 Ekran</button>
+  <button class="tab on" data-v="vs">🖥 Ekran</button>
+  <button class="tab" data-v="vy">Yaz</button>
   <button class="tab" data-v="vp">Pad</button>
   <button class="tab" data-v="vk">Klavye</button>
   <button class="tab ib" id="micTop" title="Bas-Konuş / Dokun-Kilitle">🎤</button>
@@ -267,7 +301,10 @@ body[data-pad="off"] #ypadwrap{display:none}
 
 <!-- AYARLAR -->
 <div id="set" class="hid">
-  <h4>Yapay Zeka (Dilbilgisi & Sesli Komut)</h4>
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <h4 style="margin:0">Yapay Zeka (Dilbilgisi & Sesli Komut)</h4>
+    <button class="k s" id="closeSetBtn" style="flex:0 0 70px;height:30px">Kapat ✕</button>
+  </div>
   <div class="ai-stat">
     <span id="aiCountText">Yüklü Anahtar: Groq (0) · Gemini (0)</span>
     <span class="ai-badge" id="aiActiveBadge">Hazır</span>
@@ -291,21 +328,24 @@ body[data-pad="off"] #ypadwrap{display:none}
   <label>Görüntü Kalitesi
     <select data-s="scrScale">
       <option value="0.45">Hızlı (Akıcı)</option>
-      <option value="0.6">Dengeli (Önerilen)</option>
-      <option value="0.8">Yüksek (Net yazı)</option>
+      <option value="0.65">Dengeli (Önerilen)</option>
+      <option value="0.85">Yüksek (Net yazı)</option>
       <option value="1.0">Tam Çözünürlük (1:1)</option>
     </select>
   </label>
   <label>Yenileme Hızı (FPS)
     <select data-s="scrFps">
       <option value="250">4 FPS (Düşük Pil)</option>
-      <option value="140">7 FPS (Normal)</option>
-      <option value="80">12 FPS (Akıcı)</option>
+      <option value="130">8 FPS (Normal)</option>
+      <option value="75">13 FPS (Akıcı)</option>
     </select>
   </label>
+  <label>Açılışta ekran
+    <select data-s="startTab"><option value="vs">🖥 Tam Ekran PC</option><option value="vy">Yaz</option><option value="vp">Pad</option><option value="vk">Klavye</option></select>
+  </label>
 
-  <h4>Giriş</h4>
-  <label>Sesi doğrudan PC'ye yaz (kapalıysa önce kutuya) <input type="checkbox" data-s="direct"></label>
+  <h4>Giriş & Ses</h4>
+  <label>Sesi doğrudan PC'ye yaz (Yaz sekmesinde) <input type="checkbox" data-s="direct"></label>
   <label>Yüzen mikrofon düğmesini göster <input type="checkbox" data-s="showFab"></label>
   <label>Sesli komutlar (nokta, tırnak, madde...) <input type="checkbox" data-s="punct"></label>
   <label>Cümle başını büyük harf yap <input type="checkbox" data-s="cap"></label>
@@ -313,9 +353,12 @@ body[data-pad="off"] #ypadwrap{display:none}
   <label>Sayılar
     <select data-s="num"><option value="auto">Olduğu gibi</option><option value="digit">Rakamla (25)</option><option value="word">Yazıyla (yirmi beş)</option></select>
   </label>
-  <label>Açılışta ekran
-    <select data-s="startTab"><option value="vy">Yaz</option><option value="vs">Ekran</option><option value="vp">Pad</option><option value="vk">Klavye</option></select>
-  </label>
+
+  <h4>Pad & Kaydırma</h4>
+  <label>İmleç hızı <input type="range" data-s="speed" min="0.5" max="4" step="0.1"></label>
+  <label>Kaydırma (Scroll) hızı <input type="range" data-s="scroll" min="0.3" max="3" step="0.1"></label>
+  <label>Kaydırmayı ters çevir <input type="checkbox" data-s="invert"></label>
+  <label>Ekran açık kalsın <input type="checkbox" data-s="awake"></label>
 
   <h4>Mousepad yerleşimi (Yaz ekranı)</h4>
   <label>Yaz ekranında mousepad göster <input type="checkbox" data-s="yPad"></label>
@@ -328,12 +371,6 @@ body[data-pad="off"] #ypadwrap{display:none}
   </label>
   <label>Yatay ekranda genişlik <input type="range" data-s="padW" min="22" max="60" step="2"></label>
   <label>Pad altında tık düğmeleri <input type="checkbox" data-s="clicks"></label>
-
-  <h4>Pad</h4>
-  <label>İmleç hızı <input type="range" data-s="speed" min="0.5" max="4" step="0.1"></label>
-  <label>Kaydırma hızı <input type="range" data-s="scroll" min="0.3" max="3" step="0.1"></label>
-  <label>Kaydırmayı ters çevir <input type="checkbox" data-s="invert"></label>
-  <label>Ekran açık kalsın <input type="checkbox" data-s="awake"></label>
 
   <h4>Word kısayolları</h4>
   <label>Word dili
@@ -355,8 +392,48 @@ body[data-pad="off"] #ypadwrap{display:none}
   </div>
 </div>
 
+<!-- TAM EKRAN CANLI PC GÖRÜNÜMÜ (AÇILIŞTA VARSAYILAN) -->
+<div class="view on" id="vs">
+  <!-- Sağ Üst Kompakt Kontroller -->
+  <div id="scrMiniBar">
+    <span id="dotMini"></span>
+    <button id="scrResetZoom" title="Yakınlaştırmayı sıfırla (1x)">1x</button>
+    <button id="scrModeScroll" title="Açıkken tek parmakla da sayfayı kaydırır (Mouse tekerleği)">↕ Tekerlek</button>
+    <button id="scrModeRight" title="Açıkken dokunduğun yere Sağ Tık yapar">🖱 Sağ</button>
+    <button id="scrEnterBtn" title="PC'de Enter tuşuna bas">↵</button>
+    <button id="scrFsBtn" title="Tam Ekran">⛶</button>
+    <button id="scrMenuBtn" title="Sekmeler ve Ayarlar">☰</button>
+  </div>
+
+  <div id="screenViewport">
+    <img id="pcScreen" alt="PC Ekranı yükleniyor...">
+  </div>
+
+  <!-- HER YERİNDEN TUTULUP KAYDIRILABİLEN YÜZEN SES + AI KONSOLU -->
+  <div id="floatPod">
+    <div id="podHeader">
+      <span id="podDragTitle">⠿ Hafıza & Sesli AI Kumanda</span>
+      <div id="podHeaderBtns">
+        <button id="podClrBtn" title="Hafızayı temizle">Temizle</button>
+        <button id="podMinBtn" title="Küçült / Büyüt">Küçült −</button>
+      </div>
+    </div>
+    <div id="podBody">
+      <textarea id="podMem" placeholder="1. 🎤 Konuş ile metni hafızaya al&#10;2. ✨ Komut ile sesli düzeltme emri ver&#10;3. Ekranda istediğin yere dokunup 📤 Yazdır'a bas"></textarea>
+      <div id="podInterim"></div>
+      <div id="podBtns">
+        <button id="podMic" title="Basılı tutarak veya dokunarak konuş (Hafızaya yazar)">🎤 Konuş</button>
+        <button id="podAiCmd" title="Basılı tutup nasıl düzeltileceğini söyle (Örn: Dilbilgisini düzelt, son cümleyi değiştir)">✨ Komut</button>
+        <button id="podBs" title="Kutuya tıklandıysa harf, değilse kelime siler">⌫</button>
+        <button id="podUndo" title="Son değişikliği geri al">↩</button>
+        <button id="podSend" title="Hafızadaki metni PC'de seçili yere yazdır">📤 Yazdır</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- YAZ -->
-<div class="view on" id="vy">
+<div class="view" id="vy">
   <div id="ymain">
     <div id="stickyTop">
       <div id="boxWrap">
@@ -406,7 +483,7 @@ body[data-pad="off"] #ypadwrap{display:none}
       </div>
       <details id="tdet">
         <summary>Tablo hücreleri</summary>
-        <p>Word'de tabloyu sen ekle ve imleci <b>ilk hücreye</b> koy, sonra "İmleç 1. hücrede" düğmesine bas. Bir hücreye dokununca imleç oraya gider, konuştuğun ya da yazdığın metin o hücreye yazılır.</p>
+        <p>Word'de tabloyu sen ekle ve imleci <b>ilk hücreye</b> koy, sonra "İmleç 1. hücrede" düğmesine bas.</p>
         <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap">
           <span class="step">Satır <button id="rMinus">−</button><b id="rVal">4</b><button id="rPlus">+</button></span>
           <span class="step">Sütun <button id="cMinus">−</button><b id="cVal">3</b><button id="cPlus">+</button></span>
@@ -418,11 +495,6 @@ body[data-pad="off"] #ypadwrap{display:none}
           <button class="k s" id="tReset">İmleç 1. hücrede</button>
         </div>
       </details>
-      <details>
-        <summary>Sesli komutlar ve ipuçları</summary>
-        <p><b>🖥 Ekran Sekmesi:</b> Bilgisayar ekranını canlı görürsün. Dokunduğun yere tıklar. Üzerindeki yüzen konsoldan konuşup metni hafızaya alabilir, <b>✨ Komut</b> tuşuna basıp <i>"dilbilgisini düzelt"</i> veya <i>"son cümleyi silip resmileştir"</i> gibi sesli emirler verebilir ve <b>📤 Yazdır</b> ile PC'de tıkladığın yere gönderebilirsin.</p>
-        <p><b>Silme (⌫):</b> Metin kutusunun içine dokunup imleci koyduğunda <b>harf</b> siler. Kutu seçili değilken bastığında <b>son kelimeyi</b> siler.</p>
-      </details>
     </div>
   </div>
 
@@ -432,42 +504,6 @@ body[data-pad="off"] #ypadwrap{display:none}
       <button class="k" data-click="l">Sol</button>
       <button class="k" data-click="m">Orta</button>
       <button class="k" data-click="r">Sağ</button>
-    </div>
-  </div>
-</div>
-
-<!-- CANLI PC EKRANI SEKMESİ -->
-<div class="view" id="vs">
-  <div id="screenTopBar">
-    <button id="scrModeClick" class="on" title="Dokunduğun yere Sol Tık yapar (Basılı tut: Sağ tık)">👆 Sol Tık</button>
-    <button id="scrModeRight" title="Dokunduğun yere Sağ Tık yapar">🖱 Sağ Tık</button>
-    <button id="scrModeScroll" title="Parmağını sürükleyerek sayfayı kaydır">↕ Kaydır</button>
-    <button id="scrZoomBtn" title="Ekranı büyüt / küçült">🔍 1x</button>
-    <button id="scrEnterBtn" title="PC'de Enter tuşuna bas">↵ Enter</button>
-  </div>
-  <div id="screenViewport">
-    <img id="pcScreen" alt="PC Ekranı yükleniyor...">
-  </div>
-
-  <!-- EKRAN ÜZERİNDE SÜRÜKLENEBİLİR SES + YAPAY ZEKA KONSOLU -->
-  <div id="floatPod">
-    <div id="podHeader">
-      <span id="podDragTitle">⠿ Hafıza & Sesli AI Kumanda</span>
-      <div id="podHeaderBtns">
-        <button id="podClrBtn" title="Hafızayı temizle">Temizle</button>
-        <button id="podMinBtn" title="Küçült / Büyüt">Küçült −</button>
-      </div>
-    </div>
-    <div id="podBody">
-      <textarea id="podMem" placeholder="1. 🎤 Konuş ile metni buraya biriktir&#10;2. ✨ Komut ile sesli düzeltme emri ver&#10;3. Ekranda istediğin yere dokunup 📤 Yazdır'a bas"></textarea>
-      <div id="podInterim"></div>
-      <div id="podBtns">
-        <button id="podMic" title="Basılı tutarak veya dokunarak konuş (Hafızaya yazar)">🎤 Konuş</button>
-        <button id="podAiCmd" title="Basılı tutup nasıl düzeltileceğini söyle (Örn: Dilbilgisini düzelt, son cümleyi değiştir)">✨ Komut</button>
-        <button id="podBs" title="Kutuya tıklandıysa harf, değilse kelime siler">⌫</button>
-        <button id="podUndo" title="Son değişikliği geri al">↩</button>
-        <button id="podSend" title="Hafızadaki metni PC'de seçili yere yazdır">📤 Yazdır</button>
-      </div>
     </div>
   </div>
 </div>
@@ -494,7 +530,7 @@ body[data-pad="off"] #ypadwrap{display:none}
   <div class="sc" id="sc"></div>
 </div>
 
-<button id="fabMic" title="Basılı Tut: Bas-Konuş | Kısa Dokun: Sürekli Dinle">🎤<small>BAS-KONUŞ</small></button>
+<button id="fabMic" class="hid" title="Basılı Tut: Bas-Konuş | Kısa Dokun: Sürekli Dinle">🎤<small>BAS-KONUŞ</small></button>
 <div id="tapRipple"></div>
 <div id="toast"></div>
 
@@ -512,18 +548,20 @@ const qs = new URLSearchParams(location.search);
 let PIN = qs.get('p') || lsGet('kpin') || '';
 if (qs.get('p')) { lsSet('kpin', PIN); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
 
-/* ---------- Ayarlar ---------- */
+/* ---------- Ayarlar (Varsayılan açılış: 'vs' yani Tam Ekran PC) ---------- */
 const WL = {
   tr: { kb: 'k', ki: 't', ku: 'a', kc: 'e', kl: 'l', kr: 'r', kj: 'j' },
   en: { kb: 'b', ki: 'i', ku: 'u', kc: 'e', kl: 'l', kr: 'r', kj: 'j' }
 };
 const D = Object.assign({
   speed: 1.6, scroll: 1.0, invert: false, awake: true, direct: false, showFab: true, punct: true, cap: true, indent: false,
-  num: 'auto', startTab: 'vy', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
-  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '0.6', scrFps: '140'
+  num: 'auto', startTab: 'vs', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
+  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '0.65', scrFps: '130'
 }, WL.tr);
 let saved = {};
 try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
+// İlk geçişte doğrudan tam ekran PC açılması için:
+if (!lsGet('k_fs_migrated')) { saved.startTab = 'vs'; lsSet('k_fs_migrated', '1'); }
 const S = Object.assign({}, D, saved);
 function saveS() { lsSet('kset3', JSON.stringify(S)); }
 
@@ -536,14 +574,31 @@ async function wake() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
 $('#gear').onclick = () => $('#set').classList.toggle('hid');
+$('#closeSetBtn').onclick = () => $('#set').classList.add('hid');
 document.addEventListener('contextmenu', e => {
   if (e.target.id !== 'box' && e.target.id !== 'podMem' && e.target.id !== 'aiKeysInput') e.preventDefault();
 });
 
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2800);
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600);
 }
+
+/* ---------- Tam Ekran (Fullscreen API) ---------- */
+function toggleFullScreen() {
+  const docEl = document.documentElement;
+  const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+  const exit = document.exitFullscreen || document.webkitExitFullscreen;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (req) req.call(docEl).catch(() => {});
+  } else {
+    if (exit) exit.call(document).catch(() => {});
+  }
+}
+$('#scrFsBtn').onclick = toggleFullScreen;
+$('#scrMenuBtn').onclick = () => {
+  document.body.classList.toggle('show-top');
+};
 
 /* ---------- Senkronize Hafıza Kutuları (#box ve #podMem) ---------- */
 const box = $('#box');
@@ -783,7 +838,10 @@ $('#aiFixBtn').onclick = () => runAiWithInstruction('');
 
 /* ---------- WebSocket ---------- */
 let ws = null, wsOk = false, fails = 0;
-function setDot() { $('#dot').classList.toggle('ok', wsOk); }
+function setDot() {
+  $('#dot').classList.toggle('ok', wsOk);
+  $('#dotMini').classList.toggle('ok', wsOk);
+}
 function connect() {
   if (!PIN) {
     PIN = (prompt('PC ekranındaki PIN:') || '').trim();
@@ -805,14 +863,15 @@ function tx(o) { if (wsOk && ws && ws.readyState === 1) ws.send(JSON.stringify(o
 connect();
 
 /* ---------- Sekmeler ve Canlı Ekran Akışı ---------- */
-let activeTab = 'vy';
+let activeTab = 'vs';
 let screenLoopActive = false;
 
 function showTab(id) {
   activeTab = id;
   $$('.tab[data-v]').forEach(x => x.classList.toggle('on', x.dataset.v === id));
   $$('.view').forEach(v => v.classList.toggle('on', v.id === id));
-  // Ekran sekmesindeyken yüzen konsol zaten var, sağ alttaki büyük FAB mikrofonu gizle ki çakışmasın
+  document.body.classList.toggle('fullscreen-mode', id === 'vs');
+  if (id !== 'vs') document.body.classList.remove('show-top');
   $('#fabMic').classList.toggle('hid', !S.showFab || id === 'vs');
   if (id === 'vs') startScreenLoop();
 }
@@ -827,8 +886,8 @@ function startScreenLoop() {
       screenLoopActive = false;
       return;
     }
-    const scale = S.scrScale || '0.6';
-    const delay = parseInt(S.scrFps || '140', 10);
+    const scale = S.scrScale || '0.65';
+    const delay = parseInt(S.scrFps || '130', 10);
     const loader = new Image();
     loader.onload = () => {
       pcScreenImg.src = loader.src;
@@ -845,177 +904,318 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && activeTab === 'vs') startScreenLoop();
 });
 
-/* ---------- Canlı PC Ekranı Dokunmatik Kontrolü ---------- */
-let scrTouchMode = 'l'; // 'l' = Sol Tık, 'r' = Sağ Tık, 'scroll' = Kaydır
-let scrZoomed = false;
+/* ================================================================
+   CANLI EKRAN: PINCH-TO-ZOOM (2 PARMAK BÜYÜTME) + 2 PARMAK SCROLL/PAN
+   ================================================================ */
+let scrTouchMode = 'l'; // 'l' = Sol Tık, 'r' = Sağ Tık, 'scroll' = Tekerlek
+let zScale = 1, zTx = 0, zTy = 0;
 
-function setScrMode(m) {
-  scrTouchMode = m;
-  $('#scrModeClick').classList.toggle('on', m === 'l');
-  $('#scrModeRight').classList.toggle('on', m === 'r');
-  $('#scrModeScroll').classList.toggle('on', m === 'scroll');
+function applyZoomTransform() {
+  if (zScale <= 1.01) {
+    zScale = 1; zTx = 0; zTy = 0;
+  } else {
+    const maxPanX = window.innerWidth * (zScale - 1);
+    const maxPanY = window.innerHeight * (zScale - 1);
+    zTx = Math.min(0, Math.max(-maxPanX, zTx));
+    zTy = Math.min(0, Math.max(-maxPanY, zTy));
+  }
+  pcScreenImg.style.transform = `translate(${zTx}px, ${zTy}px) scale(${zScale})`;
+  $('#scrResetZoom').textContent = zScale > 1.05 ? `${zScale.toFixed(1)}x` : '1x';
+  $('#scrResetZoom').classList.toggle('on', zScale > 1.05);
 }
-$('#scrModeClick').onclick = () => setScrMode('l');
-$('#scrModeRight').onclick = () => setScrMode('r');
-$('#scrModeScroll').onclick = () => setScrMode('scroll');
-$('#scrEnterBtn').onclick = () => tx({ t: 'key', k: 'enter', m: [] });
-$('#scrZoomBtn').onclick = () => {
-  scrZoomed = !scrZoomed;
-  $('#screenViewport').classList.toggle('zoom2', scrZoomed);
-  $('#screenViewport').classList.toggle('pan', scrZoomed);
-  $('#scrZoomBtn').classList.toggle('on', scrZoomed);
-  $('#scrZoomBtn').textContent = scrZoomed ? '🔍 2x (Kaydır)' : '🔍 1x';
+
+$('#scrResetZoom').onclick = () => {
+  zScale = 1; zTx = 0; zTy = 0;
+  applyZoomTransform();
 };
 
-function showRipple(cx, cy) {
+$('#scrModeRight').onclick = () => {
+  scrTouchMode = scrTouchMode === 'r' ? 'l' : 'r';
+  $('#scrModeRight').classList.toggle('on', scrTouchMode === 'r');
+  $('#scrModeScroll').classList.remove('on');
+};
+
+$('#scrModeScroll').onclick = () => {
+  scrTouchMode = scrTouchMode === 'scroll' ? 'l' : 'scroll';
+  $('#scrModeScroll').classList.toggle('on', scrTouchMode === 'scroll');
+  $('#scrModeRight').classList.remove('on');
+};
+
+$('#scrEnterBtn').onclick = () => tx({ t: 'key', k: 'enter', m: [] });
+
+function showRipple(cx, cy, isRight) {
   const r = $('#tapRipple');
   r.style.left = cx + 'px';
   r.style.top = cy + 'px';
+  r.classList.toggle('rclick', !!isRight);
   r.classList.remove('show');
   void r.offsetWidth;
   r.classList.add('show');
 }
 
-function getRelCoords(clientX, clientY) {
+// Görüntünün (object-fit: contain ve zoom dahil) içindeki gerçek 0..1 PC koordinatını hesaplar
+function getActualImageCoords(clientX, clientY) {
   const rect = pcScreenImg.getBoundingClientRect();
   if (!rect.width || !rect.height) return null;
-  const rx = (clientX - rect.left) / rect.width;
-  const ry = (clientY - rect.top) / rect.height;
-  if (rx < 0 || rx > 1 || ry < 0 || ry > 1) return null;
-  return { x: rx, y: ry };
+
+  const natW = pcScreenImg.naturalWidth || 1920;
+  const natH = pcScreenImg.naturalHeight || 1080;
+  const imgRatio = natW / natH;
+  const boxRatio = rect.width / rect.height;
+
+  let renderW = rect.width, renderH = rect.height, offX = 0, offY = 0;
+  if (boxRatio > imgRatio) {
+    renderW = rect.height * imgRatio;
+    offX = (rect.width - renderW) / 2;
+  } else {
+    renderH = rect.width / imgRatio;
+    offY = (rect.height - renderH) / 2;
+  }
+
+  const rx = (clientX - rect.left - offX) / renderW;
+  const ry = (clientY - rect.top - offY) / renderH;
+  return {
+    x: Math.max(0, Math.min(1, rx)),
+    y: Math.max(0, Math.min(1, ry))
+  };
 }
 
-(function bindScreenTouch() {
-  let pDown = false, startX = 0, startY = 0, lastY = 0, downAt = 0, dragging = false, holdTimer = 0, lastTapAt = 0;
+(function bindMultiTouchScreen() {
+  const vp = $('#screenViewport');
+  let mode = 'none'; // 'one' | 'two'
+  let p1 = { x: 0, y: 0, startX: 0, startY: 0, moved: 0, t0: 0 };
+  let draggingLeft = false, holdTimer = 0, lastTapAt = 0;
+  let two = { startDist: 0, startScale: 1, lastMidX: 0, lastMidY: 0, totalMove: 0, t0: 0, scrollAccY: 0, scrollAccX: 0 };
 
-  pcScreenImg.addEventListener('pointerdown', e => {
-    if (scrZoomed && scrTouchMode === 'scroll') return;
+  const dist2 = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  const mid2 = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+
+  vp.addEventListener('touchstart', e => {
     e.preventDefault();
     if (podFocused) podMem.blur();
-    const c = getRelCoords(e.clientX, e.clientY);
-    if (!c) return;
-    try { pcScreenImg.setPointerCapture(e.pointerId); } catch (err) {}
-    pDown = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    lastY = e.clientY;
-    downAt = Date.now();
-    dragging = false;
+    if (document.body.classList.contains('show-top')) document.body.classList.remove('show-top');
 
-    // 550ms basılı tutulursa otomatik Sağ Tık yap
-    clearTimeout(holdTimer);
-    if (scrTouchMode === 'l') {
-      holdTimer = setTimeout(() => {
-        if (pDown && !dragging) {
-          pDown = false;
-          showRipple(e.clientX, e.clientY);
-          tx({ t: 'abs_click', x: c.x, y: c.y, b: 'r' });
-          if (navigator.vibrate) navigator.vibrate(35);
-          toast('Sağ Tık');
-        }
-      }, 550);
-    }
-  });
+    if (e.touches.length === 1 && mode === 'none') {
+      const t = e.touches[0];
+      mode = 'one';
+      p1 = { x: t.clientX, y: t.clientY, startX: t.clientX, startY: t.clientY, moved: 0, t0: Date.now() };
+      draggingLeft = false;
 
-  pcScreenImg.addEventListener('pointermove', e => {
-    if (!pDown) return;
-    const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
-    if (dist > 12) clearTimeout(holdTimer);
-
-    if (scrTouchMode === 'scroll') {
-      const dy = e.clientY - lastY;
-      if (Math.abs(dy) > 3) {
-        tx({ t: 'scroll', dy: Math.trunc(dy * 3 * S.scroll * (S.invert ? -1 : 1)), dx: 0 });
-        lastY = e.clientY;
+      clearTimeout(holdTimer);
+      if (scrTouchMode === 'l') {
+        holdTimer = setTimeout(() => {
+          if (mode === 'one' && p1.moved < 14 && !draggingLeft) {
+            const c = getActualImageCoords(p1.startX, p1.startY);
+            if (c) {
+              showRipple(p1.startX, p1.startY, true);
+              tx({ t: 'abs_click', x: c.x, y: c.y, b: 'r' });
+              if (navigator.vibrate) navigator.vibrate(35);
+              toast('Sağ Tık');
+              mode = 'done';
+            }
+          }
+        }, 520);
       }
-      return;
+    } else if (e.touches.length >= 2) {
+      clearTimeout(holdTimer);
+      if (draggingLeft) {
+        const c = getActualImageCoords(p1.x, p1.y);
+        if (c) tx({ t: 'abs_up', x: c.x, y: c.y, b: 'l' });
+        draggingLeft = false;
+      }
+      mode = 'two';
+      const d = dist2(e.touches[0], e.touches[1]);
+      const m = mid2(e.touches[0], e.touches[1]);
+      two = {
+        startDist: Math.max(20, d),
+        startScale: zScale,
+        lastDist: Math.max(20, d),
+        lastMidX: m.x,
+        lastMidY: m.y,
+        totalMove: 0,
+        t0: Date.now(),
+        scrollAccY: 0,
+        scrollAccX: 0
+      };
     }
+  }, { passive: false });
 
-    const c = getRelCoords(e.clientX, e.clientY);
-    if (!c) return;
-    if (!dragging && dist > 14) {
-      dragging = true;
-      const c0 = getRelCoords(startX, startY) || c;
-      tx({ t: 'abs_down', x: c0.x, y: c0.y, b: 'l' });
-    }
-    if (dragging) {
-      tx({ t: 'abs_move', x: c.x, y: c.y });
-    }
-  });
+  vp.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (mode === 'one' && e.touches.length === 1) {
+      const t = e.touches[0];
+      const dx = t.clientX - p1.x;
+      const dy = t.clientY - p1.y;
+      p1.x = t.clientX;
+      p1.y = t.clientY;
+      p1.moved += Math.abs(dx) + Math.abs(dy);
 
-  const endScreenTouch = e => {
+      if (p1.moved > 14) clearTimeout(holdTimer);
+
+      // Tekerlek (Scroll) modu açıksa tek parmakla PC sayfasını kaydır
+      if (scrTouchMode === 'scroll') {
+        const sy = Math.trunc(dy * 3.5 * S.scroll * (S.invert ? -1 : 1));
+        if (sy) tx({ t: 'scroll', dy: sy, dx: 0 });
+        return;
+      }
+
+      const c = getActualImageCoords(t.clientX, t.clientY);
+      if (!c) return;
+      if (!draggingLeft && p1.moved > 16) {
+        draggingLeft = true;
+        const c0 = getActualImageCoords(p1.startX, p1.startY) || c;
+        tx({ t: 'abs_down', x: c0.x, y: c0.y, b: 'l' });
+      }
+      if (draggingLeft) {
+        tx({ t: 'abs_move', x: c.x, y: c.y });
+      }
+    } else if (mode === 'two' && e.touches.length >= 2) {
+      const d = Math.max(20, dist2(e.touches[0], e.touches[1]));
+      const m = mid2(e.touches[0], e.touches[1]);
+      const midDx = m.x - two.lastMidX;
+      const midDy = m.y - two.lastMidY;
+      const distChange = Math.abs(d - two.startDist);
+      two.totalMove += Math.abs(midDx) + Math.abs(midDy) + Math.abs(d - two.lastDist);
+
+      // 1) İki parmak arası mesafe açılıp kapanıyorsa -> Pinch-to-Zoom
+      if (distChange > 18 || zScale > 1.01) {
+        const ratio = d / two.lastDist;
+        const newScale = Math.max(1, Math.min(5, zScale * ratio));
+        // Parmağın orta noktasına doğru yakınlaştır
+        zTx = m.x - (m.x - zTx) * (newScale / zScale) + midDx;
+        zTy = m.y - (m.y - zTy) * (newScale / zScale) + midDy;
+        zScale = newScale;
+        applyZoomTransform();
+      }
+
+      // 2) İki parmak birlikte çekiliyorsa -> PC'de Mouse Wheel (Scroll) gönder
+      if (distChange < 35) {
+        const k = S.scroll * (S.invert ? -1 : 1) * 4.2;
+        two.scrollAccY += midDy * k;
+        two.scrollAccX -= midDx * k;
+        const sy = Math.trunc(two.scrollAccY);
+        const sx = Math.trunc(two.scrollAccX);
+        if (sy || sx) {
+          two.scrollAccY -= sy;
+          two.scrollAccX -= sx;
+          tx({ t: 'scroll', dy: sy, dx: sx });
+        }
+      }
+
+      two.lastDist = d;
+      two.lastMidX = m.x;
+      two.lastMidY = m.y;
+    }
+  }, { passive: false });
+
+  vp.addEventListener('touchend', e => {
+    e.preventDefault();
     clearTimeout(holdTimer);
-    if (!pDown) return;
-    pDown = false;
-    const c = getRelCoords(e.clientX, e.clientY) || getRelCoords(startX, startY);
-    if (!c) return;
 
-    if (scrTouchMode === 'scroll') return;
-
-    if (dragging) {
-      tx({ t: 'abs_up', x: c.x, y: c.y, b: 'l' });
-      dragging = false;
-      return;
+    if (mode === 'one' && e.touches.length === 0) {
+      const c = getActualImageCoords(p1.x, p1.y) || getActualImageCoords(p1.startX, p1.startY);
+      if (scrTouchMode !== 'scroll' && c) {
+        if (draggingLeft) {
+          tx({ t: 'abs_up', x: c.x, y: c.y, b: 'l' });
+          draggingLeft = false;
+        } else if (p1.moved < 16) {
+          const now = Date.now();
+          showRipple(p1.startX, p1.startY, scrTouchMode === 'r');
+          if (navigator.vibrate) navigator.vibrate(12);
+          if (scrTouchMode === 'r') {
+            tx({ t: 'abs_click', x: c.x, y: c.y, b: 'r' });
+          } else if (now - lastTapAt < 320) {
+            tx({ t: 'abs_dclick', x: c.x, y: c.y });
+            lastTapAt = 0;
+          } else {
+            tx({ t: 'abs_click', x: c.x, y: c.y, b: 'l' });
+            lastTapAt = now;
+          }
+        }
+      }
+      mode = 'none';
+    } else if (mode === 'two' && e.touches.length === 0) {
+      // İki parmakla hızlıca dokunup çekildiyse -> Sağ Tık
+      if (Date.now() - two.t0 < 260 && two.totalMove < 22) {
+        const c = getActualImageCoords(two.lastMidX, two.lastMidY);
+        if (c) {
+          showRipple(two.lastMidX, two.lastMidY, true);
+          tx({ t: 'abs_click', x: c.x, y: c.y, b: 'r' });
+          if (navigator.vibrate) navigator.vibrate(25);
+        }
+      }
+      mode = 'none';
+    } else if (e.touches.length === 0) {
+      mode = 'none';
     }
-
-    showRipple(e.clientX, e.clientY);
-    if (navigator.vibrate) navigator.vibrate(12);
-
-    const now = Date.now();
-    if (scrTouchMode === 'r') {
-      tx({ t: 'abs_click', x: c.x, y: c.y, b: 'r' });
-    } else if (now - lastTapAt < 320) {
-      tx({ t: 'abs_dclick', x: c.x, y: c.y });
-      lastTapAt = 0;
-    } else {
-      tx({ t: 'abs_click', x: c.x, y: c.y, b: 'l' });
-      lastTapAt = now;
-    }
-  };
-
-  pcScreenImg.addEventListener('pointerup', endScreenTouch);
-  pcScreenImg.addEventListener('pointercancel', endScreenTouch);
+  }, { passive: false });
 })();
 
-/* ---------- Sürüklenebilir (Oynatılabilir) Yüzen Konsol ---------- */
-(function initDraggablePod() {
+/* ================================================================
+   HER YERİNDEN TUTULUP SÜRÜKLENEBİLEN YÜZEN KONSOL (#floatPod)
+   ================================================================ */
+(function initAnywhereDraggablePod() {
   const pod = $('#floatPod');
-  const handle = $('#podHeader');
-  let drag = false, ox = 0, oy = 0, startL = 0, startT = 0;
+  let pId = null, startX = 0, startY = 0, startL = 0, startT = 0, isDragging = false;
 
-  handle.addEventListener('pointerdown', e => {
-    if (e.target.closest('button')) return;
-    e.preventDefault();
-    try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  pod.addEventListener('pointerdown', e => {
+    // Metin kutusunun içine dokunulduysa imleç/yazı seçimi çalışsın, sürükleme başlamasın
+    if (e.target === podMem) return;
+    pId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
     const rect = pod.getBoundingClientRect();
-    pod.style.bottom = 'auto';
-    pod.style.right = 'auto';
-    pod.style.left = rect.left + 'px';
-    pod.style.top = rect.top + 'px';
     startL = rect.left;
     startT = rect.top;
-    ox = e.clientX;
-    oy = e.clientY;
-    drag = true;
-  });
+    isDragging = false;
+  }, true);
 
-  handle.addEventListener('pointermove', e => {
-    if (!drag) return;
-    const nl = Math.max(4, Math.min(window.innerWidth - 80, startL + (e.clientX - ox)));
-    const nt = Math.max(44, Math.min(window.innerHeight - 60, startT + (e.clientY - oy)));
-    pod.style.left = nl + 'px';
-    pod.style.top = nt + 'px';
-  });
+  window.addEventListener('pointermove', e => {
+    if (pId === null || e.pointerId !== pId) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
 
-  const stopDrag = () => { drag = false; };
-  handle.addEventListener('pointerup', stopDrag);
-  handle.addEventListener('pointercancel', stopDrag);
+    if (!isDragging && Math.hypot(dx, dy) > 9) {
+      isDragging = true;
+      pod.classList.add('dragging');
+      pod.style.bottom = 'auto';
+      pod.style.right = 'auto';
+      // Eğer bir butonun üzerindeyken sürüklemeye başlandıysa mikrofonu/butonu iptal et
+      if (listening && !micLocked) endVoice();
+    }
+
+    if (isDragging) {
+      e.preventDefault();
+      const maxW = window.innerWidth - 60;
+      const maxH = window.innerHeight - 48;
+      const nl = Math.max(4, Math.min(maxW, startL + dx));
+      const nt = Math.max(4, Math.min(maxH, startT + dy));
+      pod.style.left = nl + 'px';
+      pod.style.top = nt + 'px';
+    }
+  }, { passive: false });
+
+  const endPodPointer = e => {
+    if (pId === null || (e.pointerId !== undefined && e.pointerId !== pId)) return;
+    if (isDragging) {
+      pod.classList.remove('dragging');
+      // Sürükleme bittiğinde altındaki butonun yanlışlıkla tıklanmasını engelle
+      e.stopPropagation();
+    }
+    pId = null;
+    setTimeout(() => { isDragging = false; }, 30);
+  };
+
+  window.addEventListener('pointerup', endPodPointer, true);
+  window.addEventListener('pointercancel', endPodPointer, true);
 
   $('#podMinBtn').onclick = () => {
+    if (isDragging) return;
     const isMini = pod.classList.toggle('mini');
     $('#podMinBtn').textContent = isMini ? 'Aç +' : 'Küçült −';
   };
   $('#podClrBtn').onclick = () => {
+    if (isDragging) return;
     box.value = '';
     syncBoxes(false);
     hist.length = 0;
@@ -1047,7 +1247,7 @@ document.addEventListener('pointerdown', e => {
   if (podFocused) podMem.blur();
 });
 
-/* ---------- Touchpad ---------- */
+/* ---------- Klasik Touchpad (Pad ve Yaz Sekmesi) ---------- */
 function makePad(el) {
   let T = { active: false }, acc = { x: 0, y: 0 }, scr = { x: 0, y: 0 }, lastTap = 0, raf = 0;
   const avg = (ts, k) => { let s = 0; for (const t of ts) s += t[k]; return s / ts.length; };
@@ -1175,7 +1375,6 @@ function runProgram(text) {
    ================================================================ */
 const st = { space: false, cap: true, autos: [], quote: false, lineStart: true, lastDigit: false, numOnce: null };
 
-// Ekran sekmesindeyken her zaman önce hafızaya (kutuya) yazar
 function useDirectNow() {
   return S.direct && activeTab !== 'vs';
 }
@@ -1256,7 +1455,7 @@ function emitTok(name) {
   if (/^hücre:/.test(name) || name === 'sonraki hücre' || name === 'önceki hücre') { if (S.cap) st.cap = true; }
 }
 
-/* ---------- Düğme durumları: Aa, AA, K, T, A ---------- */
+/* ---------- Düğme durumları ---------- */
 const MODK = ['cap', 'upper', 'b', 'i', 'u'];
 const mod = {};
 MODK.forEach(k => mod[k] = { latch: false, held: false, once: false, pend: false, down: false, t0: 0, last: 0 });
@@ -1644,12 +1843,16 @@ buildChips($('#chDigit'), DIGITS, false);
 buildChips($('#chStyle'), STYLES, true);
 
 function holdRepeat(el, fn) {
-  let to = 0, iv = 0;
+  let to = 0, iv = 0, startX = 0, startY = 0;
   const stop = () => { clearTimeout(to); clearInterval(iv); to = iv = 0; el.classList.remove('press'); };
   el.addEventListener('pointerdown', e => {
-    e.preventDefault(); el.classList.add('press'); fn();
+    e.preventDefault(); startX = e.clientX; startY = e.clientY;
+    el.classList.add('press'); fn();
     if (navigator.vibrate) navigator.vibrate(8);
     to = setTimeout(() => { iv = setInterval(fn, 65); }, 380);
+  });
+  el.addEventListener('pointermove', e => {
+    if (Math.hypot(e.clientX - startX, e.clientY - startY) > 10) stop();
   });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stop));
 }
@@ -1711,7 +1914,7 @@ $('#tReset').onclick = () => { tbl.exec = { r: 1, c: 1 }; tbl.ui = { r: 1, c: 1 
 
 /* ---------- Konuşma Tanıma: Normal Yazma & Sesli Yapay Zeka Komutu ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, micLocked = false, voiceTarget = 'dictate'; // 'dictate' veya 'aicmd'
+let rec = null, micLocked = false, voiceTarget = 'dictate';
 
 function setMicUI(on, locked) {
   const isAi = on && voiceTarget === 'aicmd';
@@ -1805,13 +2008,15 @@ function endVoice() {
 }
 
 function bindPTT(btn, targetMode) {
-  let downTime = 0, wasListeningAtDown = false, wasLockedAtDown = false, activePointer = null;
+  let downTime = 0, startX = 0, startY = 0, movedOut = false, wasListeningAtDown = false, wasLockedAtDown = false, activePointer = null;
 
   btn.addEventListener('pointerdown', e => {
     e.preventDefault();
-    try { btn.setPointerCapture(e.pointerId); } catch (err) {}
     activePointer = e.pointerId;
     downTime = Date.now();
+    startX = e.clientX;
+    startY = e.clientY;
+    movedOut = false;
     wasListeningAtDown = listening;
     wasLockedAtDown = micLocked;
 
@@ -1820,9 +2025,17 @@ function bindPTT(btn, targetMode) {
     }
   });
 
+  btn.addEventListener('pointermove', e => {
+    if (activePointer === null || e.pointerId !== activePointer) return;
+    if (Math.hypot(e.clientX - startX, e.clientY - startY) > 12) {
+      movedOut = true;
+    }
+  });
+
   const finishPointer = e => {
     if (activePointer === null || (e.pointerId !== undefined && e.pointerId !== activePointer)) return;
     activePointer = null;
+    if (movedOut) return; // Kullanıcı kutuyu sürüklediyse tıklama sayma
     const heldMs = Date.now() - downTime;
 
     if (wasListeningAtDown && wasLockedAtDown) {
@@ -1831,7 +2044,6 @@ function bindPTT(btn, targetMode) {
     }
 
     if (heldMs < 260) {
-      // ✨ Komut butonuna kısa dokunulduğunda eğer hiç konuşma başlamadıysa doğrudan dilbilgisi düzeltmesi de yapabilir veya komutu dinler
       micLocked = true;
       setMicUI(true, true);
       if (targetMode === 'aicmd') toast('Komutunu söyle (Örn: "Dilbilgisini düzelt" veya "Son cümleyi resmileştir")');
@@ -1992,7 +2204,7 @@ applyPrefs();
 renderGrid();
 renderMods();
 updateFocusUI();
-showTab(S.startTab || 'vy');
+showTab(S.startTab || 'vs');
 wake();
 
 window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok, aiPool, runAiWithInstruction };
