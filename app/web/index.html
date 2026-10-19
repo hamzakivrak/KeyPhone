@@ -70,7 +70,7 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
 #pcScreen{
   width:100%;
   height:100%;
-  object-fit:fill; /* Varsayılan: Telefon ekranını %100 doldurur (kenarlarda siyah boşluk kalmaz) */
+  object-fit:fill;
   display:block;
   transform-origin:0 0;
   user-select:none;
@@ -140,7 +140,6 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
   border-color:#fff;
   box-shadow:0 12px 32px rgba(77,163,255,.4);
 }
-/* Küçültülmüş (Mini Top) Modu */
 #floatPod.mini{
   width:auto!important;
   height:auto!important;
@@ -227,7 +226,6 @@ body.fullscreen-mode.show-top #top{display:flex;position:fixed;top:0;left:0;righ
 #podBs{flex:0.6!important;font-size:14px!important}
 #podUndo{flex:0.55!important;font-size:13px!important}
 
-/* Sağ Alt Boyutlandırma (Resize) Tutamacı */
 #podResizeHandle{
   position:absolute;
   right:1px;
@@ -338,7 +336,6 @@ body[data-pad="off"] #ypadwrap{display:none}
 </head>
 <body data-pp="bottom" data-pl="right" data-pad="on" data-clicks="on" class="fullscreen-mode">
 
-<!-- ÜST BAR (Tam ekran PC modunda tamamen gizlidir, sağ üstteki ☰ ile açılır) -->
 <div id="top">
   <span id="dot"></span>
   <button class="tab on" data-v="vs">🖥 Ekran</button>
@@ -373,9 +370,9 @@ body[data-pad="off"] #ypadwrap{display:none}
   </div>
   <textarea id="aiKeysInput" placeholder="gemini:&#10;AIzaSy...&#10;&#10;grok:&#10;gsk_..."></textarea>
 
-  <h4>Canlı Ekran & Uygulama Modu</h4>
+  <h4>Canlı Ekran & Hız Ayarları</h4>
   <div class="small" style="color:#a7f3d0">
-    💡 <b>Tam Ekran Uygulama Yapma:</b> Chrome sağ alt/üst menüsünden (<b>⋮</b>) <b>"Ana ekrana ekle"</b> (veya Uygulamayı yükle) seçeneğine basarsan adres çubuğu tamamen kalkar.
+    💡 <b>Tam Ekran Uygulama Yapma:</b> Chrome menüsünden (<b>⋮</b>) <b>"Ana ekrana ekle"</b> seçeneğine basarsan adres çubuğu tamamen kalkar.
   </div>
   <label>Ekran Oranı
     <select data-s="scrFit">
@@ -383,19 +380,26 @@ body[data-pad="off"] #ypadwrap{display:none}
       <option value="contain">Orijinal Oran (16:9)</option>
     </select>
   </label>
-  <label>Görüntü Kalitesi
+  <label>Görüntü Çözünürlüğü
     <select data-s="scrScale">
-      <option value="0.5">Hızlı (Akıcı)</option>
-      <option value="0.68">Dengeli (Önerilen)</option>
-      <option value="0.85">Yüksek (Net yazı)</option>
+      <option value="0.5">Hızlı (Çok Akıcı)</option>
+      <option value="0.65">Dengeli (Önerilen)</option>
+      <option value="0.8">Yüksek (Net Yazı)</option>
       <option value="1.0">Tam Çözünürlük (1:1)</option>
     </select>
   </label>
-  <label>Yenileme Hızı (FPS)
+  <label>Akış Hızı (FPS)
     <select data-s="scrFps">
-      <option value="220">5 FPS (Düşük Pil)</option>
-      <option value="120">8 FPS (Normal)</option>
-      <option value="70">14 FPS (Akıcı)</option>
+      <option value="100">10 FPS (Düşük Pil)</option>
+      <option value="55">18 FPS (Akıcı)</option>
+      <option value="35">28 FPS (Ultra Akıcı / Canlı)</option>
+    </select>
+  </label>
+  <label>JPEG Sıkıştırma Kalitesi
+    <select data-s="scrQual">
+      <option value="50">Düşük (En Hızlı Tepki)</option>
+      <option value="65">Normal (Önerilen)</option>
+      <option value="82">Yüksek Kalite</option>
     </select>
   </label>
   <label>Açılışta ekran
@@ -434,7 +438,6 @@ body[data-pad="off"] #ypadwrap{display:none}
 
 <!-- TAM EKRAN CANLI PC GÖRÜNÜMÜ -->
 <div class="view on" id="vs">
-  <!-- Sağ Üst Minimal Hap Çubuk -->
   <div id="scrMiniBar">
     <span id="dotMini"></span>
     <button id="scrResetZoom" title="Yakınlaştırmayı sıfırla">1x</button>
@@ -602,11 +605,14 @@ const WL = {
 const D = Object.assign({
   speed: 1.6, scroll: 1.0, invert: false, awake: true, direct: false, showFab: true, punct: true, cap: true, indent: false,
   num: 'auto', startTab: 'vs', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
-  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '0.68', scrFps: '120', scrFit: 'fill'
+  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '0.65', scrFps: '35', scrQual: '65', scrFit: 'fill'
 }, WL.tr);
 let saved = {};
 try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
-if (!lsGet('k_fs_v2')) { saved.startTab = 'vs'; saved.scrFit = 'fill'; lsSet('k_fs_v2', '1'); }
+if (!lsGet('k_mjpeg_v1')) {
+  saved.startTab = 'vs'; saved.scrFit = 'fill'; saved.scrScale = '0.65'; saved.scrFps = '35'; saved.scrQual = '65';
+  lsSet('k_mjpeg_v1', '1');
+}
 const S = Object.assign({}, D, saved);
 function saveS() { lsSet('kset3', JSON.stringify(S)); }
 
@@ -631,13 +637,6 @@ function toast(msg) {
 }
 
 /* ---------- Tam Ekran (Fullscreen API) ---------- */
-function requestFsNow() {
-  const docEl = document.documentElement;
-  const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
-  if (!document.fullscreenElement && !document.webkitFullscreenElement && req) {
-    req.call(docEl).catch(() => {});
-  }
-}
 function toggleFullScreen() {
   const docEl = document.documentElement;
   const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
@@ -887,9 +886,10 @@ function connect() {
 function tx(o) { if (wsOk && ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 connect();
 
-/* ---------- Sekmeler ve Canlı Ekran Akışı ---------- */
+/* ---------- Sekmeler ve Kesintisiz MJPEG Video Akışı ---------- */
 let activeTab = 'vs';
-let screenLoopActive = false;
+const pcScreenImg = $('#pcScreen');
+let streamUrlCurrent = '';
 
 function showTab(id) {
   activeTab = id;
@@ -898,35 +898,35 @@ function showTab(id) {
   document.body.classList.toggle('fullscreen-mode', id === 'vs');
   document.body.classList.remove('show-top');
   $('#fabMic').classList.toggle('hid', !S.showFab || id === 'vs');
-  if (id === 'vs') startScreenLoop();
+  startScreenLoop();
 }
 $$('.tab[data-v]').forEach(b => b.onclick = () => showTab(b.dataset.v));
 
-const pcScreenImg = $('#pcScreen');
-function startScreenLoop() {
-  if (screenLoopActive) return;
-  screenLoopActive = true;
-  function nextFrame() {
-    if (activeTab !== 'vs' || document.visibilityState !== 'visible') {
-      screenLoopActive = false;
-      return;
-    }
-    const scale = S.scrScale || '0.68';
-    const delay = parseInt(S.scrFps || '120', 10);
-    const loader = new Image();
-    loader.onload = () => {
-      pcScreenImg.src = loader.src;
-      setTimeout(nextFrame, delay);
-    };
-    loader.onerror = () => {
-      setTimeout(nextFrame, 500);
-    };
-    loader.src = `/screen.bmp?p=${encodeURIComponent(PIN)}&s=${scale}&t=${Date.now()}`;
+function startScreenLoop(forceRestart) {
+  if (activeTab !== 'vs' || document.visibilityState !== 'visible') {
+    pcScreenImg.src = '';
+    streamUrlCurrent = '';
+    return;
   }
-  nextFrame();
+  const scale = S.scrScale || '0.65';
+  const delay = S.scrFps || '35';
+  const qual = S.scrQual || '65';
+  const baseKey = `${scale}_${delay}_${qual}`;
+  if (!forceRestart && streamUrlCurrent === baseKey) return;
+  streamUrlCurrent = baseKey;
+  pcScreenImg.src = `/stream.mjpg?p=${encodeURIComponent(PIN)}&s=${scale}&q=${qual}&d=${delay}&t=${Date.now()}`;
 }
+
+pcScreenImg.onerror = () => {
+  if (activeTab === 'vs' && document.visibilityState === 'visible') {
+    streamUrlCurrent = '';
+    setTimeout(() => startScreenLoop(true), 450);
+  }
+};
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && activeTab === 'vs') startScreenLoop();
+  if (document.visibilityState === 'visible' && activeTab === 'vs') startScreenLoop(true);
+  else if (document.visibilityState !== 'visible') { pcScreenImg.src = ''; streamUrlCurrent = ''; }
 });
 
 /* ================================================================
@@ -1096,7 +1096,6 @@ function getActualImageCoords(clientX, clientY) {
       const distChange = Math.abs(d - two.startDist);
       two.totalMove += Math.abs(midDx) + Math.abs(midDy) + Math.abs(d - two.lastDist);
 
-      // İki parmak sıkıştırma/açma (Pinch-to-Zoom) ve yakınlaşmış ekranda gezinme (Pan)
       if (distChange > 14 || zScale > 1.01) {
         const ratio = d / two.lastDist;
         const newScale = Math.max(1, Math.min(6, zScale * ratio));
@@ -1106,7 +1105,6 @@ function getActualImageCoords(clientX, clientY) {
         applyZoomTransform();
       }
 
-      // İki parmak birlikte çekiliyorsa PC Mouse Scroll gönder
       if (distChange < 32) {
         const k = S.scroll * (S.invert ? -1 : 1) * 4.5;
         two.scrollAccY += midDy * k;
@@ -1176,7 +1174,6 @@ function getActualImageCoords(clientX, clientY) {
   const resizer = $('#podResizeHandle');
   let pId = null, action = '', startX = 0, startY = 0, startL = 0, startT = 0, startW = 0, startH = 0, moved = false;
 
-  // Kayıtlı konum ve boyutu yükle
   try {
     const savedPod = JSON.parse(lsGet('k_pod_rect') || 'null');
     if (savedPod) {
@@ -1196,7 +1193,6 @@ function getActualImageCoords(clientX, clientY) {
     lsSet('k_pod_rect', JSON.stringify({ l: Math.round(r.left), t: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }));
   }
 
-  // Sağ alt köşeden boyutlandırma (Resize)
   resizer.addEventListener('pointerdown', e => {
     e.preventDefault();
     e.stopPropagation();
@@ -1210,7 +1206,6 @@ function getActualImageCoords(clientX, clientY) {
     moved = true;
   });
 
-  // Herhangi bir yerinden sürükleme (Metin kutusu içi ve resize tutamacı hariç)
   pod.addEventListener('pointerdown', e => {
     if (e.target === podMem || e.target === resizer) return;
     pId = e.pointerId;
@@ -2219,6 +2214,7 @@ function applyPrefs() {
   $$('#segMode button').forEach(b => b.classList.toggle('on', (b.dataset.direct === '1') === !!S.direct));
   $$('#segNum button').forEach(b => b.classList.toggle('on', b.dataset.num === S.num));
   setFmtLabels();
+  if (activeTab === 'vs') startScreenLoop();
 }
 function loadSettingsUI() {
   $$('[data-s]').forEach(el => {
