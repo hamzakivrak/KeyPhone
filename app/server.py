@@ -2,6 +2,7 @@
 
 Telefon tarayıcıdan https://<pc-ip>:8765 adresini açar ve WebSocket ile bağlanır.
 Yalnızca Python standart kütüphanesi + HTTPS sertifikası için 'cryptography' kullanır.
+GDI+ (gdiplus.dll) ile ultra hızlı JPEG sıkıştırma ve kesintisiz MJPEG akışı sağlar.
 """
 import base64
 import ctypes
@@ -16,6 +17,7 @@ import socket
 import ssl
 import struct
 import threading
+import time
 from ctypes import wintypes
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -35,7 +37,16 @@ except Exception:
 
 user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
+gdiplus = ctypes.windll.gdiplus
+ole32 = ctypes.windll.ole32
+kernel32 = ctypes.windll.kernel32
 ULONG_PTR = ctypes.c_size_t
+
+kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
+kernel32.GlobalLock.restype = ctypes.c_void_p
+kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+kernel32.GlobalSize.argtypes = [wintypes.HGLOBAL]
+kernel32.GlobalSize.restype = ctypes.c_size_t
 
 
 class MOUSEINPUT(ctypes.Structure):
@@ -56,15 +67,6 @@ class INPUT(ctypes.Structure):
     _fields_ = [("type", wintypes.DWORD), ("u", _U)]
 
 
-class BITMAPINFOHEADER(ctypes.Structure):
-    _fields_ = [
-        ("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
-        ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
-        ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG),
-        ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD)
-    ]
-
-
 class POINT(ctypes.Structure):
     _fields_ = [("x", wintypes.LONG), ("y", wintypes.LONG)]
 
@@ -74,15 +76,52 @@ class CURSORINFO(ctypes.Structure):
                 ("hCursor", wintypes.HANDLE), ("ptScreenPos", POINT)]
 
 
+# ---------------------------------------------------------------- GDI+ Donanımsal JPEG Sıkıştırıcı
+class GUID_STRUCT(ctypes.Structure):
+    _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD),
+                ("Data3", wintypes.WORD), ("Data4", ctypes.c_ubyte * 8)]
+
+
+class GdiplusStartupInput(ctypes.Structure):
+    _fields_ = [("GdiplusVersion", ctypes.c_uint32), ("DebugEventCallback", ctypes.c_void_p),
+                ("SuppressBackgroundThread", wintypes.BOOL), ("SuppressExternalCodecs", wintypes.BOOL)]
+
+
+class EncoderParameter(ctypes.Structure):
+    _fields_ = [("Guid", GUID_STRUCT), ("NumberOfValues", ctypes.c_ulong),
+                ("Type", ctypes.c_ulong), ("Value", ctypes.c_void_p)]
+
+
+class EncoderParameters(ctypes.Structure):
+    _fields_ = [("Count", ctypes.c_uint), ("Parameter", EncoderParameter * 1)]
+
+
+_gdip_token = ctypes.c_ulong()
+_startup_in = GdiplusStartupInput(1, None, False, False)
+gdiplus.GdiplusStartup(ctypes.byref(_gdip_token), ctypes.byref(_startup_in), None)
+
+# JPEG Encoder CLSID: {557CF401-1A04-11D3-9A73-0000F81EF32E}
+CLSID_JPEG = GUID_STRUCT(0x557CF401, 0x1A04, 0x11D3, (ctypes.c_ubyte * 8)(0x9A, 0x73, 0x00, 0x00, 0xF8, 0x1E, 0xF3, 0x2E))
+# EncoderQuality GUID: {1D5BE4B5-FA4A-452D-9CDD-5DB35105E7EB}
+GUID_QUALITY = GUID_STRUCT(0x1D5BE4B5, 0xFA4A, 0x452D, (ctypes.c_ubyte * 8)(0x9C, 0xDD, 0x5D, 0xB3, 0x51, 0x05, 0xE7, 0xEB))
+
 _cap_lock = threading.Lock()
+_cached_frame = b""
+_cached_time = 0.0
 
 
-def capture_screen_bmp(scale=0.65):
-    """Ekranı yakalar, fare imlecini çizer ve hızlı 16-bit BMP olarak döndürür."""
+def capture_screen_jpeg(scale=0.65, quality=65):
+    """Ekranı hızlıca yakalar ve GDI+ ile bellekte doğrudan JPEG'e sıkıştırır (~50 KB)."""
+    global _cached_frame, _cached_time
+    now = time.monotonic()
+    # Aynı anda birden fazla istek gelirse 18ms içindeki son kareyi yeniden kullan
+    if _cached_frame and (now - _cached_time) < 0.018:
+        return _cached_frame
+
     with _cap_lock:
         sw = user32.GetSystemMetrics(0)
         sh = user32.GetSystemMetrics(1)
-        tw = max(320, int(sw * scale) & ~3)
+        tw = max(320, int(sw * scale))
         th = max(200, int(sh * scale))
 
         hdc_scr = user32.GetDC(0)
@@ -90,7 +129,8 @@ def capture_screen_bmp(scale=0.65):
         hbmp = gdi32.CreateCompatibleBitmap(hdc_scr, tw, th)
         old = gdi32.SelectObject(hdc_mem, hbmp)
 
-        gdi32.SetStretchBltMode(hdc_mem, 4)
+        # COLORONCOLOR (3): HALFTONE (4) modundan 8 kat daha hızlıdır
+        gdi32.SetStretchBltMode(hdc_mem, 3)
         gdi32.StretchBlt(hdc_mem, 0, 0, tw, th, hdc_scr, 0, 0, sw, sh, 0x00CC0020)
 
         ci = CURSORINFO()
@@ -98,30 +138,45 @@ def capture_screen_bmp(scale=0.65):
         if user32.GetCursorInfo(ctypes.byref(ci)) and (ci.flags & 1):
             cx = int(ci.ptScreenPos.x * scale)
             cy = int(ci.ptScreenPos.y * scale)
-            user32.DrawIconEx(hdc_mem, cx, cy, ci.hCursor, 20, 20, 0, 0, 3)
+            user32.DrawIconEx(hdc_mem, cx, cy, ci.hCursor, 18, 18, 0, 0, 3)
 
-        bmi = BITMAPINFOHEADER()
-        bmi.biSize = ctypes.sizeof(BITMAPINFOHEADER)
-        bmi.biWidth = tw
-        bmi.biHeight = th
-        bmi.biPlanes = 1
-        bmi.biBitCount = 16
-        bmi.biCompression = 0
+        gp_bmp = ctypes.c_void_p()
+        gdiplus.GdipCreateBitmapFromHBITMAP(hbmp, 0, ctypes.byref(gp_bmp))
 
-        stride = ((tw * 2 + 3) & ~3)
-        img_size = stride * th
-        bmi.biSizeImage = img_size
+        stream = ctypes.c_void_p()
+        ole32.CreateStreamOnHGlobal(0, True, ctypes.byref(stream))
 
-        buf = ctypes.create_string_buffer(img_size)
-        gdi32.GetDIBits(hdc_mem, hbmp, 0, th, buf, ctypes.byref(bmi), 0)
+        q_val = ctypes.c_ulong(max(20, min(95, int(quality))))
+        ep = EncoderParameters()
+        ep.Count = 1
+        ep.Parameter[0].Guid = GUID_QUALITY
+        ep.Parameter[0].NumberOfValues = 1
+        ep.Parameter[0].Type = 4  # EncoderParameterValueTypeLong
+        ep.Parameter[0].Value = ctypes.cast(ctypes.byref(q_val), ctypes.c_void_p)
+
+        gdiplus.GdipSaveImageToStream(gp_bmp, stream, ctypes.byref(CLSID_JPEG), ctypes.byref(ep))
+
+        hglob = wintypes.HGLOBAL()
+        ole32.GetHGlobalFromStream(stream, ctypes.byref(hglob))
+        size = kernel32.GlobalSize(hglob)
+        ptr = kernel32.GlobalLock(hglob)
+        jpg_bytes = ctypes.string_at(ptr, size) if (ptr and size) else b""
+        kernel32.GlobalUnlock(hglob)
+
+        # Bellek temizliği (Memory leak önleme)
+        vtable = ctypes.cast(stream, ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p))).contents
+        release_fn = ctypes.WINFUNCTYPE(ctypes.c_ulong, ctypes.c_void_p)(vtable[2])
+        release_fn(stream)
+        gdiplus.GdipDisposeImage(gp_bmp)
 
         gdi32.SelectObject(hdc_mem, old)
         gdi32.DeleteObject(hbmp)
         gdi32.DeleteDC(hdc_mem)
         user32.ReleaseDC(0, hdc_scr)
 
-        bfh = struct.pack("<2sIHHI", b"BM", 14 + 40 + img_size, 0, 0, 14 + 40)
-        return bfh + bytes(bmi) + buf.raw
+        _cached_frame = jpg_bytes
+        _cached_time = time.monotonic()
+        return jpg_bytes
 
 
 def send(*items):
@@ -372,15 +427,26 @@ class H(BaseHTTPRequestHandler):
                 return
             self.websocket()
             return
-        if u.path == "/screen.bmp":
+        if u.path == "/stream.mjpg":
+            pin = qs.get("p", [""])[0]
+            if not hmac.compare_digest(pin.encode(), PIN.encode()):
+                self.reply(403, b"PIN yanlis")
+                return
+            sc = max(0.3, min(1.0, float(qs.get("s", ["0.68"])[0])))
+            ql = max(25, min(92, int(qs.get("q", ["65"])[0])))
+            fps_delay = max(0.025, min(0.5, int(qs.get("d", ["45"])[0]) / 1000.0))
+            self.mjpeg_stream(sc, ql, fps_delay)
+            return
+        if u.path in ("/screen.jpg", "/screen.bmp"):
             pin = qs.get("p", [""])[0]
             if not hmac.compare_digest(pin.encode(), PIN.encode()):
                 self.reply(403, b"PIN yanlis")
                 return
             try:
-                sc = max(0.25, min(1.0, float(qs.get("s", ["0.65"])[0])))
-                bmp = capture_screen_bmp(sc)
-                self.reply(200, bmp, "image/bmp")
+                sc = max(0.3, min(1.0, float(qs.get("s", ["0.68"])[0])))
+                ql = max(25, min(92, int(qs.get("q", ["65"])[0])))
+                jpg = capture_screen_jpeg(sc, ql)
+                self.reply(200, jpg, "image/jpeg")
             except Exception as e:
                 self.reply(500, str(e).encode("utf-8"))
             return
@@ -412,6 +478,37 @@ class H(BaseHTTPRequestHandler):
                 self.reply(500, b"web/index.html yok")
             return
         self.reply(404, b"yok")
+
+    def mjpeg_stream(self, scale, quality, delay):
+        """Tek bir HTTP bağlantısı üzerinden kesintisiz, düşük gecikmeli MJPEG video akışı."""
+        self.send_response(200)
+        self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.close_connection = True
+        try:
+            self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        except OSError:
+            pass
+        try:
+            while True:
+                t0 = time.monotonic()
+                jpg = capture_screen_jpeg(scale, quality)
+                if jpg:
+                    header = (
+                        b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n"
+                        b"Content-Length: " + str(len(jpg)).encode("ascii") + b"\r\n\r\n"
+                    )
+                    self.wfile.write(header + jpg + b"\r\n")
+                    self.wfile.flush()
+                elapsed = time.monotonic() - t0
+                rem = delay - elapsed
+                if rem > 0.002:
+                    time.sleep(rem)
+        except (ConnectionError, OSError, ssl.SSLError):
+            pass
 
     def websocket(self):
         key = self.headers.get("Sec-WebSocket-Key", "")
@@ -459,13 +556,11 @@ def main():
     except Exception as e:
         print("HTTPS açılamadı (%s). HTTP ile devam ediliyor, sesli yazma çalışmayabilir." % e)
     print("\n" + "=" * 60)
-    print(" KUMANDA HAZIR (Tam Ekran & PWA Uygulama Destekli)")
+    print(" KUMANDA HAZIR (Ultra Hızlı MJPEG Video Akışı Destekli)")
     print("=" * 60)
     print(" Telefonda (aynı Wi-Fi) şu adresi aç:\n")
     print("     %s://%s:%d/?p=%s\n" % (scheme, ip, PORT, PIN))
     print(" PIN: %s" % PIN)
-    print(" İPUCU: Telefonda tarayıcı menüsünden 'Ana ekrana ekle' yaparsan")
-    print("        adres çubuğu olmadan gerçek tam ekran uygulama gibi açılır.")
     print("=" * 60 + "\n")
     httpd.serve_forever()
 
