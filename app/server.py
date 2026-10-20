@@ -1,13 +1,15 @@
-"""Kumanda sunucusu (Windows). Telefondan gelen fare/klavye olaylarını PC'ye uygular.
+"""Kumanda sunucusu (Windows). Telefondan gelen fare/klavye ve çoklu oyun kolu (Gamepad) olaylarını PC'ye uygular.
 
 1:1 Native çözünürlükte (BitBlt) keskin görüntü, GDI+ yüksek kaliteli JPEG akışı,
-PC'de seçilen metni telefona aktarma ve seçilen ekran bölgesini kırpma (/crop.jpg) desteği sağlar.
+PC'de seçilen metni telefona aktarma, seçilen ekran bölgesini kırpma (/crop.jpg) ve
+4 oyuncuya kadar Çoklu Oyun Kolu (Sanal Xbox 360 XInput + Donanım ScanCode Klavye/Fare + Direksiyon) desteği sağlar.
 """
 import base64
 import ctypes
 import datetime
 import hashlib
 import hmac
+import io
 import ipaddress
 import json
 import os
@@ -17,6 +19,8 @@ import ssl
 import struct
 import threading
 import time
+import urllib.request
+import zipfile
 from ctypes import wintypes
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -58,6 +62,8 @@ user32.SetClipboardData.restype = wintypes.HANDLE
 user32.EmptyClipboard.restype = wintypes.BOOL
 user32.CloseClipboard.restype = wintypes.BOOL
 user32.GetClipboardSequenceNumber.restype = wintypes.DWORD
+user32.MapVirtualKeyW.argtypes = [wintypes.UINT, wintypes.UINT]
+user32.MapVirtualKeyW.restype = wintypes.UINT
 
 CF_UNICODETEXT = 13
 GMEM_MOVEABLE = 0x0002
@@ -205,7 +211,6 @@ def capture_crop_jpeg(x1=0.0, y1=0.0, x2=1.0, y2=1.0, quality=92):
         rx1, rx2 = sorted((max(0.0, min(1.0, float(x1))), max(0.0, min(1.0, float(x2)))))
         ry1, ry2 = sorted((max(0.0, min(1.0, float(y1))), max(0.0, min(1.0, float(y2)))))
 
-        # Çok küçük bir dokunuşsa tam ekranı al
         if (rx2 - rx1) < 0.04 or (ry2 - ry1) < 0.03:
             rx1, ry1, rx2, ry2 = 0.0, 0.0, 1.0, 1.0
 
@@ -274,6 +279,8 @@ def set_clipboard_text(text):
 
 
 def send(*items):
+    if not items:
+        return
     arr = (INPUT * len(items))(*items)
     user32.SendInput(len(items), arr, ctypes.sizeof(INPUT))
 
@@ -283,13 +290,23 @@ MOVE, LDOWN, LUP, RDOWN, RUP, MDOWN, MUP, WHEEL, HWHEEL, ABSOLUTE = (
 )
 BTN = {"l": (LDOWN, LUP), "r": (RDOWN, RUP), "m": (MDOWN, MUP)}
 
-VK = {"enter": 0x0D, "backspace": 0x08, "tab": 0x09, "esc": 0x1B, "space": 0x20, "delete": 0x2E,
-      "insert": 0x2D, "left": 0x25, "up": 0x26, "right": 0x27, "down": 0x28, "home": 0x24,
-      "end": 0x23, "pgup": 0x21, "pgdn": 0x22, "prtsc": 0x2C, "win": 0x5B,
-      "ctrl": 0x11, "alt": 0x12, "shift": 0x10}
+VK = {
+    "enter": 0x0D, "backspace": 0x08, "tab": 0x09, "esc": 0x1B, "space": 0x20, "delete": 0x2E,
+    "insert": 0x2D, "left": 0x25, "up": 0x26, "right": 0x27, "down": 0x28, "home": 0x24,
+    "end": 0x23, "pgup": 0x21, "pgdn": 0x22, "prtsc": 0x2C, "win": 0x5B,
+    "ctrl": 0x11, "lctrl": 0xA2, "rctrl": 0xA3,
+    "alt": 0x12, "lalt": 0xA4, "ralt": 0xA5,
+    "shift": 0x10, "lshift": 0xA0, "rshift": 0xA1,
+    "capslock": 0x14,
+    "num0": 0x60, "num1": 0x61, "num2": 0x62, "num3": 0x63, "num4": 0x64,
+    "num5": 0x65, "num6": 0x66, "num7": 0x67, "num8": 0x68, "num9": 0x69,
+    "num_mul": 0x6A, "num_add": 0x6B, "num_sub": 0x6D, "num_dec": 0x6E, "num_div": 0x6F,
+    "semicolon": 0xBA, "plus": 0xBB, "comma": 0xBC, "minus": 0xBD, "period": 0xBE, "slash": 0xBF,
+    "tilde": 0xC0, "lbracket": 0xDB, "backslash": 0xDC, "rbracket": 0xDD, "quote": 0xDE
+}
 for _i in range(1, 13):
     VK["f%d" % _i] = 0x6F + _i
-EXT = {0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E, 0x5B}
+EXT = {0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E, 0x5B, 0xA3, 0xA5, 0x6F}
 MODS = {"ctrl": 0x11, "alt": 0x12, "shift": 0x10, "win": 0x5B}
 
 
@@ -307,8 +324,22 @@ def abs_xy(rx, ry):
 
 def key(vk, up=False):
     i = INPUT(type=1)
+    scan = user32.MapVirtualKeyW(vk, 0) & 0xFFFF
     flags = (2 if up else 0) | (1 if vk in EXT else 0)
-    i.u.ki = KEYBDINPUT(vk, 0, flags, 0, 0)
+    i.u.ki = KEYBDINPUT(vk, scan, flags, 0, 0)
+    return i
+
+
+def game_key(vk, up=False):
+    """DirectX / Vulkan / OpenGL oyunları için donanım ScanCode öncelikli tuş olayı üretir."""
+    i = INPUT(type=1)
+    scan = user32.MapVirtualKeyW(vk, 0) & 0xFFFF
+    if scan:
+        flags = 0x0008 | (2 if up else 0) | (1 if vk in EXT else 0)
+        i.u.ki = KEYBDINPUT(vk, scan, flags, 0, 0)
+    else:
+        flags = (2 if up else 0) | (1 if vk in EXT else 0)
+        i.u.ki = KEYBDINPUT(vk, 0, flags, 0, 0)
     return i
 
 
@@ -333,6 +364,9 @@ def type_text(text):
 
 
 def vk_for(k):
+    if not k:
+        return None
+    k = str(k).lower().strip()
     if k in VK:
         return VK[k]
     if len(k) == 1 and k.isascii() and k.isalnum():
@@ -350,6 +384,305 @@ def press(k, mods):
 
 def clamp(v, lim=3000):
     return max(-lim, min(lim, int(v)))
+
+
+# ================================================================
+# ÇOKLU OYUN KOLU (SANAL XBOX 360 KOLU - ViGEmBus & KLAVYE/FARE MOTORU)
+# ================================================================
+class XUSB_REPORT(ctypes.Structure):
+    _fields_ = [
+        ("wButtons", ctypes.c_uint16),
+        ("bLeftTrigger", ctypes.c_uint8),
+        ("bRightTrigger", ctypes.c_uint8),
+        ("sThumbLX", ctypes.c_int16),
+        ("sThumbLY", ctypes.c_int16),
+        ("sThumbRX", ctypes.c_int16),
+        ("sThumbRY", ctypes.c_int16),
+    ]
+
+
+class VirtualGamepadHub:
+    """4 oyuncuya kadar Sanal Xbox 360 kolu (ViGEmBus) ve oyuncu slotlarını yönetir."""
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.dll = None
+        self.client = None
+        self.vigem_ready = False
+        self.targets = {}  # slot (1..4) -> PVIGEM_TARGET
+        self.slot_owners = {}  # slot (1..4) -> client_id
+        self._init_attempted = False
+
+    def _find_or_download_dll(self):
+        arch = "x64" if struct.calcsize("P") * 8 == 64 else "x86"
+        candidates = [
+            os.path.join(HERE, "ViGEmClient.dll"),
+            os.path.join(DATA, f"ViGEmClient_{arch}.dll"),
+            os.path.join(DATA, "ViGEmClient.dll"),
+        ]
+        # Eğer vgamepad kuruluysa onun içindeki DLL'i bul
+        try:
+            import vgamepad  # type: ignore
+            vg_dir = os.path.dirname(vgamepad.__file__)
+            for root, _, files in os.walk(vg_dir):
+                for f in files:
+                    if f.lower() == "vigemclient.dll" and (arch in root.lower() or "64" in root.lower() or arch == "x86"):
+                        candidates.insert(0, os.path.join(root, f))
+        except Exception:
+            pass
+
+        for p in candidates:
+            if os.path.exists(p):
+                return p
+
+        # Yoksa PyPI üzerindeki resmi vgamepad paketinden ViGEmClient.dll'i DATA klasörüne indir
+        target_dll = os.path.join(DATA, f"ViGEmClient_{arch}.dll")
+        try:
+            os.makedirs(DATA, exist_ok=True)
+            req = urllib.request.Request(
+                "https://pypi.org/pypi/vgamepad/json",
+                headers={"User-Agent": "Kumanda-Gamepad/1.0"},
+            )
+            meta = json.loads(urllib.request.urlopen(req, timeout=5).read().decode("utf-8"))
+            urls = meta.get("urls", [])
+            whl_url = ""
+            for u in urls:
+                fn = u.get("filename", "")
+                if fn.endswith(".whl") and ("win_amd64" in fn if arch == "x64" else "win32" in fn):
+                    whl_url = u.get("url", "")
+                    break
+            if not whl_url and urls:
+                for u in urls:
+                    if u.get("filename", "").endswith(".whl"):
+                        whl_url = u.get("url", "")
+                        break
+            if whl_url:
+                whl_bytes = urllib.request.urlopen(whl_url, timeout=8).read()
+                with zipfile.ZipFile(io.BytesIO(whl_bytes)) as z:
+                    for name in z.namelist():
+                        if name.lower().endswith("vigemclient.dll") and (arch in name.lower() or "x64" in name.lower()):
+                            with open(target_dll, "wb") as f:
+                                f.write(z.read(name))
+                            return target_dll
+        except Exception:
+            pass
+        return None
+
+    def ensure_initialized(self):
+        with self.lock:
+            if self.vigem_ready:
+                return True
+            if self._init_attempted:
+                return False
+            self._init_attempted = True
+
+            dll_path = self._find_or_download_dll()
+            if not dll_path:
+                return False
+            try:
+                dll = ctypes.WinDLL(dll_path)
+                dll.vigem_alloc.restype = ctypes.c_void_p
+                dll.vigem_free.argtypes = [ctypes.c_void_p]
+                dll.vigem_connect.argtypes = [ctypes.c_void_p]
+                dll.vigem_connect.restype = ctypes.c_uint32
+                dll.vigem_disconnect.argtypes = [ctypes.c_void_p]
+                dll.vigem_target_x360_alloc.restype = ctypes.c_void_p
+                dll.vigem_target_free.argtypes = [ctypes.c_void_p]
+                dll.vigem_target_add.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+                dll.vigem_target_add.restype = ctypes.c_uint32
+                dll.vigem_target_remove.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+                dll.vigem_target_remove.restype = ctypes.c_uint32
+                dll.vigem_target_x360_update.argtypes = [ctypes.c_void_p, ctypes.c_void_p, XUSB_REPORT]
+                dll.vigem_target_x360_update.restype = ctypes.c_uint32
+
+                client = dll.vigem_alloc()
+                if not client:
+                    return False
+                err = dll.vigem_connect(client)
+                if err != 0x20000000:  # VIGEM_ERROR_NONE
+                    dll.vigem_free(client)
+                    return False
+
+                self.dll = dll
+                self.client = client
+                self.vigem_ready = True
+                print(" [Gamepad] ViGEmBus bulundu: Sanal Xbox 360 Kol desteği AKTİF.")
+                return True
+            except Exception as e:
+                print(" [Gamepad] ViGEmBus başlatılamadı, Klavye/Fare emülasyonu kullanılacak:", e)
+                return False
+
+    def assign_slot(self, client_id, preferred_slot=None):
+        with self.lock:
+            # Mevcut slotu varsa ve tercih belirtilmediyse koru
+            for s, cid in list(self.slot_owners.items()):
+                if cid == client_id:
+                    if preferred_slot is None or preferred_slot == s:
+                        return s
+                    del self.slot_owners[s]
+
+            if preferred_slot in (1, 2, 3, 4) and preferred_slot not in self.slot_owners:
+                self.slot_owners[preferred_slot] = client_id
+                return preferred_slot
+
+            for s in (1, 2, 3, 4):
+                if s not in self.slot_owners:
+                    self.slot_owners[s] = client_id
+                    return s
+
+            # Tüm slotlar doluysa tercih edileni veya 1'i ver
+            s = preferred_slot if preferred_slot in (1, 2, 3, 4) else 1
+            self.slot_owners[s] = client_id
+            return s
+
+    def _get_or_create_target(self, slot):
+        if not self.vigem_ready:
+            return None
+        t = self.targets.get(slot)
+        if t:
+            return t
+        t = self.dll.vigem_target_x360_alloc()
+        if not t:
+            return None
+        err = self.dll.vigem_target_add(self.client, t)
+        if err != 0x20000000:
+            self.dll.vigem_target_free(t)
+            return None
+        self.targets[slot] = t
+        return t
+
+    def update_x360(self, slot, btns=0, lt=0, rt=0, lx=0, ly=0, rx=0, ry=0):
+        if not self.vigem_ready and not self._init_attempted:
+            self.ensure_initialized()
+        if not self.vigem_ready:
+            return False
+        with self.lock:
+            target = self._get_or_create_target(slot)
+            if not target:
+                return False
+            rep = XUSB_REPORT(
+                int(btns) & 0xFFFF,
+                max(0, min(255, int(lt))),
+                max(0, min(255, int(rt))),
+                max(-32768, min(32767, int(lx))),
+                max(-32768, min(32767, int(ly))),
+                max(-32768, min(32767, int(rx))),
+                max(-32768, min(32767, int(ry))),
+            )
+            err = self.dll.vigem_target_x360_update(self.client, target, rep)
+            return err == 0x20000000
+
+    def release_client(self, client_id):
+        with self.lock:
+            freed_slots = [s for s, cid in self.slot_owners.items() if cid == client_id]
+            for s in freed_slots:
+                del self.slot_owners[s]
+                target = self.targets.pop(s, None)
+                if target and self.vigem_ready:
+                    try:
+                        self.dll.vigem_target_x360_update(self.client, target, XUSB_REPORT(0, 0, 0, 0, 0, 0, 0))
+                        self.dll.vigem_target_remove(self.client, target)
+                        self.dll.vigem_target_free(target)
+                    except Exception:
+                        pass
+
+    def active_slots_list(self):
+        with self.lock:
+            return sorted(list(self.slot_owners.keys()))
+
+
+GAMEPAD_HUB = VirtualGamepadHub()
+
+# Global referans sayacı: Birden fazla oyuncu aynı klavye tuşuna basarsa çakışmayı önler
+_global_key_lock = threading.Lock()
+_global_held_counts = {}  # vk -> count
+_global_mouse_counts = {"l": 0, "r": 0, "m": 0}
+
+
+def _acquire_vk(vk):
+    with _global_key_lock:
+        cnt = _global_held_counts.get(vk, 0)
+        _global_held_counts[vk] = cnt + 1
+        if cnt == 0:
+            send(game_key(vk, False))
+
+
+def _release_vk(vk):
+    with _global_key_lock:
+        cnt = _global_held_counts.get(vk, 0)
+        if cnt <= 1:
+            _global_held_counts.pop(vk, None)
+            send(game_key(vk, True))
+        else:
+            _global_held_counts[vk] = cnt - 1
+
+
+def _acquire_mb(b):
+    if b not in BTN:
+        return
+    with _global_key_lock:
+        cnt = _global_mouse_counts.get(b, 0)
+        _global_mouse_counts[b] = cnt + 1
+        if cnt == 0:
+            send(mouse(BTN[b][0]))
+
+
+def _release_mb(b):
+    if b not in BTN:
+        return
+    with _global_key_lock:
+        cnt = _global_mouse_counts.get(b, 0)
+        if cnt <= 1:
+            _global_mouse_counts[b] = 0
+            send(mouse(BTN[b][1]))
+        else:
+            _global_mouse_counts[b] = cnt - 1
+
+
+def sync_client_keys_and_mouse(client_state, desired_key_names, desired_mbs, mdx=0, mdy=0):
+    """İstemcinin basılı tuttuğu oyun tuşlarını ve fare butonlarını önceki durumla fark (diff) alarak günceller."""
+    if client_state is None:
+        return
+    new_vks = set()
+    for kname in desired_key_names:
+        vk = vk_for(kname)
+        if vk is not None:
+            new_vks.add(vk)
+
+    old_vks = client_state["held_vks"]
+    for vk in (old_vks - new_vks):
+        _release_vk(vk)
+    for vk in (new_vks - old_vks):
+        _acquire_vk(vk)
+    client_state["held_vks"] = new_vks
+
+    new_mbs = set(b for b in desired_mbs if b in BTN)
+    old_mbs = client_state["held_mbs"]
+    for b in (old_mbs - new_mbs):
+        _release_mb(b)
+    for b in (new_mbs - old_mbs):
+        _acquire_mb(b)
+    client_state["held_mbs"] = new_mbs
+
+    if mdx or mdy:
+        send(mouse(MOVE, clamp(mdx, 1800), clamp(mdy, 1800)))
+
+
+def release_client_state(client_state):
+    """Bağlantı koptuğunda veya sekme değiştiğinde istemcinin basılı kalan tüm tuşlarını ve kolunu bırakır."""
+    if not client_state:
+        return
+    for vk in list(client_state.get("held_vks", set())):
+        _release_vk(vk)
+    client_state["held_vks"].clear()
+
+    for b in list(client_state.get("held_mbs", set())):
+        _release_mb(b)
+    client_state["held_mbs"].clear()
+
+    cid = client_state.get("id")
+    if cid:
+        GAMEPAD_HUB.release_client(cid)
 
 
 def probe_selected_text(send_ws_fn):
@@ -374,8 +707,93 @@ def probe_selected_text(send_ws_fn):
     threading.Thread(target=_worker, daemon=True).start()
 
 
-def handle(ev, send_ws_fn=None):
+def handle(ev, send_ws_fn=None, client_state=None):
     t = ev.get("t")
+    if t == "pad":
+        # Yüksek hızlı birleşik Oyun Kolu paketi (XInput + Klavye/Fare Yedek veya Özel Profil)
+        mode = ev.get("mode", "auto")  # 'auto' | 'xinput' | 'kb'
+        slot = int(ev.get("slot") or (client_state.get("slot", 1) if client_state else 1))
+        if client_state and client_state.get("slot") != slot:
+            slot = GAMEPAD_HUB.assign_slot(client_state["id"], slot)
+            client_state["slot"] = slot
+
+        used_xinput = False
+        if mode in ("auto", "xinput"):
+            used_xinput = GAMEPAD_HUB.update_x360(
+                slot=slot,
+                btns=ev.get("btns", 0),
+                lt=ev.get("lt", 0),
+                rt=ev.get("rt", 0),
+                lx=ev.get("lx", 0),
+                ly=ev.get("ly", 0),
+                rx=ev.get("rx", 0),
+                ry=ev.get("ry", 0),
+            )
+
+        # Klavye/Fare modu seçiliyse VEYA XInput sürücüsü yoksa (ya da FPS fare bakışı varsa) klavye/fare uygula
+        if mode == "kb" or not used_xinput:
+            sync_client_keys_and_mouse(
+                client_state,
+                ev.get("keys", []),
+                ev.get("mb", []),
+                ev.get("mdx", 0),
+                ev.get("mdy", 0),
+            )
+        else:
+            # XInput aktifken bile sağ çubuk 'fare bakışı' (mdx/mdy) gönderiyorsa uygula, basılı klavye tuşu varsa temizle
+            if client_state and (client_state["held_vks"] or client_state["held_mbs"]):
+                sync_client_keys_and_mouse(client_state, [], [], 0, 0)
+            mdx, mdy = ev.get("mdx", 0), ev.get("mdy", 0)
+            if mdx or mdy:
+                send(mouse(MOVE, clamp(mdx, 1800), clamp(mdy, 1800)))
+        return
+
+    if t == "pad_init":
+        if client_state:
+            pref = ev.get("slot")
+            pref = int(pref) if pref in (1, 2, 3, 4, "1", "2", "3", "4") else None
+            slot = GAMEPAD_HUB.assign_slot(client_state["id"], pref)
+            client_state["slot"] = slot
+            vigem_ok = GAMEPAD_HUB.ensure_initialized()
+            if vigem_ok:
+                GAMEPAD_HUB.update_x360(slot, 0, 0, 0, 0, 0, 0, 0)
+            if send_ws_fn:
+                send_ws_fn({
+                    "t": "pad_info",
+                    "slot": slot,
+                    "vigem": vigem_ok,
+                    "active_slots": GAMEPAD_HUB.active_slots_list(),
+                })
+        return
+
+    if t == "pad_release":
+        if client_state:
+            sync_client_keys_and_mouse(client_state, [], [], 0, 0)
+            slot = client_state.get("slot", 1)
+            if GAMEPAD_HUB.vigem_ready:
+                GAMEPAD_HUB.update_x360(slot, 0, 0, 0, 0, 0, 0, 0)
+        return
+
+    if t == "keydown":
+        vk = vk_for(ev.get("k", ""))
+        if vk is not None and client_state is not None:
+            if vk not in client_state["held_vks"]:
+                client_state["held_vks"].add(vk)
+                _acquire_vk(vk)
+        elif vk is not None:
+            send(game_key(vk, False))
+        return
+
+    if t == "keyup":
+        vk = vk_for(ev.get("k", ""))
+        if vk is not None and client_state is not None:
+            if vk in client_state["held_vks"]:
+                client_state["held_vks"].remove(vk)
+                _release_vk(vk)
+        elif vk is not None:
+            send(game_key(vk, True))
+        return
+
     if t == "move":
         send(mouse(MOVE, clamp(ev.get("dx", 0)), clamp(ev.get("dy", 0))))
     elif t == "abs_move":
@@ -550,6 +968,10 @@ class QuietServer(ThreadingHTTPServer):
         super().handle_error(request, client_address)
 
 
+_client_seq = 0
+_client_seq_lock = threading.Lock()
+
+
 class H(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -614,7 +1036,7 @@ class H(BaseHTTPRequestHandler):
             return
         if u.path == "/manifest.json":
             manifest = json.dumps({
-                "name": "Kumanda PC Ekran",
+                "name": "Kumanda PC Ekran & Oyun Kolu",
                 "short_name": "Kumanda",
                 "start_url": "/?p=" + PIN,
                 "display": "fullscreen",
@@ -672,8 +1094,9 @@ class H(BaseHTTPRequestHandler):
             pass
 
     def websocket(self):
-        key = self.headers.get("Sec-WebSocket-Key", "")
-        accept = base64.b64encode(hashlib.sha1((key + GUID).encode()).digest()).decode()
+        global _client_seq
+        key_hdr = self.headers.get("Sec-WebSocket-Key", "")
+        accept = base64.b64encode(hashlib.sha1((key_hdr + GUID).encode()).digest()).decode()
         self.send_response(101, "Switching Protocols")
         self.send_header("Upgrade", "websocket")
         self.send_header("Connection", "Upgrade")
@@ -681,6 +1104,17 @@ class H(BaseHTTPRequestHandler):
         self.end_headers()
         self.close_connection = True
         wlock = threading.Lock()
+
+        with _client_seq_lock:
+            _client_seq += 1
+            cid = _client_seq
+
+        client_state = {
+            "id": cid,
+            "slot": 1,
+            "held_vks": set(),
+            "held_mbs": set(),
+        }
 
         def send_ws(obj):
             with wlock:
@@ -705,11 +1139,13 @@ class H(BaseHTTPRequestHandler):
                         self.wfile.flush()
                 elif op == 1:
                     try:
-                        handle(json.loads(payload.decode("utf-8")), send_ws)
+                        handle(json.loads(payload.decode("utf-8")), send_ws, client_state)
                     except Exception as e:
                         print("olay hatası:", e)
         except (ConnectionError, OSError, ssl.SSLError):
             pass
+        finally:
+            release_client_state(client_state)
 
 
 def main():
@@ -717,6 +1153,10 @@ def main():
     os.makedirs(DATA, exist_ok=True)
     PIN = get_pin()
     ip = local_ip()
+
+    # Arka planda sanal Xbox 360 gamepad sürücüsünü (ViGEmBus) hazırla
+    threading.Thread(target=GAMEPAD_HUB.ensure_initialized, daemon=True).start()
+
     httpd = QuietServer(("0.0.0.0", PORT), H)
     scheme = "http"
     try:
@@ -727,13 +1167,13 @@ def main():
         scheme = "https"
     except Exception as e:
         print("HTTPS açılamadı (%s). HTTP ile devam ediliyor, sesli yazma çalışmayabilir." % e)
-    print("\n" + "=" * 60)
-    print(" KUMANDA HAZIR (1:1 HD + Seçili Metin & Görsel OCR Destekli)")
-    print("=" * 60)
-    print(" Telefonda (aynı Wi-Fi) şu adresi aç:\n")
+    print("\n" + "=" * 64)
+    print(" KUMANDA HAZIR (1:1 HD + AI/OCR + 4 Kişilik Oyun Kolu Destekli)")
+    print("=" * 64)
+    print(" Telefonda veya Tablette (aynı Wi-Fi) şu adresi aç:\n")
     print("     %s://%s:%d/?p=%s\n" % (scheme, ip, PORT, PIN))
     print(" PIN: %s" % PIN)
-    print("=" * 60 + "\n")
+    print("=" * 64 + "\n")
     httpd.serve_forever()
 
 
