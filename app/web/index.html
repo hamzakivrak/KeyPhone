@@ -411,6 +411,481 @@ body[data-pad="off"] #ypadwrap{display:none}
 
 #toast{position:fixed;left:50%;top:42px;transform:translateX(-50%);background:#000e;color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:210;border:1px solid var(--b)}
 #toast.on{opacity:1}
+
+/* ================================================================
+   ÇOKLU OYUN KOLU / GAMEPAD SEKME GÖRÜNÜMÜ (#vg) - TELEFON & TABLET UYUMLU
+   ================================================================ */
+#vg{
+  position:fixed;
+  inset:0;
+  padding:0;
+  margin:0;
+  width:100vw;
+  height:100dvh;
+  background:radial-gradient(circle at 50% 25%, #161b26 0%, #090b10 75%, #050608 100%);
+  z-index:12;
+  overflow:hidden;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  --gp-scale:1;
+  --gp-pad:14px;
+}
+#vg.on{display:flex;flex-direction:column;justify-content:space-between}
+
+/* Üst Kontrol ve Oyuncu Çubuğu */
+#gpTopBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:5px;
+  padding:6px 10px;
+  background:rgba(12,15,22,.82);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.1);
+  z-index:30;
+  flex:none;
+  flex-wrap:wrap;
+}
+.gp-top-group{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+#dotGp{width:9px;height:9px;border-radius:50%;background:var(--r);display:inline-block;margin-right:2px;box-shadow:0 0 8px var(--r)}
+#dotGp.ok{background:#30a46c;box-shadow:0 0 8px #30a46c}
+
+.gp-slot-btn{
+  height:28px;
+  min-width:34px;
+  padding:0 7px;
+  border-radius:8px;
+  background:rgba(30,35,46,.9);
+  border:1px solid rgba(255,255,255,.15);
+  color:var(--m);
+  font-size:11px;
+  font-weight:800;
+  touch-action:manipulation;
+}
+.gp-slot-btn.on[data-slot="1"]{background:#10b981;color:#001;border-color:#34d399;box-shadow:0 0 12px rgba(16,185,129,.45)}
+.gp-slot-btn.on[data-slot="2"]{background:#3b82f6;color:#fff;border-color:#60a5fa;box-shadow:0 0 12px rgba(59,130,246,.45)}
+.gp-slot-btn.on[data-slot="3"]{background:#f59e0b;color:#001;border-color:#fbbf24;box-shadow:0 0 12px rgba(245,158,11,.45)}
+.gp-slot-btn.on[data-slot="4"]{background:#a855f7;color:#fff;border-color:#c084fc;box-shadow:0 0 12px rgba(168,85,247,.45)}
+
+#gpGenreSelect{
+  height:28px;
+  background:rgba(30,35,46,.95);
+  color:var(--t);
+  border:1px solid rgba(77,163,255,.45);
+  border-radius:8px;
+  padding:0 7px;
+  font-size:11px;
+  font-weight:700;
+  max-width:165px;
+}
+.gp-pill-btn{
+  height:28px;
+  padding:0 8px;
+  border-radius:8px;
+  background:rgba(30,35,46,.9);
+  border:1px solid rgba(255,255,255,.15);
+  color:var(--t);
+  font-size:11px;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  touch-action:manipulation;
+}
+.gp-pill-btn.on{background:var(--a);color:#001;border-color:var(--a)}
+.gp-pill-btn.warn-on{background:var(--w);color:#001;border-color:#fde047;box-shadow:0 0 10px rgba(245,165,36,.4)}
+.gp-pill-btn.danger-on{background:var(--r);color:#fff;border-color:#fca5a5;box-shadow:0 0 10px rgba(229,72,77,.4)}
+
+#gpStatusBadge{
+  font-size:10px;
+  padding:3px 7px;
+  border-radius:6px;
+  background:rgba(48,164,108,.18);
+  color:#86efac;
+  border:1px solid rgba(48,164,108,.4);
+  font-weight:700;
+  white-space:nowrap;
+}
+
+/* Omuz ve Tetik Tuşları (L1, L2, R1, R2) + Orta Konsol */
+#gpShoulderRow{
+  display:flex;
+  align-items:stretch;
+  justify-content:space-between;
+  gap:8px;
+  padding:6px var(--gp-pad) 2px;
+  flex:none;
+  z-index:20;
+}
+.gp-shoulder-pair{
+  display:flex;
+  gap:8px;
+  flex:1;
+  max-width:38%;
+}
+.gp-trig-btn{
+  flex:1;
+  height:calc(44px * var(--gp-scale));
+  min-height:36px;
+  max-height:68px;
+  border-radius:12px;
+  background:linear-gradient(180deg, #252b38 0%, #171b24 100%);
+  border:1.5px solid rgba(255,255,255,.18);
+  color:var(--t);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.45);
+  touch-action:none;
+}
+.gp-trig-btn b{font-size:13px;letter-spacing:.3px;pointer-events:none}
+.gp-trig-btn small{font-size:9px;color:var(--a);opacity:.9;pointer-events:none;margin-top:1px}
+.gp-trig-btn.press{
+  background:linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color:#93c5fd;
+  color:#fff;
+  transform:translateY(1px) scale(.98);
+  box-shadow:0 0 16px rgba(59,130,246,.55);
+}
+.gp-trig-btn.press small{color:#e0f2fe}
+.gp-trig-btn.hold-lock{
+  border-color:var(--w)!important;
+  box-shadow:0 0 14px rgba(245,165,36,.6)!important;
+}
+.gp-trig-btn.turbo-on::after,
+.gp-act-btn.turbo-on::after{
+  content:'⚡';
+  position:absolute;
+  top:2px;
+  right:4px;
+  font-size:9px;
+  color:#fde047;
+}
+
+/* Orta Menü Tuşları (Select, Home, Start, L3, R3) */
+#gpCenterCluster{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  flex:none;
+}
+.gp-sys-btn{
+  height:34px;
+  min-width:44px;
+  padding:0 8px;
+  border-radius:17px;
+  background:#181c26;
+  border:1px solid rgba(255,255,255,.16);
+  color:var(--m);
+  font-size:10px;
+  font-weight:700;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  touch-action:none;
+}
+.gp-sys-btn.press{background:var(--a);color:#001;border-color:#fff}
+.gp-sys-btn.home-btn{
+  width:40px;
+  height:40px;
+  min-width:40px;
+  border-radius:50%;
+  background:radial-gradient(circle, #252f42 0%, #121620 100%);
+  border:1.5px solid rgba(77,163,255,.5);
+  color:var(--a);
+  font-size:14px;
+}
+
+/* Ana İki Başparmak Oyun Alanı */
+#gpMainDeck{
+  flex:1;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:4px var(--gp-pad) calc(10px + env(safe-area-inset-bottom, 0px));
+  gap:10px;
+  position:relative;
+}
+.gp-side-zone{
+  flex:1;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+  position:relative;
+  gap:8px;
+}
+#gpLeftZone{justify-content:flex-start;gap:14px}
+#gpRightZone{justify-content:flex-end;gap:14px}
+
+/* 360 Derece Sanal Analog Stick */
+.gp-stick-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  position:relative;
+}
+.gp-stick-base{
+  width:calc(138px * var(--gp-scale));
+  height:calc(138px * var(--gp-scale));
+  min-width:96px;
+  min-height:96px;
+  max-width:210px;
+  max-height:210px;
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 50%, rgba(30,37,52,.9) 0%, rgba(14,17,24,.95) 75%, #090b10 100%);
+  border:2px solid rgba(77,163,255,.32);
+  box-shadow:inset 0 4px 18px rgba(0,0,0,.85), 0 4px 16px rgba(0,0,0,.5);
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:none;
+}
+.gp-stick-base.active{
+  border-color:var(--a);
+  box-shadow:inset 0 4px 18px rgba(0,0,0,.85), 0 0 22px rgba(77,163,255,.35);
+}
+.gp-stick-cross{
+  position:absolute;
+  inset:16%;
+  border-radius:50%;
+  border:1px dashed rgba(255,255,255,.1);
+  pointer-events:none;
+}
+.gp-stick-nub{
+  width:46%;
+  height:46%;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #4b5563 0%, #272e3d 55%, #111827 100%);
+  border:2px solid rgba(147,197,253,.55);
+  box-shadow:0 6px 14px rgba(0,0,0,.75), inset 0 2px 5px rgba(255,255,255,.25);
+  position:absolute;
+  left:27%;
+  top:27%;
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:800;
+  color:rgba(255,255,255,.75);
+  will-change:transform;
+}
+.gp-stick-base.active .gp-stick-nub{
+  background:radial-gradient(circle at 35% 30%, #60a5fa 0%, #2563eb 60%, #1d4ed8 100%);
+  border-color:#fff;
+  color:#fff;
+}
+.gp-zone-caption{
+  font-size:10px;
+  color:var(--m);
+  font-weight:600;
+  pointer-events:none;
+  text-align:center;
+}
+
+/* 8 Yönlü Kaydırmalı D-Pad */
+.gp-dpad-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.gp-dpad{
+  width:calc(126px * var(--gp-scale));
+  height:calc(126px * var(--gp-scale));
+  min-width:92px;
+  min-height:92px;
+  max-width:195px;
+  max-height:195px;
+  position:relative;
+  border-radius:20px;
+  background:rgba(18,22,31,.65);
+  border:1.5px solid rgba(255,255,255,.12);
+  touch-action:none;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:1fr 1fr 1fr;
+  padding:4px;
+  gap:2px;
+}
+.gp-dpad-seg{
+  border-radius:8px;
+  background:rgba(32,38,50,.92);
+  border:1px solid rgba(255,255,255,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  font-weight:800;
+  color:var(--t);
+  pointer-events:none;
+  transition:background .06s, transform .06s;
+}
+.gp-dpad-seg.diag{
+  background:rgba(24,28,38,.45);
+  border-color:transparent;
+  font-size:10px;
+  color:rgba(255,255,255,.22);
+}
+.gp-dpad-center{
+  border-radius:50%;
+  background:#11151d;
+  border:1px solid rgba(255,255,255,.08);
+  pointer-events:none;
+}
+.gp-dpad-seg.press{
+  background:var(--a)!important;
+  color:#001!important;
+  border-color:#fff!important;
+  box-shadow:0 0 12px rgba(77,163,255,.65);
+  transform:scale(.95);
+}
+
+/* Elmas Aksiyon Tuşları (A, B, X, Y / PlayStation Sembolleri) */
+.gp-abxy-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+#gpAbxy{
+  width:calc(152px * var(--gp-scale));
+  height:calc(152px * var(--gp-scale));
+  min-width:112px;
+  min-height:112px;
+  max-width:230px;
+  max-height:230px;
+  position:relative;
+  touch-action:none;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(25,30,42,.55) 0%, transparent 72%);
+}
+.gp-act-btn{
+  position:absolute;
+  width:36%;
+  height:36%;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 28%, #2e3646 0%, #1a202c 70%, #11151f 100%);
+  border:2px solid rgba(255,255,255,.22);
+  box-shadow:0 5px 14px rgba(0,0,0,.65);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  pointer-events:none;
+  transition:transform .05s, box-shadow .05s;
+}
+.gp-act-btn b{font-size:calc(16px * var(--gp-scale));line-height:1;font-weight:900}
+.gp-act-btn small{font-size:8.5px;color:#cbd5e1;margin-top:1px;max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+
+/* Y (Üst), X (Sol), B (Sağ), A (Alt) Konumları ve Renkleri */
+.gp-act-btn[data-btn="y"]{top:2%;left:32%;border-color:#facc15;color:#fde047}
+.gp-act-btn[data-btn="x"]{top:32%;left:2%;border-color:#38bdf8;color:#7dd3fc}
+.gp-act-btn[data-btn="b"]{top:32%;right:2%;border-color:#f87171;color:#fca5a5}
+.gp-act-btn[data-btn="a"]{bottom:2%;left:32%;border-color:#4ade80;color:#86efac}
+
+.gp-act-btn.press[data-btn="y"]{background:#eab308;color:#001;border-color:#fff;transform:scale(.92);box-shadow:0 0 18px #eab308}
+.gp-act-btn.press[data-btn="x"]{background:#0284c7;color:#fff;border-color:#fff;transform:scale(.92);box-shadow:0 0 18px #38bdf8}
+.gp-act-btn.press[data-btn="b"]{background:#dc2626;color:#fff;border-color:#fff;transform:scale(.92);box-shadow:0 0 18px #f87171}
+.gp-act-btn.press[data-btn="a"]{background:#16a34a;color:#001;border-color:#fff;transform:scale(.92);box-shadow:0 0 18px #4ade80}
+.gp-act-btn.press small{color:inherit;font-weight:800}
+.gp-act-btn.hold-lock{border-width:3px!important;border-color:var(--w)!important;box-shadow:0 0 16px rgba(245,165,36,.8)!important}
+
+/* Direksiyon (Jiroskop) Gösterge Çubuğu */
+#gpGyroBar{
+  position:absolute;
+  top:4px;
+  left:50%;
+  transform:translateX(-50%);
+  width:180px;
+  height:18px;
+  border-radius:10px;
+  background:rgba(15,18,26,.85);
+  border:1px solid rgba(77,163,255,.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  pointer-events:none;
+  z-index:25;
+}
+#gpGyroFill{
+  position:absolute;
+  height:100%;
+  width:8px;
+  background:var(--a);
+  border-radius:4px;
+  left:calc(50% - 4px);
+  box-shadow:0 0 8px var(--a);
+}
+#gpGyroText{font-size:9px;color:#e2e8f0;z-index:2;font-weight:700}
+
+/* Retro modda sağ stick gizlenip tuşlar büyür */
+#vg[data-genre="retro"] #gpStickRWrap{display:none}
+#vg[data-genre="retro"] #gpAbxy{width:calc(172px * var(--gp-scale));height:calc(172px * var(--gp-scale))}
+#vg[data-genre="retro"] .gp-dpad{width:calc(146px * var(--gp-scale));height:calc(146px * var(--gp-scale))}
+
+/* Dikey (Portrait) Telefon Tutuşuna Özel Otomatik Yerleşim */
+@media (orientation:portrait){
+  #gpMainDeck{
+    flex-direction:column;
+    justify-content:space-evenly;
+    padding:6px 10px 14px;
+  }
+  .gp-side-zone{
+    width:100%;
+    height:auto;
+    justify-content:space-around!important;
+  }
+  #gpShoulderRow{
+    flex-wrap:wrap;
+    gap:4px;
+  }
+  .gp-shoulder-pair{max-width:48%}
+  #gpCenterCluster{width:100%;order:3;margin-top:2px}
+}
+
+/* Ayarlar içindeki Özel Tuş Dizilimi (Keymap) Tablosu */
+.gp-map-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:6px;
+  background:var(--p2);
+  padding:8px;
+  border-radius:10px;
+  border:1px solid var(--b);
+}
+.gp-map-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+  background:var(--p);
+  padding:4px 7px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.07);
+  font-size:11px;
+}
+.gp-map-item span{font-weight:700;color:var(--t)}
+.gp-map-item select{
+  padding:3px 4px!important;
+  font-size:11px!important;
+  max-width:110px;
+}
+
 </style>
 </head>
 <body data-pp="bottom" data-pl="right" data-pad="on" data-clicks="on" class="fullscreen-mode">
@@ -421,6 +896,7 @@ body[data-pad="off"] #ypadwrap{display:none}
   <button class="tab" data-v="vy">Yaz</button>
   <button class="tab" data-v="vp">Pad</button>
   <button class="tab" data-v="vk">Klavye</button>
+  <button class="tab" data-v="vg">🎮 Kol</button>
   <button class="tab ib" id="micTop" title="Bas-Konuş / Dokun-Kilitle">🎤</button>
   <button class="tab ib" id="gear" title="Ayarlar">⚙</button>
 </div>
@@ -483,7 +959,7 @@ body[data-pad="off"] #ypadwrap{display:none}
     </select>
   </label>
   <label>Açılışta ekran
-    <select data-s="startTab"><option value="vs">🖥 Tam Ekran PC</option><option value="vy">Yaz</option><option value="vp">Pad</option><option value="vk">Klavye</option></select>
+    <select data-s="startTab"><option value="vs">🖥 Tam Ekran PC</option><option value="vg">🎮 Oyun Kolu (Gamepad)</option><option value="vy">Yaz</option><option value="vp">Pad</option><option value="vk">Klavye</option></select>
   </label>
 
   <h4>Giriş & Kaydırma</h4>
@@ -514,6 +990,67 @@ body[data-pad="off"] #ypadwrap{display:none}
     <button class="k s" id="tI">Dene: italik</button>
     <button class="k s" id="tU">Dene: altı çizili</button>
   </div>
+
+  <h4 id="gpSettingsAnchor">🎮 Oyun Kolu (Gamepad) & Tuş Dizilimi Ayarları</h4>
+  <label>Varsayılan Oyuncu Kolu (1-4 Kişi)
+    <select data-s="gpSlot">
+      <option value="1">Oyuncu 1 (Yeşil - P1)</option>
+      <option value="2">Oyuncu 2 (Mavi - P2)</option>
+      <option value="3">Oyuncu 3 (Turuncu - P3)</option>
+      <option value="4">Oyuncu 4 (Mor - P4)</option>
+    </select>
+  </label>
+  <label>Oyun Türü / Hazır Tuş Profili
+    <select data-s="gpGenre" id="setGpGenre">
+      <option value="standard">🎮 Standart Konsol (Xbox / PlayStation)</option>
+      <option value="football">⚽ Futbol (FIFA / EA FC / eFootball)</option>
+      <option value="racing">🏎️ Yarış & Sürüş (Forza / NFS / Blur)</option>
+      <option value="fighting">🥊 Dövüş & Arcade (MK / Street Fighter / Tekken)</option>
+      <option value="fps">🔫 FPS / Nişancı (Sağ Stick Fare Bakışlı)</option>
+      <option value="retro">👾 Retro / Platform (Büyük D-Pad + 4 Tuş)</option>
+      <option value="custom">🛠️ Özel Tuş Dizilimi (Aşağıdan Düzenle)</option>
+    </select>
+  </label>
+  <label>Kontrol Motoru (PC İletişim Modu)
+    <select data-s="gpMode">
+      <option value="auto">Otomatik (Önce Xbox 360 XInput, yoksa Klavye)</option>
+      <option value="xinput">Sadece Sanal Xbox 360 Kolu (ViGEm / Sunshine)</option>
+      <option value="kb">Sadece Klavye & Fare Emülasyonu (ScanCode)</option>
+    </select>
+  </label>
+  <label>Tuş Sembol Görünümü
+    <select data-s="gpLabels">
+      <option value="xbox">Xbox (Y, X, B, A / LB, RB, LT, RT)</option>
+      <option value="ps">PlayStation (△, □, ○, ✕ / L1, R1, L2, R2)</option>
+    </select>
+  </label>
+  <label>Sağ Analog Stick İşlevi
+    <select data-s="gpRightStickMode">
+      <option value="auto">Profile Göre Otomatik (Stick veya Fare)</option>
+      <option value="stick">Her Zaman Sanal Sağ Stick (Çalım / Kamera)</option>
+      <option value="mouse">Her Zaman Fare Bakışı (FPS Nişan / İmleç)</option>
+    </select>
+  </label>
+  <label>Telefon / Tablet Tuş Boyutu <input type="range" data-s="gpScale" min="0.75" max="1.35" step="0.05"></label>
+  <label>Kenar Tutuş Boşluğu (Tablet/Telefon) <input type="range" data-s="gpPad" min="6" max="48" step="2"></label>
+  <label>Direksiyon (Jiroskop) Hassasiyeti <input type="range" data-s="gpGyroSens" min="0.5" max="2.5" step="0.1"></label>
+  <label>Tuş Titreşimi (Haptic Feedback) <input type="checkbox" data-s="gpVib"></label>
+  <label>Sol Analog Dokunduğun Yerde Merkezlesin <input type="checkbox" data-s="gpFloatStick"></label>
+
+  <details id="gpKeymapDetails">
+    <summary>🛠️ Klavye & Fare Tuş Eşlemesini Özelleştir (Oyun Türüne / Oyuncuya Göre)</summary>
+    <div class="small" style="margin:4px 0 8px">
+      Klavye modunda veya klavye ile oynanan oyunlarda her oyun kolu tuşunun bilgisayarda hangi tuşa basacağını buradan değiştirebilirsin.
+    </div>
+    <div class="row" style="margin-bottom:6px">
+      <button class="k s" id="btnResetP1">P1 (WASD)</button>
+      <button class="k s" id="btnResetP2">P2 (Oklar+Num)</button>
+      <button class="k s" id="btnResetP3">P3 (IJKL)</button>
+      <button class="k s" id="btnResetP4">P4 (TFGH)</button>
+    </div>
+    <div class="gp-map-grid" id="gpMapGrid"></div>
+  </details>
+
 </div>
 
 <!-- TAM EKRAN CANLI PC GÖRÜNÜMÜ -->
@@ -666,6 +1203,115 @@ body[data-pad="off"] #ypadwrap{display:none}
   <div class="sc" id="sc"></div>
 </div>
 
+<!-- ÇOKLU OYUN KOLU / GAMEPAD (#vg) -->
+<div class="view" id="vg" data-genre="standard">
+  <div id="gpTopBar">
+    <div class="gp-top-group">
+      <span id="dotGp"></span>
+      <button class="gp-slot-btn on" data-slot="1" title="1. Oyuncu Kolu">P1</button>
+      <button class="gp-slot-btn" data-slot="2" title="2. Oyuncu Kolu">P2</button>
+      <button class="gp-slot-btn" data-slot="3" title="3. Oyuncu Kolu">P3</button>
+      <button class="gp-slot-btn" data-slot="4" title="4. Oyuncu Kolu">P4</button>
+      <select id="gpGenreSelect" title="Oyun Türüne Göre Tuş Dizilimi">
+        <option value="standard">🎮 Standart Konsol</option>
+        <option value="football">⚽ Futbol (FIFA/FC)</option>
+        <option value="racing">🏎️ Yarış / Sürüş</option>
+        <option value="fighting">🥊 Dövüş / Arcade</option>
+        <option value="fps">🔫 FPS / Nişancı</option>
+        <option value="retro">👾 Retro / Platform</option>
+        <option value="custom">🛠️ Özel Dizilim</option>
+      </select>
+    </div>
+
+    <div class="gp-top-group">
+      <span id="gpStatusBadge">🟢 Hazır</span>
+      <button class="gp-pill-btn" id="gpGyroBtn" title="Telefonu/Tableti eğerek direksiyon gibi kullan">🛞 Direksiyon</button>
+      <button class="gp-pill-btn hid" id="gpGyroCalBtn" title="Direksiyon merkezini şu anki tutuşuna göre sıfırla">🎯 Merkezle</button>
+      <button class="gp-pill-btn" id="gpTurboBtn" title="Turbo: Seçtiğin tuşa basılı tutunca seri basar">🔥 Turbo</button>
+      <button class="gp-pill-btn" id="gpHoldBtn" title="Basılı Tutma Kilidi: Gaz veya koşu tuşunu basılı kilitler">🔒 Kilitle</button>
+      <button class="gp-pill-btn" id="gpFsBtn" title="Tam Ekran ve Yatay Görünüm">⛶</button>
+      <button class="gp-pill-btn" id="gpSetBtn" title="Oyun Kolu & Tuş Dizilimi Ayarları">⚙</button>
+      <button class="gp-pill-btn" id="gpMenuBtn" title="Üst Sekme Menüsünü Göster/Gizle">☰</button>
+    </div>
+  </div>
+
+  <!-- Üst Omuz / Tetik Tuşları (L2, L1, R1, R2) ve Orta Sistem Tuşları -->
+  <div id="gpShoulderRow">
+    <div class="gp-shoulder-pair">
+      <button class="gp-trig-btn" data-gbtn="l2"><b id="lblL2">LT / L2</b><small id="subL2">Fren / Nişan</small></button>
+      <button class="gp-trig-btn" data-gbtn="l1"><b id="lblL1">LB / L1</b><small id="subL1">Omuz Sol</small></button>
+    </div>
+
+    <div id="gpCenterCluster">
+      <button class="gp-sys-btn" data-gbtn="l3"><b id="lblL3">L3</b><span>Sol Çubuk</span></button>
+      <button class="gp-sys-btn" data-gbtn="select"><b>SELECT</b><span id="subSelect">Back</span></button>
+      <button class="gp-sys-btn home-btn" data-gbtn="home" title="Xbox / PS Guide Tuşu">🎮</button>
+      <button class="gp-sys-btn" data-gbtn="start"><b>START</b><span id="subStart">Pause</span></button>
+      <button class="gp-sys-btn" data-gbtn="r3"><b id="lblR3">R3</b><span>Sağ Çubuk</span></button>
+    </div>
+
+    <div class="gp-shoulder-pair">
+      <button class="gp-trig-btn" data-gbtn="r1"><b id="lblR1">RB / R1</b><small id="subR1">Omuz Sağ</small></button>
+      <button class="gp-trig-btn" data-gbtn="r2"><b id="lblR2">RT / R2</b><small id="subR2">Gaz / Ateş</small></button>
+    </div>
+  </div>
+
+  <!-- Ana İki Başparmak Kontrol Alanı -->
+  <div id="gpMainDeck">
+    <div id="gpGyroBar" class="hid">
+      <div id="gpGyroFill"></div>
+      <span id="gpGyroText">🛞 Direksiyon: 0°</span>
+    </div>
+
+    <!-- Sol Bölge: 360° Sol Analog Stick + 8 Yönlü Kaydırmalı D-Pad -->
+    <div class="gp-side-zone" id="gpLeftZone">
+      <div class="gp-stick-wrap" id="gpStickLWrap">
+        <div class="gp-stick-base" id="gpStickL">
+          <div class="gp-stick-cross"></div>
+          <div class="gp-stick-nub" id="gpNubL">L</div>
+        </div>
+        <span class="gp-zone-caption" id="capStickL">Sol Analog (360°)</span>
+      </div>
+
+      <div class="gp-dpad-wrap" id="gpDpadWrap">
+        <div class="gp-dpad" id="gpDpad">
+          <div class="gp-dpad-seg diag" data-dpad="ul">↖</div>
+          <div class="gp-dpad-seg" data-dpad="up">▲</div>
+          <div class="gp-dpad-seg diag" data-dpad="ur">↗</div>
+          <div class="gp-dpad-seg" data-dpad="left">◀</div>
+          <div class="gp-dpad-center"></div>
+          <div class="gp-dpad-seg" data-dpad="right">▶</div>
+          <div class="gp-dpad-seg diag" data-dpad="dl">↙</div>
+          <div class="gp-dpad-seg" data-dpad="down">▼</div>
+          <div class="gp-dpad-seg diag" data-dpad="dr">↘</div>
+        </div>
+        <span class="gp-zone-caption">D-Pad (Kaydırmalı)</span>
+      </div>
+    </div>
+
+    <!-- Sağ Bölge: Sağ Analog Stick (Kamera/Çalım/Fare) + Elmas A/B/X/Y Tuşları -->
+    <div class="gp-side-zone" id="gpRightZone">
+      <div class="gp-stick-wrap" id="gpStickRWrap">
+        <div class="gp-stick-base" id="gpStickR">
+          <div class="gp-stick-cross"></div>
+          <div class="gp-stick-nub" id="gpNubR">R</div>
+        </div>
+        <span class="gp-zone-caption" id="capStickR">Sağ Analog / Kamera</span>
+      </div>
+
+      <div class="gp-abxy-wrap">
+        <div id="gpAbxy">
+          <button class="gp-act-btn" data-btn="y"><b id="lblY">Y</b><small id="subY">Üçgen</small></button>
+          <button class="gp-act-btn" data-btn="x"><b id="lblX">X</b><small id="subX">Kare</small></button>
+          <button class="gp-act-btn" data-btn="b"><b id="lblB">B</b><small id="subB">Yuvarlak</small></button>
+          <button class="gp-act-btn" data-btn="a"><b id="lblA">A</b><small id="subA">Çarpı</small></button>
+        </div>
+        <span class="gp-zone-caption" id="capAbxy">Aksiyon Tuşları (Kaydır/Çoklu)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <button id="fabMic" class="hid">🎤<small>KONUŞ</small></button>
 <div id="tapRipple"></div>
 <div id="toast"></div>
@@ -698,7 +1344,9 @@ const D = Object.assign({
   miniDirect: true, grabSel: true, noSoftKb: true,
   showFab: true, punct: true, cap: true, indent: false,
   num: 'auto', startTab: 'vs', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
-  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '1.0', scrFps: '40', scrQual: '90', scrFit: 'fill'
+  wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '1.0', scrFps: '40', scrQual: '90', scrFit: 'fill',
+  gpSlot: '1', gpGenre: 'standard', gpMode: 'auto', gpLabels: 'xbox', gpRightStickMode: 'auto',
+  gpScale: 1.0, gpPad: 14, gpGyroSens: 1.2, gpVib: true, gpFloatStick: true
 }, WL.tr);
 let saved = {};
 try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
@@ -1214,6 +1862,7 @@ let ws = null, wsOk = false, fails = 0;
 function setDot() {
   $('#dot').classList.toggle('ok', wsOk);
   $('#dotMini').classList.toggle('ok', wsOk);
+  if ($('#dotGp')) $('#dotGp').classList.toggle('ok', wsOk);
 }
 function connect() {
   if (!PIN) {
@@ -1223,11 +1872,15 @@ function connect() {
   try {
     ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?p=' + encodeURIComponent(PIN));
   } catch (e) { setTimeout(connect, 1500); return; }
-  ws.onopen = () => { wsOk = true; fails = 0; setDot(); };
+  ws.onopen = () => {
+    wsOk = true; fails = 0; setDot();
+    if (activeTab === 'vg' && typeof window.__initGamepadSlot === 'function') window.__initGamepadSlot();
+  };
   ws.onmessage = ev => {
     try {
       const msg = JSON.parse(ev.data);
       if (msg.t === 'sel') handlePcSelectionEvent(msg.s);
+      else if (msg.t === 'pad_info' && typeof window.__onPadInfo === 'function') window.__onPadInfo(msg);
     } catch (e) {}
   };
   ws.onclose = () => {
@@ -1247,13 +1900,19 @@ const pcScreenImg = $('#pcScreen');
 let streamUrlCurrent = '';
 
 function showTab(id) {
+  if (activeTab === 'vg' && id !== 'vg' && typeof window.__releaseGamepad === 'function') {
+    window.__releaseGamepad();
+  }
   activeTab = id;
   $$('.tab[data-v]').forEach(x => x.classList.toggle('on', x.dataset.v === id));
   $$('.view').forEach(v => v.classList.toggle('on', v.id === id));
-  document.body.classList.toggle('fullscreen-mode', id === 'vs');
+  document.body.classList.toggle('fullscreen-mode', id === 'vs' || id === 'vg');
   document.body.classList.remove('show-top');
-  $('#fabMic').classList.toggle('hid', !S.showFab || id === 'vs');
+  $('#fabMic').classList.toggle('hid', !S.showFab || id === 'vs' || id === 'vg');
   startScreenLoop();
+  if (id === 'vg' && typeof window.__initGamepadSlot === 'function') {
+    window.__initGamepadSlot();
+  }
 }
 $$('.tab[data-v]').forEach(b => b.onclick = () => showTab(b.dataset.v));
 
@@ -2787,6 +3446,951 @@ renderMods();
 updateFocusUI();
 showTab(S.startTab || 'vs');
 wake();
+
+
+/* ================================================================
+   ÇOKLU OYUN KOLU (GAMEPAD) MOTORU: 1-4 OYUNCU, XINPUT + SCANCODE KLAVYE/FARE,
+   OYUN TÜRÜ PROFİLLERİ, ÇOKLU DOKUNMATİK (MULTI-TOUCH), TURBO, HOLD & JİROSKOP
+   ================================================================ */
+(function initGamepadEngine() {
+  const vg = $('#vg');
+  if (!vg) return;
+
+  // Xbox 360 (XUSB_BUTTON) Bitmask Sabitleri
+  const XBTN = {
+    up: 0x0001,
+    down: 0x0002,
+    left: 0x0004,
+    right: 0x0008,
+    start: 0x0010,
+    select: 0x0020,
+    l3: 0x0040,
+    r3: 0x0080,
+    l1: 0x0100,
+    r1: 0x0200,
+    home: 0x0400,
+    a: 0x1000,
+    b: 0x2000,
+    x: 0x4000,
+    y: 0x8000
+  };
+
+  // 4 Farklı Oyuncu İçin Çakışmayan Varsayılan Klavye Profilleri (Aynı PC'de 4 Kişi Klavye Modu Oynayabilsin)
+  const PLAYER_KB_DEFAULTS = {
+    1: {
+      up: 'w', down: 's', left: 'a', right: 'd',
+      a: 'space', b: 'k', x: 'j', y: 'l',
+      l1: 'q', r1: 'e', l2: 'u', r2: 'i',
+      l3: 'lshift', r3: 'v', select: 'tab', start: 'enter', home: 'esc',
+      r_up: 'up', r_down: 'down', r_left: 'left', r_right: 'right'
+    },
+    2: {
+      up: 'up', down: 'down', left: 'left', right: 'right',
+      a: 'num0', b: 'num2', x: 'num1', y: 'num3',
+      l1: 'num4', r1: 'num6', l2: 'num7', r2: 'num9',
+      l3: 'rshift', r3: 'num5', select: 'backspace', start: 'num_add', home: 'esc',
+      r_up: 'num8', r_down: 'num5', r_left: 'num4', r_right: 'num6'
+    },
+    3: {
+      up: 'i', down: 'k', left: 'j', right: 'l',
+      a: 'm', b: 'period', x: 'n', y: 'comma',
+      l1: 'u', r1: 'o', l2: '7', r2: '9',
+      l3: '8', r3: '0', select: 'minus', start: 'plus', home: 'esc',
+      r_up: 't', r_down: 'g', r_left: 'f', r_right: 'h'
+    },
+    4: {
+      up: 't', down: 'g', left: 'f', right: 'h',
+      a: 'b', b: 'c', x: 'v', y: 'x',
+      l1: 'r', r1: 'y', l2: '4', r2: '6',
+      l3: '5', r3: 'z', select: 'f1', start: 'f2', home: 'esc',
+      r_up: 'up', r_down: 'down', r_left: 'left', r_right: 'right'
+    }
+  };
+
+  // Oyun Türüne Göre Özel Klavye/Fare ve Etiket Profilleri
+  const GENRE_PROFILES = {
+    standard: {
+      name: 'Standart Konsol',
+      stickL: 'Sol Analog (Hareket)',
+      stickR: 'Sağ Analog (Kamera)',
+      rightMode: 'stick',
+      sub: { a: 'Zıpla / Onay', b: 'Eğil / Geri', x: 'Etkileşim', y: 'Üst Aksiyon', l1: 'LB / L1', r1: 'RB / R1', l2: 'LT / L2', r2: 'RT / R2', select: 'Seç', start: 'Menü' },
+      kbOverride: null // Oyuncu (P1-P4) varsayılanını kullanır
+    },
+    football: {
+      name: 'Futbol (FIFA/FC)',
+      stickL: 'Oyuncu Yönü (360°)',
+      stickR: 'Çalım / Skill Moves',
+      rightMode: 'stick',
+      sub: { a: 'Pas / Pres', b: 'Şut / Kayma', x: 'Orta / Uzun Pas', y: 'Ara Pas / Kaleci', l1: 'Oyuncu Değiş', r1: 'Plase / Teknik', l2: 'Jokey / Koru', r2: 'Hızlı Koşu (Sprint)', select: 'Kamera', start: 'Duraklat' },
+      kbOverride: {
+        up: 'w', down: 's', left: 'a', right: 'd',
+        a: 's', b: 'd', x: 'a', y: 'w',
+        l1: 'q', r1: 'z', l2: 'c', r2: 'e',
+        l3: 'lshift', r3: 'space', select: 'tab', start: 'esc'
+      }
+    },
+    racing: {
+      name: 'Yarış & Sürüş',
+      stickL: 'Direksiyon (Sol/Sağ)',
+      stickR: 'Serbest Kamera',
+      rightMode: 'stick',
+      sub: { a: 'El Freni', b: 'Nitro / NOS', x: 'Vites Küçült', y: 'Kamera Değiş', l1: 'Debriyaj / Geri Bak', r1: 'Vites Büyüt', l2: 'Fren / Geri Vites', r2: 'GAZ (Basılı Tut)', select: 'Harita', start: 'Duraklat' },
+      kbOverride: {
+        up: 'w', down: 's', left: 'a', right: 'd',
+        a: 'space', b: 'lshift', x: 'q', y: 'c',
+        l1: 'v', r1: 'e', l2: 's', r2: 'w',
+        l3: 'h', r3: 'b', select: 'm', start: 'esc'
+      }
+    },
+    fighting: {
+      name: 'Dövüş & Arcade',
+      stickL: 'Dövüşçü Hareketi',
+      stickR: 'Özel / Taunt',
+      rightMode: 'stick',
+      sub: { a: 'Hafif Tekme (LK)', b: 'Ağır Tekme (HK)', x: 'Hafif Yumruk (LP)', y: 'Ağır Yumruk (HP)', l1: 'Yakalama (Throw)', r1: 'Kombo / Assist', l2: 'Stance / Özel', r2: 'BLOK (Savunma)', select: 'Jeton', start: 'Başlat' },
+      kbOverride: null
+    },
+    fps: {
+      name: 'FPS / Nişancı',
+      stickL: 'Yürüyüş (WASD)',
+      stickR: '🎯 Fare Bakışı (Nişan)',
+      rightMode: 'mouse',
+      sub: { a: 'Zıpla (Space)', b: 'Eğil (Ctrl)', x: 'Şarjör (R)', y: 'Silah Değiş (Q)', l1: 'El Bombası (G)', r1: 'Yakın Dövüş (V)', l2: 'Dürbün (Sağ Tık)', r2: 'ATEŞ (Sol Tık)', select: 'Skor (Tab)', start: 'Menü (Esc)' },
+      kbOverride: {
+        up: 'w', down: 's', left: 'a', right: 'd',
+        a: 'space', b: 'lctrl', x: 'r', y: 'q',
+        l1: 'g', r1: 'f', l2: 'mouse_r', r2: 'mouse_l',
+        l3: 'lshift', r3: 'c', select: 'tab', start: 'esc'
+      }
+    },
+    retro: {
+      name: 'Retro / Platform',
+      stickL: 'Yön (Büyük Stick)',
+      stickR: '',
+      rightMode: 'stick',
+      sub: { a: 'Zıpla (A)', b: 'Koş / Ateş (B)', x: 'Atak (X)', y: 'Özel (Y)', l1: 'Sol Omuz', r1: 'Sağ Omuz', l2: 'L2', r2: 'R2', select: 'Select / Coin', start: 'Start' },
+      kbOverride: null
+    },
+    custom: {
+      name: 'Özel Dizilim',
+      stickL: 'Sol Analog',
+      stickR: 'Sağ Analog',
+      rightMode: 'stick',
+      sub: { a: 'Özel A', b: 'Özel B', x: 'Özel X', y: 'Özel Y', l1: 'Özel L1', r1: 'Özel R1', l2: 'Özel L2', r2: 'Özel R2', select: 'Select', start: 'Start' },
+      kbOverride: null
+    }
+  };
+
+  // Özel Tuş Haritası Seçenekleri
+  const KEY_OPTIONS = [
+    ['space', 'Boşluk (Space)'], ['enter', 'Enter'], ['esc', 'Esc'], ['tab', 'Tab'], ['backspace', 'Backspace'],
+    ['lshift', 'Sol Shift'], ['rshift', 'Sağ Shift'], ['lctrl', 'Sol Ctrl'], ['rctrl', 'Sağ Ctrl'], ['lalt', 'Sol Alt'],
+    ['up', '▲ Yukarı Ok'], ['down', '▼ Aşağı Ok'], ['left', '◀ Sol Ok'], ['right', '▶ Sağ Ok'],
+    ['mouse_l', '🖱 Fare Sol Tık'], ['mouse_r', '🖱 Fare Sağ Tık'], ['mouse_m', '🖱 Fare Orta Tık'],
+    ['w', 'W'], ['a', 'A'], ['s', 'S'], ['d', 'D'], ['q', 'Q'], ['e', 'E'], ['r', 'R'], ['f', 'F'], ['g', 'G'], ['c', 'C'], ['v', 'V'], ['z', 'Z'], ['x', 'X'], ['b', 'B'], ['n', 'N'], ['m', 'M'],
+    ['i', 'I'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['u', 'U'], ['o', 'O'], ['p', 'P'], ['t', 'T'], ['y', 'Y'], ['h', 'H'],
+    ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6'], ['7', '7'], ['8', '8'], ['9', '9'], ['0', '0'],
+    ['num0', 'Numpad 0'], ['num1', 'Numpad 1'], ['num2', 'Numpad 2'], ['num3', 'Numpad 3'], ['num4', 'Numpad 4'],
+    ['num5', 'Numpad 5'], ['num6', 'Numpad 6'], ['num7', 'Numpad 7'], ['num8', 'Numpad 8'], ['num9', 'Numpad 9'],
+    ['num_add', 'Numpad +'], ['num_sub', 'Numpad -'], ['f1', 'F1'], ['f2', 'F2'], ['f3', 'F3'], ['f4', 'F4']
+  ];
+
+  const MAP_FIELDS = [
+    ['up', '▲ Yukarı'], ['down', '▼ Aşağı'], ['left', '◀ Sol'], ['right', '▶ Sağ'],
+    ['a', 'A / ✕ (Alt)'], ['b', 'B / ○ (Sağ)'], ['x', 'X / □ (Sol)'], ['y', 'Y / △ (Üst)'],
+    ['l1', 'L1 / LB'], ['r1', 'R1 / RB'], ['l2', 'L2 / LT'], ['r2', 'R2 / RT'],
+    ['l3', 'L3 (Sol Stick)'], ['r3', 'R3 (Sağ Stick)'], ['select', 'Select / Back'], ['start', 'Start / Menu']
+  ];
+
+  let customKeymap = {};
+  try {
+    customKeymap = JSON.parse(lsGet('k_gp_custom_map') || 'null') || Object.assign({}, PLAYER_KB_DEFAULTS[1]);
+  } catch (e) {
+    customKeymap = Object.assign({}, PLAYER_KB_DEFAULTS[1]);
+  }
+  function saveCustomKeymap() {
+    lsSet('k_gp_custom_map', JSON.stringify(customKeymap));
+  }
+
+  // Ayarlar içindeki 16 tuşluk eşleme tablosunu oluştur
+  const mapGrid = $('#gpMapGrid');
+  const mapSelectEls = {};
+  if (mapGrid) {
+    MAP_FIELDS.forEach(([fieldKey, labelText]) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'gp-map-item';
+      const lbl = document.createElement('span');
+      lbl.textContent = labelText;
+      const sel = document.createElement('select');
+      KEY_OPTIONS.forEach(([val, txt]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = txt;
+        sel.appendChild(opt);
+      });
+      sel.value = customKeymap[fieldKey] || PLAYER_KB_DEFAULTS[1][fieldKey] || 'space';
+      sel.onchange = () => {
+        customKeymap[fieldKey] = sel.value;
+        saveCustomKeymap();
+        if (S.gpGenre !== 'custom') {
+          S.gpGenre = 'custom';
+          saveS();
+          loadSettingsUI();
+        }
+        applyGamepadConfigUI();
+      };
+      mapSelectEls[fieldKey] = sel;
+      wrap.appendChild(lbl);
+      wrap.appendChild(sel);
+      mapGrid.appendChild(wrap);
+    });
+  }
+
+  function loadPlayerPresetToCustom(pNum) {
+    customKeymap = Object.assign({}, PLAYER_KB_DEFAULTS[pNum] || PLAYER_KB_DEFAULTS[1]);
+    saveCustomKeymap();
+    Object.keys(mapSelectEls).forEach(k => {
+      if (customKeymap[k]) mapSelectEls[k].value = customKeymap[k];
+    });
+    S.gpGenre = 'custom';
+    saveS();
+    loadSettingsUI();
+    applyGamepadConfigUI();
+    toast(`Oyuncu ${pNum} klavye tuş dizilimi yüklendi`);
+  }
+  if ($('#btnResetP1')) $('#btnResetP1').onclick = () => loadPlayerPresetToCustom(1);
+  if ($('#btnResetP2')) $('#btnResetP2').onclick = () => loadPlayerPresetToCustom(2);
+  if ($('#btnResetP3')) $('#btnResetP3').onclick = () => loadPlayerPresetToCustom(3);
+  if ($('#btnResetP4')) $('#btnResetP4').onclick = () => loadPlayerPresetToCustom(4);
+
+  function getActiveKeymap() {
+    const slot = parseInt(S.gpSlot || '1', 10) || 1;
+    const base = Object.assign({}, PLAYER_KB_DEFAULTS[slot] || PLAYER_KB_DEFAULTS[1]);
+    const g = S.gpGenre || 'standard';
+    if (g === 'custom') {
+      return Object.assign(base, customKeymap);
+    }
+    const prof = GENRE_PROFILES[g];
+    if (prof && prof.kbOverride && slot === 1) {
+      return Object.assign(base, prof.kbOverride);
+    }
+    return base;
+  }
+
+  // Oyun Kolu Durum Değişkenleri
+  const gpState = {
+    slot: 1,
+    vigemAvailable: false,
+    stickL: { x: 0, y: 0, active: false },
+    stickR: { x: 0, y: 0, active: false },
+    gyro: { enabled: false, x: 0, y: 0, zeroBeta: 0, zeroGamma: 0, rawBeta: 0, rawGamma: 0 },
+    dpad: { up: false, down: false, left: false, right: false },
+    buttons: {
+      a: false, b: false, x: false, y: false,
+      l1: false, r1: false, l2: false, r2: false,
+      l3: false, r3: false, select: false, start: false, home: false
+    },
+    holdLocked: {}, // btn -> bool
+    turboEnabled: {}, // btn -> bool
+    turboArmMode: false,
+    holdArmMode: false,
+    turboPhase: false
+  };
+
+  function vib(ms) {
+    if (S.gpVib && navigator.vibrate) {
+      try { navigator.vibrate(ms); } catch (e) {}
+    }
+  }
+
+  // Görsel Etiketleri ve Boyutları Güncelleme
+  function applyGamepadConfigUI() {
+    const scale = parseFloat(S.gpScale || 1.0);
+    const padPx = parseInt(S.gpPad || 14, 10);
+    vg.style.setProperty('--gp-scale', String(scale));
+    vg.style.setProperty('--gp-pad', padPx + 'px');
+
+    const genre = S.gpGenre || 'standard';
+    vg.dataset.genre = genre;
+    if ($('#gpGenreSelect')) $('#gpGenreSelect').value = genre;
+    if ($('#setGpGenre')) $('#setGpGenre').value = genre;
+
+    const slot = parseInt(S.gpSlot || '1', 10) || 1;
+    gpState.slot = slot;
+    $$('.gp-slot-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.slot, 10) === slot));
+
+    const isPS = S.gpLabels === 'ps';
+    $('#lblY').textContent = isPS ? '△' : 'Y';
+    $('#lblX').textContent = isPS ? '□' : 'X';
+    $('#lblB').textContent = isPS ? '○' : 'B';
+    $('#lblA').textContent = isPS ? '✕' : 'A';
+    $('#lblL1').textContent = isPS ? 'L1' : 'LB';
+    $('#lblR1').textContent = isPS ? 'R1' : 'RB';
+    $('#lblL2').textContent = isPS ? 'L2' : 'LT';
+    $('#lblR2').textContent = isPS ? 'R2' : 'RT';
+
+    const prof = GENRE_PROFILES[genre] || GENRE_PROFILES.standard;
+    const km = getActiveKeymap();
+    const fmtK = k => (k || '').toUpperCase().replace('MOUSE_L', 'SolTık').replace('MOUSE_R', 'SağTık').replace('LSHIFT', 'Shift').replace('LCTRL', 'Ctrl');
+
+    $('#subY').textContent = genre === 'custom' ? fmtK(km.y) : prof.sub.y;
+    $('#subX').textContent = genre === 'custom' ? fmtK(km.x) : prof.sub.x;
+    $('#subB').textContent = genre === 'custom' ? fmtK(km.b) : prof.sub.b;
+    $('#subA').textContent = genre === 'custom' ? fmtK(km.a) : prof.sub.a;
+    $('#subL1').textContent = genre === 'custom' ? fmtK(km.l1) : prof.sub.l1;
+    $('#subR1').textContent = genre === 'custom' ? fmtK(km.r1) : prof.sub.r1;
+    $('#subL2').textContent = genre === 'custom' ? fmtK(km.l2) : prof.sub.l2;
+    $('#subR2').textContent = genre === 'custom' ? fmtK(km.r2) : prof.sub.r2;
+    $('#subSelect').textContent = prof.sub.select;
+    $('#subStart').textContent = prof.sub.start;
+
+    $('#capStickL').textContent = prof.stickL;
+    const useMouseRight = S.gpRightStickMode === 'mouse' || (S.gpRightStickMode === 'auto' && prof.rightMode === 'mouse');
+    $('#capStickR').textContent = useMouseRight ? '🎯 Fare Bakışı (Nişan)' : prof.stickR;
+
+    updateStatusBadge();
+  }
+
+  function updateStatusBadge() {
+    const badge = $('#gpStatusBadge');
+    if (!badge) return;
+    const mode = S.gpMode || 'auto';
+    const useX = (mode === 'xinput') || (mode === 'auto' && gpState.vigemAvailable);
+    const engineTxt = useX ? 'Xbox 360 (XInput)' : 'Klavye/Fare';
+    badge.textContent = `P${gpState.slot} · ${engineTxt}`;
+  }
+
+  window.__initGamepadSlot = function () {
+    applyGamepadConfigUI();
+    tx({ t: 'pad_init', slot: parseInt(S.gpSlot || '1', 10) || 1 });
+  };
+
+  window.__onPadInfo = function (msg) {
+    if (msg.slot) {
+      gpState.slot = msg.slot;
+    }
+    gpState.vigemAvailable = !!msg.vigem;
+    updateStatusBadge();
+  };
+
+  // Üst Çubuk Kontrolleri
+  $$('.gp-slot-btn').forEach(btn => {
+    btn.onclick = () => {
+      S.gpSlot = btn.dataset.slot;
+      saveS();
+      loadSettingsUI();
+      applyGamepadConfigUI();
+      tx({ t: 'pad_init', slot: parseInt(S.gpSlot, 10) });
+      vib(18);
+      toast(`🎮 Oyuncu ${S.gpSlot} (P${S.gpSlot}) seçildi`);
+    };
+  });
+
+  $('#gpGenreSelect').onchange = e => {
+    S.gpGenre = e.target.value;
+    saveS();
+    loadSettingsUI();
+    applyGamepadConfigUI();
+    const prof = GENRE_PROFILES[S.gpGenre] || GENRE_PROFILES.standard;
+    toast(`Profil: ${prof.name}`);
+  };
+
+  $('#gpFsBtn').onclick = () => {
+    toggleFullScreen();
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+  };
+  $('#gpSetBtn').onclick = () => {
+    $('#set').classList.toggle('hid');
+    const anc = $('#gpSettingsAnchor');
+    if (anc && !$('#set').classList.contains('hid')) {
+      setTimeout(() => anc.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    }
+  };
+  $('#gpMenuBtn').onclick = () => document.body.classList.toggle('show-top');
+
+  // Turbo & Basılı Tutma (Hold Lock) Modları
+  $('#gpTurboBtn').onclick = () => {
+    gpState.turboArmMode = !gpState.turboArmMode;
+    gpState.holdArmMode = false;
+    $('#gpTurboBtn').classList.toggle('warn-on', gpState.turboArmMode);
+    $('#gpHoldBtn').classList.remove('warn-on');
+    if (gpState.turboArmMode) {
+      toast('🔥 Turbo ayarlamak istediğin tuşa dokun (İptal için tekrar bas)');
+    }
+  };
+
+  $('#gpHoldBtn').onclick = () => {
+    gpState.holdArmMode = !gpState.holdArmMode;
+    gpState.turboArmMode = false;
+    $('#gpHoldBtn').classList.toggle('warn-on', gpState.holdArmMode);
+    $('#gpTurboBtn').classList.remove('warn-on');
+    if (gpState.holdArmMode) {
+      toast('🔒 Basılı kilitlemek istediğin tuşa (örn. R2 Gaz) dokun');
+    }
+  };
+
+  function toggleButtonSpecialMode(btnName, domEl) {
+    if (gpState.turboArmMode) {
+      gpState.turboEnabled[btnName] = !gpState.turboEnabled[btnName];
+      domEl.classList.toggle('turbo-on', !!gpState.turboEnabled[btnName]);
+      gpState.turboArmMode = false;
+      $('#gpTurboBtn').classList.remove('warn-on');
+      vib(25);
+      toast(gpState.turboEnabled[btnName] ? `⚡ ${btnName.toUpperCase()} için Turbo AÇILDI` : `${btnName.toUpperCase()} Turbo kapatıldı`);
+      return true;
+    }
+    if (gpState.holdArmMode) {
+      gpState.holdLocked[btnName] = !gpState.holdLocked[btnName];
+      domEl.classList.toggle('hold-lock', !!gpState.holdLocked[btnName]);
+      domEl.classList.toggle('press', !!gpState.holdLocked[btnName]);
+      gpState.holdArmMode = false;
+      $('#gpHoldBtn').classList.remove('warn-on');
+      vib(25);
+      toast(gpState.holdLocked[btnName] ? `🔒 ${btnName.toUpperCase()} basılı kilitlendi` : `🔓 ${btnName.toUpperCase()} kilidi açıldı`);
+      sendPadStateNow();
+      return true;
+    }
+    if (gpState.holdLocked[btnName]) {
+      gpState.holdLocked[btnName] = false;
+      domEl.classList.remove('hold-lock', 'press');
+      sendPadStateNow();
+    }
+    return false;
+  }
+
+  // Jiroskop / Direksiyon (Tilt Steering) Desteği
+  function handleOrientation(ev) {
+    if (!gpState.gyro.enabled) return;
+    const beta = ev.beta || 0;   // Öne/Arkaya eğim (-180..180)
+    const gamma = ev.gamma || 0; // Sağa/Sola eğim (-90..90)
+    gpState.gyro.rawBeta = beta;
+    gpState.gyro.rawGamma = gamma;
+
+    // Yatay (Landscape) veya Dikey tutuşa göre direksiyon eksenini otomatik algıla
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const steerDeg = isLandscape ? (beta - gpState.gyro.zeroBeta) : (gamma - gpState.gyro.zeroGamma);
+    const maxAngle = 28 / Math.max(0.4, parseFloat(S.gpGyroSens || 1.2));
+    let normSteer = Math.max(-1, Math.min(1, steerDeg / maxAngle));
+    if (Math.abs(normSteer) < 0.06) normSteer = 0;
+
+    gpState.gyro.x = normSteer;
+    const fill = $('#gpGyroFill');
+    const txt = $('#gpGyroText');
+    if (fill && txt) {
+      const pct = 50 + normSteer * 44;
+      fill.style.left = `calc(${pct.toFixed(1)}% - 4px)`;
+      txt.textContent = `🛞 Direksiyon: ${Math.round(steerDeg)}°`;
+    }
+  }
+
+  $('#gpGyroBtn').onclick = async () => {
+    if (!gpState.gyro.enabled) {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+          const perm = await DeviceOrientationEvent.requestPermission();
+          if (perm !== 'granted') {
+            toast('Jiroskop izni verilmedi.');
+            return;
+          }
+        } catch (e) {}
+      }
+      gpState.gyro.enabled = true;
+      gpState.gyro.zeroBeta = gpState.gyro.rawBeta;
+      gpState.gyro.zeroGamma = gpState.gyro.rawGamma;
+      window.addEventListener('deviceorientation', handleOrientation, true);
+      $('#gpGyroBtn').classList.add('on');
+      $('#gpGyroCalBtn').classList.remove('hid');
+      $('#gpGyroBar').classList.remove('hid');
+      toast('🛞 Direksiyon Modu Açık (Telefonu sağa/sola eğ)');
+    } else {
+      gpState.gyro.enabled = false;
+      gpState.gyro.x = 0;
+      gpState.gyro.y = 0;
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+      $('#gpGyroBtn').classList.remove('on');
+      $('#gpGyroCalBtn').classList.add('hid');
+      $('#gpGyroBar').classList.add('hid');
+      sendPadStateNow();
+    }
+  };
+
+  $('#gpGyroCalBtn').onclick = () => {
+    gpState.gyro.zeroBeta = gpState.gyro.rawBeta;
+    gpState.gyro.zeroGamma = gpState.gyro.rawGamma;
+    gpState.gyro.x = 0;
+    vib(20);
+    toast('🎯 Direksiyon merkezi sıfırlandı');
+  };
+
+  // ----------------------------------------------------------------
+  // 1. ÇOKLU DOKUNMATİK 360° ANALOG STICK (SOL VE SAĞ)
+  // ----------------------------------------------------------------
+  function bindAnalogStick(baseEl, nubEl, stickObj, l3OrR3BtnName) {
+    let touchId = null;
+    let centerX = 0, centerY = 0, maxR = 48;
+    let lastTapTime = 0;
+
+    function updateStickFromPoint(cx, cy) {
+      const dx = cx - centerX;
+      const dy = cy - centerY;
+      const dist = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx);
+      const clampedDist = Math.min(maxR, dist);
+      const nx = Math.cos(angle) * clampedDist;
+      const ny = Math.sin(angle) * clampedDist;
+
+      nubEl.style.transform = `translate(${nx.toFixed(1)}px, ${ny.toFixed(1)}px)`;
+
+      let rx = dx / maxR;
+      let ry = dy / maxR;
+      const mag = Math.hypot(rx, ry);
+      if (mag < 0.12) {
+        stickObj.x = 0;
+        stickObj.y = 0;
+      } else {
+        const normMag = Math.min(1, (mag - 0.12) / 0.88);
+        stickObj.x = Math.cos(angle) * normMag;
+        stickObj.y = Math.sin(angle) * normMag;
+      }
+      sendPadStateNow();
+    }
+
+    baseEl.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (touchId !== null) return;
+      const t = e.changedTouches[0];
+      touchId = t.identifier;
+      const rect = baseEl.getBoundingClientRect();
+      maxR = Math.max(28, rect.width * 0.34);
+
+      if (S.gpFloatStick) {
+        // Dokunulan noktayı merkeze yakınlaştırarak rahat kontrol sağla
+        const rcX = rect.left + rect.width / 2;
+        const rcY = rect.top + rect.height / 2;
+        centerX = rcX + Math.max(-18, Math.min(18, t.clientX - rcX));
+        centerY = rcY + Math.max(-18, Math.min(18, t.clientY - rcY));
+      } else {
+        centerX = rect.left + rect.width / 2;
+        centerY = rect.top + rect.height / 2;
+      }
+
+      // Çift dokunuşla L3 / R3 (Koşu / Korna) basışı
+      const now = Date.now();
+      if (now - lastTapTime < 260) {
+        gpState.buttons[l3OrR3BtnName] = true;
+        vib(18);
+      }
+      lastTapTime = now;
+
+      stickObj.active = true;
+      baseEl.classList.add('active');
+      vib(8);
+      updateStickFromPoint(t.clientX, t.clientY);
+    }, { passive: false });
+
+    baseEl.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (touchId === null) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === touchId) {
+          updateStickFromPoint(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+          break;
+        }
+      }
+    }, { passive: false });
+
+    const endStick = e => {
+      if (touchId === null) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === touchId) {
+          touchId = null;
+          stickObj.active = false;
+          stickObj.x = 0;
+          stickObj.y = 0;
+          gpState.buttons[l3OrR3BtnName] = false;
+          nubEl.style.transform = 'translate(0px, 0px)';
+          baseEl.classList.remove('active');
+          sendPadStateNow();
+          break;
+        }
+      }
+    };
+    baseEl.addEventListener('touchend', endStick, { passive: false });
+    baseEl.addEventListener('touchcancel', endStick, { passive: false });
+  }
+
+  bindAnalogStick($('#gpStickL'), $('#gpNubL'), gpState.stickL, 'l3');
+  bindAnalogStick($('#gpStickR'), $('#gpNubR'), gpState.stickR, 'r3');
+
+  // ----------------------------------------------------------------
+  // 2. 8 YÖNLÜ KAYDIRMALI D-PAD (KOMBO & MENÜ DESTEKLİ)
+  // ----------------------------------------------------------------
+  (function bindSlideDpad() {
+    const dpadEl = $('#gpDpad');
+    const segs = {};
+    $$('#gpDpad [data-dpad]').forEach(el => { segs[el.dataset.dpad] = el; });
+    const activeTouches = new Map();
+
+    function computeDirFromTouch(cx, cy) {
+      const rect = dpadEl.getBoundingClientRect();
+      const dx = cx - (rect.left + rect.width / 2);
+      const dy = cy - (rect.top + rect.height / 2);
+      const dist = Math.hypot(dx, dy);
+      if (dist < rect.width * 0.11) return { up: false, down: false, left: false, right: false, seg: '' };
+
+      const deg = Math.atan2(dy, dx) * 180 / Math.PI; // -180..180
+      const up = deg < -22.5 && deg > -157.5;
+      const down = deg > 22.5 && deg < 157.5;
+      const right = deg > -67.5 && deg < 67.5;
+      const left = deg > 112.5 || deg < -112.5;
+
+      let seg = '';
+      if (up && left) seg = 'ul';
+      else if (up && right) seg = 'ur';
+      else if (down && left) seg = 'dl';
+      else if (down && right) seg = 'dr';
+      else if (up) seg = 'up';
+      else if (down) seg = 'down';
+      else if (left) seg = 'left';
+      else if (right) seg = 'right';
+      return { up, down, left, right, seg };
+    }
+
+    function refreshDpadState() {
+      let up = false, down = false, left = false, right = false;
+      const litSegs = new Set();
+      activeTouches.forEach(v => {
+        if (v.up) up = true;
+        if (v.down) down = true;
+        if (v.left) left = true;
+        if (v.right) right = true;
+        if (v.seg) litSegs.add(v.seg);
+      });
+      const changed = (gpState.dpad.up !== up || gpState.dpad.down !== down || gpState.dpad.left !== left || gpState.dpad.right !== right);
+      gpState.dpad = { up, down, left, right };
+      Object.keys(segs).forEach(k => {
+        segs[k].classList.toggle('press', litSegs.has(k) || (k === 'up' && up && !left && !right) || (k === 'down' && down && !left && !right) || (k === 'left' && left && !up && !down) || (k === 'right' && right && !up && !down));
+      });
+      if (changed) {
+        vib(10);
+        sendPadStateNow();
+      }
+    }
+
+    dpadEl.addEventListener('touchstart', e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        activeTouches.set(t.identifier, computeDirFromTouch(t.clientX, t.clientY));
+      }
+      refreshDpadState();
+    }, { passive: false });
+
+    dpadEl.addEventListener('touchmove', e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (activeTouches.has(t.identifier)) {
+          activeTouches.set(t.identifier, computeDirFromTouch(t.clientX, t.clientY));
+        }
+      }
+      refreshDpadState();
+    }, { passive: false });
+
+    const endDpad = e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        activeTouches.delete(e.changedTouches[i].identifier);
+      }
+      refreshDpadState();
+    };
+    dpadEl.addEventListener('touchend', endDpad, { passive: false });
+    dpadEl.addEventListener('touchcancel', endDpad, { passive: false });
+  })();
+
+  // ----------------------------------------------------------------
+  // 3. KAYDIRMALI & ÇOKLU DOKUNMATİK ELMAS AKSİYON TUŞLARI (A, B, X, Y)
+  // ----------------------------------------------------------------
+  (function bindAbxyCluster() {
+    const container = $('#gpAbxy');
+    const btnEls = {
+      a: $('#gpAbxy [data-btn="a"]'),
+      b: $('#gpAbxy [data-btn="b"]'),
+      x: $('#gpAbxy [data-btn="x"]'),
+      y: $('#gpAbxy [data-btn="y"]')
+    };
+    const touchMap = new Map(); // touchId -> Set of pressed btn keys
+
+    function hitTestAbxy(cx, cy) {
+      const hit = new Set();
+      const rect = container.getBoundingClientRect();
+      const rx = (cx - rect.left) / rect.width;
+      const ry = (cy - rect.top) / rect.height;
+      if (rx < -0.15 || rx > 1.15 || ry < -0.15 || ry > 1.15) return hit;
+
+      // Her tuşun merkez koordinatına olan mesafeyi ölç (aynı anda 2 tuşa basmaya da izin verir!)
+      const centers = {
+        y: [0.50, 0.20],
+        x: [0.20, 0.50],
+        b: [0.80, 0.50],
+        a: [0.50, 0.80]
+      };
+      Object.keys(centers).forEach(k => {
+        const d = Math.hypot(rx - centers[k][0], ry - centers[k][1]);
+        if (d < 0.26) hit.add(k);
+      });
+      return hit;
+    }
+
+    function syncAbxyTouches() {
+      const active = { a: false, b: false, x: false, y: false };
+      touchMap.forEach(set => {
+        set.forEach(k => { active[k] = true; });
+      });
+      let newlyPressed = false;
+      ['a', 'b', 'x', 'y'].forEach(k => {
+        const nextVal = active[k] || !!gpState.holdLocked[k];
+        if (nextVal && !gpState.buttons[k]) newlyPressed = true;
+        gpState.buttons[k] = nextVal;
+        btnEls[k].classList.toggle('press', nextVal);
+      });
+      if (newlyPressed) vib(12);
+      sendPadStateNow();
+    }
+
+    container.addEventListener('touchstart', e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        const hits = hitTestAbxy(t.clientX, t.clientY);
+        if (gpState.turboArmMode || gpState.holdArmMode) {
+          const first = Array.from(hits)[0];
+          if (first) toggleButtonSpecialMode(first, btnEls[first]);
+          return;
+        }
+        hits.forEach(k => {
+          if (gpState.holdLocked[k]) {
+            gpState.holdLocked[k] = false;
+            btnEls[k].classList.remove('hold-lock');
+          }
+        });
+        touchMap.set(t.identifier, hits);
+      }
+      syncAbxyTouches();
+    }, { passive: false });
+
+    container.addEventListener('touchmove', e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (touchMap.has(t.identifier)) {
+          touchMap.set(t.identifier, hitTestAbxy(t.clientX, t.clientY));
+        }
+      }
+      syncAbxyTouches();
+    }, { passive: false });
+
+    const endAbxy = e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        touchMap.delete(e.changedTouches[i].identifier);
+      }
+      syncAbxyTouches();
+    };
+    container.addEventListener('touchend', endAbxy, { passive: false });
+    container.addEventListener('touchcancel', endAbxy, { passive: false });
+  })();
+
+  // ----------------------------------------------------------------
+  // 4. OMUZ, TETİK VE ORTA SİSTEM TUŞLARI (L1, L2, R1, R2, SELECT, START, HOME, L3, R3)
+  // ----------------------------------------------------------------
+  $$('[data-gbtn]').forEach(btnEl => {
+    const bName = btnEl.dataset.gbtn;
+    const activePointers = new Set();
+
+    btnEl.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (toggleButtonSpecialMode(bName, btnEl)) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        activePointers.add(e.changedTouches[i].identifier);
+      }
+      gpState.buttons[bName] = true;
+      btnEl.classList.add('press');
+      vib(12);
+      sendPadStateNow();
+    }, { passive: false });
+
+    const endBtn = e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        activePointers.delete(e.changedTouches[i].identifier);
+      }
+      if (activePointers.size === 0) {
+        gpState.buttons[bName] = !!gpState.holdLocked[bName];
+        btnEl.classList.toggle('press', gpState.buttons[bName]);
+        sendPadStateNow();
+      }
+    };
+    btnEl.addEventListener('touchend', endBtn, { passive: false });
+    btnEl.addEventListener('touchcancel', endBtn, { passive: false });
+  });
+
+  // ----------------------------------------------------------------
+  // 5. BİRLEŞİK PAKET ÜRETİCİ (XINPUT + KLAVYE/FARE DIFF + TURBO + FARE BAKIŞI)
+  // ----------------------------------------------------------------
+  let lastSentJson = '';
+
+  function buildAndSendPadPacket(forceSend, mdx, mdy) {
+    if (activeTab !== 'vg' && !forceSend) return;
+
+    const km = getActiveKeymap();
+    const genre = S.gpGenre || 'standard';
+    const prof = GENRE_PROFILES[genre] || GENRE_PROFILES.standard;
+    const useMouseRight = S.gpRightStickMode === 'mouse' || (S.gpRightStickMode === 'auto' && prof.rightMode === 'mouse');
+
+    // Sol Stick + Jiroskop birleşimi
+    let lxFloat = gpState.stickL.x;
+    let lyFloat = gpState.stickL.y;
+    if (gpState.gyro.enabled && Math.abs(gpState.stickL.x) < 0.08) {
+      lxFloat = gpState.gyro.x;
+    }
+
+    // Sağ Stick
+    let rxFloat = useMouseRight ? 0 : gpState.stickR.x;
+    let ryFloat = useMouseRight ? 0 : gpState.stickR.y;
+
+    // XInput 16-bit eksen değerleri (-32768..32767, Y ekseni yukarı pozitif)
+    const lxInt = Math.round(Math.max(-1, Math.min(1, lxFloat)) * 32767);
+    const lyInt = Math.round(Math.max(-1, Math.min(1, -lyFloat)) * 32767);
+    const rxInt = Math.round(Math.max(-1, Math.min(1, rxFloat)) * 32767);
+    const ryInt = Math.round(Math.max(-1, Math.min(1, -ryFloat)) * 32767);
+
+    // Etkin buton durumlarını (Normal + Hold Lock + Turbo) hesapla
+    const effBtn = {};
+    Object.keys(gpState.buttons).forEach(k => {
+      let pressed = gpState.buttons[k] || !!gpState.holdLocked[k];
+      if (pressed && gpState.turboEnabled[k] && !gpState.turboPhase) {
+        pressed = false;
+      }
+      effBtn[k] = pressed;
+    });
+
+    // XInput bitmask hesapla
+    let btnsMask = 0;
+    if (gpState.dpad.up) btnsMask |= XBTN.up;
+    if (gpState.dpad.down) btnsMask |= XBTN.down;
+    if (gpState.dpad.left) btnsMask |= XBTN.left;
+    if (gpState.dpad.right) btnsMask |= XBTN.right;
+    ['a', 'b', 'x', 'y', 'l1', 'r1', 'l3', 'r3', 'select', 'start', 'home'].forEach(k => {
+      if (effBtn[k] && XBTN[k]) btnsMask |= XBTN[k];
+    });
+
+    const ltVal = effBtn.l2 ? 255 : 0;
+    const rtVal = effBtn.r2 ? 255 : 0;
+
+    // Klavye ve Fare Tuş Listesi (Klavye Modu ve XInput Olmayan PC'ler İçin)
+    const activeKeys = new Set();
+    const activeMbs = new Set();
+
+    const addBinding = bindStr => {
+      if (!bindStr) return;
+      if (bindStr === 'mouse_l') activeMbs.add('l');
+      else if (bindStr === 'mouse_r') activeMbs.add('r');
+      else if (bindStr === 'mouse_m') activeMbs.add('m');
+      else activeKeys.add(bindStr);
+    };
+
+    // D-Pad ve Sol Stick Yönlerini Klavye Tuşlarına Eşle (Eşik: 0.34)
+    if (gpState.dpad.up || lyFloat < -0.34) addBinding(km.up);
+    if (gpState.dpad.down || lyFloat > 0.34) addBinding(km.down);
+    if (gpState.dpad.left || lxFloat < -0.34) addBinding(km.left);
+    if (gpState.dpad.right || lxFloat > 0.34) addBinding(km.right);
+
+    // Sağ Stick fare modunda değilse ve klavye modundaysak yön tuşlarına eşle
+    if (!useMouseRight) {
+      if (ryFloat < -0.4) addBinding(km.r_up || 'up');
+      if (ryFloat > 0.4) addBinding(km.r_down || 'down');
+      if (rxFloat < -0.4) addBinding(km.r_left || 'left');
+      if (rxFloat > 0.4) addBinding(km.r_right || 'right');
+    }
+
+    ['a', 'b', 'x', 'y', 'l1', 'r1', 'l2', 'r2', 'l3', 'r3', 'select', 'start', 'home'].forEach(k => {
+      if (effBtn[k]) addBinding(km[k]);
+    });
+
+    const pkt = {
+      t: 'pad',
+      slot: gpState.slot,
+      mode: S.gpMode || 'auto',
+      btns: btnsMask,
+      lt: ltVal,
+      rt: rtVal,
+      lx: lxInt,
+      ly: lyInt,
+      rx: rxInt,
+      ry: ryInt,
+      keys: Array.from(activeKeys),
+      mb: Array.from(activeMbs),
+      mdx: mdx || 0,
+      mdy: mdy || 0
+    };
+
+    const sig = JSON.stringify([pkt.slot, pkt.mode, pkt.btns, pkt.lt, pkt.rt, pkt.lx, pkt.ly, pkt.rx, pkt.ry, pkt.keys, pkt.mb]);
+    if (forceSend || sig !== lastSentJson || pkt.mdx || pkt.mdy) {
+      lastSentJson = sig;
+      tx(pkt);
+    }
+  }
+
+  function sendPadStateNow() {
+    buildAndSendPadPacket(false, 0, 0);
+  }
+
+  // 50Hz (20ms) Sürekli Oyun Döngüsü: Turbo vuruşları, Jiroskop ve Sağ Stick FPS Fare Bakışı için
+  setInterval(() => {
+    if (activeTab !== 'vg') return;
+    gpState.turboPhase = !gpState.turboPhase;
+
+    const genre = S.gpGenre || 'standard';
+    const prof = GENRE_PROFILES[genre] || GENRE_PROFILES.standard;
+    const useMouseRight = S.gpRightStickMode === 'mouse' || (S.gpRightStickMode === 'auto' && prof.rightMode === 'mouse');
+
+    let mdx = 0, mdy = 0;
+    if (useMouseRight && (Math.abs(gpState.stickR.x) > 0.05 || Math.abs(gpState.stickR.y) > 0.05)) {
+      const sens = 18 * parseFloat(S.speed || 1.6);
+      mdx = Math.round(gpState.stickR.x * sens);
+      mdy = Math.round(gpState.stickR.y * sens);
+    }
+
+    const hasAnyTurbo = Object.keys(gpState.turboEnabled).some(k => gpState.turboEnabled[k] && (gpState.buttons[k] || gpState.holdLocked[k]));
+    if (mdx || mdy || hasAnyTurbo || gpState.gyro.enabled) {
+      buildAndSendPadPacket(hasAnyTurbo, mdx, mdy);
+    }
+  }, 28);
+
+  window.__releaseGamepad = function () {
+    gpState.stickL.x = 0; gpState.stickL.y = 0;
+    gpState.stickR.x = 0; gpState.stickR.y = 0;
+    gpState.dpad = { up: false, down: false, left: false, right: false };
+    Object.keys(gpState.buttons).forEach(k => { gpState.buttons[k] = false; });
+    gpState.holdLocked = {};
+    $$('#vg .press, #vg .hold-lock').forEach(el => el.classList.remove('press', 'hold-lock'));
+    lastSentJson = '';
+    tx({ t: 'pad_release' });
+  };
+
+  // Ayarlar değiştiğinde Gamepad arayüzünü de güncelle
+  $$('#set [data-s^="gp"]').forEach(el => {
+    el.addEventListener(el.type === 'range' ? 'input' : 'change', () => {
+      setTimeout(applyGamepadConfigUI, 10);
+    });
+  });
+
+  applyGamepadConfigUI();
+})();
 
 window.__k = { commit, parse, run, sendBox, S, st, box, want, fmtDoc, mod, tbl, numToWords, numStrToWords, parseNumWords, execTok, aiPool, runAiWithInstruction, extractTextFromScreenRegion };
 })();
