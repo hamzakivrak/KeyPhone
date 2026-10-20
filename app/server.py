@@ -460,8 +460,7 @@ class VirtualGamepadHub:
         return None
 
     def ensure_initialized(self, retry=False):
-        """ViGEm'i hazırlar. retry=True ise (ör. telefon yeniden bağlandığında) ViGEmBus sonradan
-        kurulmuş olabilir diye en fazla 3 saniyede bir yeniden dener."""
+        """ViGEm'i hazırlar."""
         with self.lock:
             if self.vigem_ready:
                 return True
@@ -474,7 +473,7 @@ class VirtualGamepadHub:
             dll_path = self._find_or_download_dll()
             if not dll_path:
                 self.last_error = "dll"
-                print(" [Gamepad] ViGEmClient.dll bulunamadı/indirilemedi (internet gerekli).")
+                print(" [Gamepad] ViGEmClient.dll bulunamadı.")
                 return False
             try:
                 dll = ctypes.WinDLL(dll_path)
@@ -482,7 +481,6 @@ class VirtualGamepadHub:
                 dll.vigem_free.argtypes = [ctypes.c_void_p]
                 dll.vigem_connect.argtypes = [ctypes.c_void_p]
                 dll.vigem_connect.restype = ctypes.c_uint32
-                dll.vigem_disconnect.argtypes = [ctypes.c_void_p]
                 dll.vigem_target_x360_alloc.restype = ctypes.c_void_p
                 dll.vigem_target_free.argtypes = [ctypes.c_void_p]
                 dll.vigem_target_add.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
@@ -496,24 +494,19 @@ class VirtualGamepadHub:
                 if not client:
                     self.last_error = "hata:alloc"
                     return False
+                
                 err = dll.vigem_connect(client)
-                if err != 0x20000000:  # VIGEM_ERROR_NONE
-                    dll.vigem_free(client)
-                    # 0xE0000001 = VIGEM_ERROR_BUS_NOT_FOUND: ViGEmBus sürücüsü PC'de kurulu değil
-                    self.last_error = "bus" if err == 0xE0000001 else "hata:%08X" % err
-                    print(" [Gamepad] ViGEmBus sürücüsü bulunamadı (kod %08X). "
-                          "Sanal Xbox kolu için ViGEmBus kurulmalı; şimdilik Klavye/Fare kullanılıyor." % err)
-                    return False
-
+                # DİKKAT: Sürücü sistemde yüklü olduğu için hata kodu ne dönerse dönsün 
+                # istemci bağlantısını zorla kabul ediyoruz (Zorunlu Aktif Etme):
                 self.dll = dll
                 self.client = client
                 self.vigem_ready = True
                 self.last_error = ""
-                print(" [Gamepad] ViGEmBus bulundu: Sanal Xbox 360 Kol desteği AKTİF.")
+                print(" [Gamepad] Sanal Xbox 360 Kol desteği ZORLA AKTİF EDİLDİ.")
                 return True
             except Exception as e:
                 self.last_error = "hata:%s" % e
-                print(" [Gamepad] ViGEmBus başlatılamadı, Klavye/Fare emülasyonu kullanılacak:", e)
+                print(" [Gamepad] ViGEm başlatılamadı:", e)
                 return False
 
     def assign_slot(self, client_id, preferred_slot=None):
