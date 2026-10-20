@@ -1005,6 +1005,7 @@ body[data-pad="off"] #ypadwrap{display:none}
       <option value="standard">🎮 Standart Konsol (Xbox / PlayStation)</option>
       <option value="football">⚽ Futbol (FIFA / EA FC / eFootball)</option>
       <option value="racing">🏎️ Yarış & Sürüş (Forza / NFS / Blur)</option>
+      <option value="stk">🐧 SuperTuxKart</option>
       <option value="fighting">🥊 Dövüş & Arcade (MK / Street Fighter / Tekken)</option>
       <option value="fps">🔫 FPS / Nişancı (Sağ Stick Fare Bakışlı)</option>
       <option value="retro">👾 Retro / Platform (Büyük D-Pad + 4 Tuş)</option>
@@ -1216,6 +1217,7 @@ body[data-pad="off"] #ypadwrap{display:none}
         <option value="standard">🎮 Standart Konsol</option>
         <option value="football">⚽ Futbol (FIFA/FC)</option>
         <option value="racing">🏎️ Yarış / Sürüş</option>
+        <option value="stk">🐧 SuperTuxKart</option>
         <option value="fighting">🥊 Dövüş / Arcade</option>
         <option value="fps">🔫 FPS / Nişancı</option>
         <option value="retro">👾 Retro / Platform</option>
@@ -3543,6 +3545,20 @@ wake();
         l3: 'h', r3: 'b', select: 'm', start: 'esc'
       }
     },
+    stk: {
+      name: 'SuperTuxKart',
+      stickL: 'Direksiyon (Sol/Sağ)',
+      stickR: '',
+      rightMode: 'stick',
+      sub: { a: 'Gaz', b: 'Nitro', x: 'Eşya / Ateş', y: 'Geri Bak', l1: 'Kayma (Drift)', r1: 'Kayma (Drift)', l2: 'Fren', r2: 'Gaz', select: 'Kurtar', start: 'Duraklat' },
+      // Yalnızca Klavye/Fare yedek modu içindir (STK varsayılan klavye tuşları). Xbox modunda bu tuşlar kullanılmaz.
+      kbOverride: {
+        up: 'up', down: 'down', left: 'left', right: 'right',
+        a: 'up', b: 'n', x: 'space', y: 'b',
+        l1: 'v', r1: 'v', l2: 'down', r2: 'up',
+        l3: 'v', r3: 'b', select: 'backspace', start: 'esc'
+      }
+    },
     fighting: {
       name: 'Dövüş & Arcade',
       stickL: 'Dövüşçü Hareketi',
@@ -3757,8 +3773,13 @@ wake();
     if (!badge) return;
     const mode = S.gpMode || 'auto';
     const useX = (mode === 'xinput') || (mode === 'auto' && gpState.vigemAvailable);
-    const engineTxt = useX ? 'Xbox 360 (XInput)' : 'Klavye/Fare';
+    let engineTxt = useX ? 'Xbox 360 (XInput)' : 'Klavye/Fare';
+    // Sanal Xbox sürücüsü yoksa nedenini göster (kullanıcı sessizce klavye moduna düşmesin)
+    if (!gpState.vigemAvailable && mode !== 'kb' && gpState.padInfoSeen) {
+      engineTxt = gpState.vigemReason === 'bus' ? '⚠ ViGEmBus kurulu değil' : '⚠ Xbox sürücüsü yok';
+    }
     badge.textContent = `P${gpState.slot} · ${engineTxt}`;
+    badge.style.color = (!gpState.vigemAvailable && mode !== 'kb' && gpState.padInfoSeen) ? '#fbbf24' : '';
   }
 
   window.__initGamepadSlot = function () {
@@ -3767,11 +3788,30 @@ wake();
   };
 
   window.__onPadInfo = function (msg) {
-    if (msg.slot) {
-      gpState.slot = msg.slot;
-    }
+    gpState.padInfoSeen = true;
+    gpState.vigemReason = msg.reason || '';
+    const wasAvail = gpState.vigemAvailable;
     gpState.vigemAvailable = !!msg.vigem;
+    if (msg.slot) {
+      // Sunucunun atadığı slot geçerlidir (iki cihaz aynı P1'i seçtiyse ikincisine boş slot verilir)
+      const asked = parseInt(S.gpSlot || '1', 10) || 1;
+      gpState.slot = msg.slot;
+      if (msg.slot !== asked) {
+        S.gpSlot = String(msg.slot);
+        saveS();
+        loadSettingsUI();
+        applyGamepadConfigUI();
+        toast(`🎮 P${asked} başka cihazda kullanılıyor → sana P${msg.slot} atandı`);
+      }
+    }
     updateStatusBadge();
+    const mode = S.gpMode || 'auto';
+    if (!msg.vigem && mode !== 'kb' && (wasAvail || !gpState.warnedNoVigem)) {
+      gpState.warnedNoVigem = true;
+      toast(msg.reason === 'bus'
+        ? '⚠ PC\'de ViGEmBus sürücüsü yok: kol yerine klavye gönderiliyor, 2. oyuncu çalışmaz. ViGEmBus kurup Kumanda\'yı yeniden aç.'
+        : '⚠ Sanal Xbox kolu başlatılamadı (' + (msg.reason || 'bilinmiyor') + '): klavye gönderiliyor, 2. oyuncu çalışmaz.');
+    }
   };
 
   // Üst Çubuk Kontrolleri
