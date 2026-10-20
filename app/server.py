@@ -462,7 +462,7 @@ class VirtualGamepadHub:
                 whl_bytes = urllib.request.urlopen(whl_url, timeout=8).read()
                 with zipfile.ZipFile(io.BytesIO(whl_bytes)) as z:
                     for name in z.namelist():
-                        if name.lower().endswith("vigemclient.dll") and (arch in name.lower() or "x64" in name.lower()):
+                        if name.lower().endswith("vigemclient.dll") and (arch in name.lower() or "x64" in name.lower() or "amd64" in name.lower()):
                             with open(target_dll, "wb") as f:
                                 f.write(z.read(name))
                             return target_dll
