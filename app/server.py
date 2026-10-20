@@ -419,55 +419,44 @@ class VirtualGamepadHub:
         arch = "x64" if struct.calcsize("P") * 8 == 64 else "x86"
         candidates = [
             os.path.join(HERE, "ViGEmClient.dll"),
+            os.path.join(HERE, f"ViGEmClient_{arch}.dll"),
             os.path.join(DATA, f"ViGEmClient_{arch}.dll"),
             os.path.join(DATA, "ViGEmClient.dll"),
         ]
-        # Eğer vgamepad kuruluysa onun içindeki DLL'i bul
-        try:
-            import vgamepad  # type: ignore
-            vg_dir = os.path.dirname(vgamepad.__file__)
-            for root, _, files in os.walk(vg_dir):
-                for f in files:
-                    if f.lower() == "vigemclient.dll" and (arch in root.lower() or "64" in root.lower() or arch == "x86"):
-                        candidates.insert(0, os.path.join(root, f))
-        except Exception:
-            pass
-
         for p in candidates:
-            if os.path.exists(p):
+            if os.path.exists(p) and os.path.getsize(p) > 10000:
                 return p
 
-        # Yoksa PyPI üzerindeki resmi vgamepad paketinden ViGEmClient.dll'i DATA klasörüne indir
         target_dll = os.path.join(DATA, f"ViGEmClient_{arch}.dll")
+        os.makedirs(DATA, exist_ok=True)
+        ctx = ssl._create_unverified_context()
+
+        # PyPI üzerinden vgamepad wheel paketini indirip içindeki doğru DLL'i çıkar
         try:
-            os.makedirs(DATA, exist_ok=True)
             req = urllib.request.Request(
                 "https://pypi.org/pypi/vgamepad/json",
-                headers={"User-Agent": "Kumanda-Gamepad/1.0"},
+                headers={"User-Agent": "Mozilla/5.0"},
             )
-            meta = json.loads(urllib.request.urlopen(req, timeout=5).read().decode("utf-8"))
-            urls = meta.get("urls", [])
-            whl_url = ""
-            for u in urls:
+            meta = json.loads(urllib.request.urlopen(req, timeout=8, context=ctx).read().decode("utf-8"))
+            for u in meta.get("urls", []):
                 fn = u.get("filename", "")
-                if fn.endswith(".whl") and ("win_amd64" in fn if arch == "x64" else "win32" in fn):
-                    whl_url = u.get("url", "")
-                    break
-            if not whl_url and urls:
-                for u in urls:
-                    if u.get("filename", "").endswith(".whl"):
-                        whl_url = u.get("url", "")
-                        break
-            if whl_url:
-                whl_bytes = urllib.request.urlopen(whl_url, timeout=8).read()
-                with zipfile.ZipFile(io.BytesIO(whl_bytes)) as z:
-                    for name in z.namelist():
-                        if name.lower().endswith("vigemclient.dll") and (arch in name.lower() or "x64" in name.lower() or "amd64" in name.lower()):
-                            with open(target_dll, "wb") as f:
-                                f.write(z.read(name))
-                            return target_dll
-        except Exception:
-            pass
+                if fn.endswith(".whl"):
+                    whl_bytes = urllib.request.urlopen(u["url"], timeout=10, context=ctx).read()
+                    with zipfile.ZipFile(io.BytesIO(whl_bytes)) as z:
+                        for name in z.namelist():
+                            low = name.lower()
+                            if low.endswith("vigemclient.dll"):
+                                # x64 sistemde x86 klasöründekini alma, x64 olanı al
+                                if arch == "x64" and ("x86" in low or "win32" in low) and "x64" not in low:
+                                    continue
+                                if arch == "x86" and ("x64" in low or "amd64" in low):
+                                    continue
+                                with open(target_dll, "wb") as f:
+                                    f.write(z.read(name))
+                                print(f" [Gamepad] ViGEmClient.dll indirildi: {target_dll}")
+                                return target_dll
+        except Exception as e:
+            print(" [Gamepad] DLL indirme hatası:", e)
         return None
 
     def ensure_initialized(self, retry=False):
