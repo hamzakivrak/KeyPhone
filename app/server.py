@@ -412,6 +412,8 @@ class VirtualGamepadHub:
         self.targets = {}  # slot (1..4) -> PVIGEM_TARGET
         self.slot_owners = {}  # slot (1..4) -> client_id
         self._init_attempted = False
+        self._last_attempt = 0.0
+        self.last_error = ""  # 'dll' | 'bus' | 'hata:<kod>' | ''
 
     def _find_or_download_dll(self):
         arch = "x64" if struct.calcsize("P") * 8 == 64 else "x86"
@@ -468,16 +470,22 @@ class VirtualGamepadHub:
             pass
         return None
 
-    def ensure_initialized(self):
+    def ensure_initialized(self, retry=False):
+        """ViGEm'i hazırlar. retry=True ise (ör. telefon yeniden bağlandığında) ViGEmBus sonradan
+        kurulmuş olabilir diye en fazla 3 saniyede bir yeniden dener."""
         with self.lock:
             if self.vigem_ready:
                 return True
-            if self._init_attempted:
+            now = time.monotonic()
+            if self._init_attempted and not (retry and now - self._last_attempt > 3.0):
                 return False
             self._init_attempted = True
+            self._last_attempt = now
 
             dll_path = self._find_or_download_dll()
             if not dll_path:
+                self.last_error = "dll"
+                print(" [Gamepad] ViGEmClient.dll bulunamadı/indirilemedi (internet gerekli).")
                 return False
             try:
                 dll = ctypes.WinDLL(dll_path)
@@ -497,18 +505,25 @@ class VirtualGamepadHub:
 
                 client = dll.vigem_alloc()
                 if not client:
+                    self.last_error = "hata:alloc"
                     return False
                 err = dll.vigem_connect(client)
                 if err != 0x20000000:  # VIGEM_ERROR_NONE
                     dll.vigem_free(client)
+                    # 0xE0000001 = VIGEM_ERROR_BUS_NOT_FOUND: ViGEmBus sürücüsü PC'de kurulu değil
+                    self.last_error = "bus" if err == 0xE0000001 else "hata:%08X" % err
+                    print(" [Gamepad] ViGEmBus sürücüsü bulunamadı (kod %08X). "
+                          "Sanal Xbox kolu için ViGEmBus kurulmalı; şimdilik Klavye/Fare kullanılıyor." % err)
                     return False
 
                 self.dll = dll
                 self.client = client
                 self.vigem_ready = True
+                self.last_error = ""
                 print(" [Gamepad] ViGEmBus bulundu: Sanal Xbox 360 Kol desteği AKTİF.")
                 return True
             except Exception as e:
+                self.last_error = "hata:%s" % e
                 print(" [Gamepad] ViGEmBus başlatılamadı, Klavye/Fare emülasyonu kullanılacak:", e)
                 return False
 
@@ -520,6 +535,7 @@ class VirtualGamepadHub:
                     if preferred_slot is None or preferred_slot == s:
                         return s
                     del self.slot_owners[s]
+                    self._drop_target_locked(s)  # eski slotta hayalet sanal kol kalmasın
 
             if preferred_slot in (1, 2, 3, 4) and preferred_slot not in self.slot_owners:
                 self.slot_owners[preferred_slot] = client_id
@@ -534,6 +550,17 @@ class VirtualGamepadHub:
             s = preferred_slot if preferred_slot in (1, 2, 3, 4) else 1
             self.slot_owners[s] = client_id
             return s
+
+    def _drop_target_locked(self, slot):
+        """Kilit zaten alınmışken: slota ait sanal Xbox kolunu Windows'tan kaldırır."""
+        target = self.targets.pop(slot, None)
+        if target and self.vigem_ready:
+            try:
+                self.dll.vigem_target_x360_update(self.client, target, XUSB_REPORT(0, 0, 0, 0, 0, 0, 0))
+                self.dll.vigem_target_remove(self.client, target)
+                self.dll.vigem_target_free(target)
+            except Exception:
+                pass
 
     def _get_or_create_target(self, slot):
         if not self.vigem_ready:
@@ -712,10 +739,9 @@ def handle(ev, send_ws_fn=None, client_state=None):
     if t == "pad":
         # Yüksek hızlı birleşik Oyun Kolu paketi (XInput + Klavye/Fare Yedek veya Özel Profil)
         mode = ev.get("mode", "auto")  # 'auto' | 'xinput' | 'kb'
-        slot = int(ev.get("slot") or (client_state.get("slot", 1) if client_state else 1))
-        if client_state and client_state.get("slot") != slot:
-            slot = GAMEPAD_HUB.assign_slot(client_state["id"], slot)
-            client_state["slot"] = slot
+        # Slot yalnızca 'pad_init' ile değişir. Paketlerdeki slot değeri yok sayılır;
+        # böylece iki cihaz aynı "P1" tercihini gönderse bile birbirinin kolunu ezmez.
+        slot = client_state.get("slot", 1) if client_state else int(ev.get("slot") or 1)
 
         used_xinput = False
         if mode in ("auto", "xinput"):
@@ -754,14 +780,16 @@ def handle(ev, send_ws_fn=None, client_state=None):
             pref = int(pref) if pref in (1, 2, 3, 4, "1", "2", "3", "4") else None
             slot = GAMEPAD_HUB.assign_slot(client_state["id"], pref)
             client_state["slot"] = slot
-            vigem_ok = GAMEPAD_HUB.ensure_initialized()
+            vigem_ok = GAMEPAD_HUB.ensure_initialized(retry=True)
             if vigem_ok:
                 GAMEPAD_HUB.update_x360(slot, 0, 0, 0, 0, 0, 0, 0)
             if send_ws_fn:
                 send_ws_fn({
                     "t": "pad_info",
                     "slot": slot,
+                    "wanted": pref,
                     "vigem": vigem_ok,
+                    "reason": "" if vigem_ok else GAMEPAD_HUB.last_error,
                     "active_slots": GAMEPAD_HUB.active_slots_list(),
                 })
         return
