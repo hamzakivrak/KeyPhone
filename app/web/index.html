@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Kumanda</title>
 <style>
 :root{--bg:#0f1115;--p:#1a1d24;--p2:#232832;--b:#2a2f3a;--a:#4da3ff;--t:#e8ecf3;--m:#8b93a3;--w:#f5a524;--r:#e5484d;--ai:#8b5cf6;--padh:36%;--padw:38%}
@@ -930,6 +930,11 @@ body[data-pad="off"] #ypadwrap{display:none}
   <label>PC'de seçilen metni otomatik kutuya çek <input type="checkbox" data-s="grabSel"></label>
   <label>Kutuya dokununca telefon klavyesini açma <input type="checkbox" data-s="noSoftKb"></label>
 
+  <h4>Bağlantı & Tam Ekran</h4>
+  <label>PC adresi (IP) <input type="text" data-s="host" placeholder="boş = bu adres" inputmode="decimal" style="width:55%;background:var(--p2);border:1px solid var(--b);color:var(--t);border-radius:8px;padding:6px 8px"></label>
+  <label>Dokununca otomatik tam ekran <input type="checkbox" data-s="autoFs"></label>
+  <label>Gecikme (telefon ⇄ PC) <b id="rttTxt">—</b></label>
+
   <h4>Canlı Ekran Netlik & Hız Ayarları</h4>
   <label>Görüntü Çözünürlüğü
     <select data-s="scrScale">
@@ -1328,7 +1333,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 /* ---------- PIN ---------- */
@@ -1348,22 +1353,36 @@ const D = Object.assign({
   num: 'auto', startTab: 'vs', yPad: true, pp: 'bottom', padH: 36, pl: 'right', padW: 38, clicks: true,
   wl: 'tr', tblR: 4, tblC: 3, aiOrder: 'groq_first', scrScale: '1.0', scrFps: '40', scrQual: '90', scrFit: 'fill',
   gpSlot: '1', gpGenre: 'standard', gpMode: 'auto', gpLabels: 'xbox', gpRightStickMode: 'auto',
-  gpScale: 1.0, gpPad: 14, gpGyroSens: 1.2, gpVib: true, gpFloatStick: true
+  gpScale: 1.0, gpPad: 14, gpGyroSens: 1.2, gpVib: true, gpFloatStick: true,
+  host: '', autoFs: true
 }, WL.tr);
 let saved = {};
 try { saved = JSON.parse(lsGet('kset3') || '{}'); } catch (e) {}
-if (!lsGet('k_hd_v5')) {
+if (!lsGet('k_hd_v6')) {
   saved.startTab = 'vs';
   saved.scrScale = '1.0';
-  saved.scrQual = '90';
+  saved.scrQual = '80';
   saved.scrFps = '40';
   saved.miniDirect = true;
   saved.grabSel = true;
   saved.noSoftKb = true;
-  lsSet('k_hd_v5', '1');
+  lsSet('k_hd_v6', '1');
 }
 const S = Object.assign({}, D, saved);
 function saveS() { lsSet('kset3', JSON.stringify(S)); }
+
+/* ---------- Sunucu adresi (PC'nin IP'si) ----------
+   Boşsa sayfanın açıldığı adres kullanılır. Doluysa (ör. 192.168.1.45) tüm bağlantılar o PC'ye gider.
+   Uygulama kabuğu GitHub Pages gibi sabit bir adresten açıldığında bu alan zorunludur. */
+function normHost(h) {
+  h = (h || '').trim().replace(/^[a-z]+:\/\//i, '').replace(/[\/?#].*$/, '');
+  if (!h) return '';
+  if (!/:\d+$/.test(h)) h += ':8765';
+  return h;
+}
+const needsHost = location.protocol === 'https:' && !/^(\d{1,3}\.){3}\d{1,3}$/.test(location.hostname) && location.hostname !== 'localhost' && !/\.local$/i.test(location.hostname);
+function hostPort() { return normHost(S.host) || location.host; }
+function apiBase() { return normHost(S.host) ? 'https://' + normHost(S.host) : ''; }
 
 let wl = null;
 async function wake() {
@@ -1396,7 +1415,21 @@ function toggleFullScreen() {
     if (exit) exit.call(document).catch(() => {});
   }
 }
-$('#scrFsBtn').onclick = toggleFullScreen;
+let fsSuppressed = false;
+const inFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+function tryAutoFs() {
+  if (!S.autoFs || fsSuppressed || inFs()) return;
+  try {
+    if (window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches) return;
+  } catch (e) {}
+  const el = document.documentElement;
+  const r = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!r) return;
+  try { const p = r.call(el); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+}
+// Tarayıcılar tam ekranı yalnızca kullanıcı dokunuşuyla açar: ilk dokunuşta (ve uygulamaya dönünce ilk dokunuşta) otomatik girer.
+['touchend', 'pointerup', 'click'].forEach(ev => document.addEventListener(ev, tryAutoFs, { capture: true, passive: true }));
+$('#scrFsBtn').onclick = () => { if (inFs()) fsSuppressed = true; toggleFullScreen(); };
 $('#scrMenuBtn').onclick = () => document.body.classList.toggle('show-top');
 $('#scrDeskLeftBtn').onclick = () => { tx({ t: 'key', k: 'left', m: ['ctrl', 'win'] }); toast('◀ Önceki Masaüstü'); };
 $('#scrDeskRightBtn').onclick = () => { tx({ t: 'key', k: 'right', m: ['ctrl', 'win'] }); toast('Sonraki Masaüstü ▶'); };
@@ -1699,7 +1732,7 @@ async function extractTextFromScreenRegion(region) {
 
   try {
     const r = region || ((Date.now() - lastDragRegion.time < 15000) ? lastDragRegion : { x1: 0, y1: 0, x2: 1, y2: 1 });
-    const cropUrl = `/crop.jpg?p=${encodeURIComponent(PIN)}&x1=${r.x1.toFixed(3)}&y1=${r.y1.toFixed(3)}&x2=${r.x2.toFixed(3)}&y2=${r.y2.toFixed(3)}&t=${Date.now()}`;
+    const cropUrl = `${apiBase()}/crop.jpg?p=${encodeURIComponent(PIN)}&x1=${r.x1.toFixed(3)}&y1=${r.y1.toFixed(3)}&x2=${r.x2.toFixed(3)}&y2=${r.y2.toFixed(3)}&t=${Date.now()}`;
     const imgRes = await fetch(cropUrl);
     if (!imgRes.ok) throw new Error('Ekran görüntüsü alınamadı');
     const blob = await imgRes.blob();
@@ -1867,12 +1900,16 @@ function setDot() {
   if ($('#dotGp')) $('#dotGp').classList.toggle('ok', wsOk);
 }
 function connect() {
+  if (needsHost && !normHost(S.host)) {
+    const h = normHost(prompt('PC adresi (PC penceresinde yazan IP, ör. 192.168.1.45):') || '');
+    if (h) { S.host = h; saveS(); loadSettingsUI(); } else { setTimeout(connect, 3000); return; }
+  }
   if (!PIN) {
     PIN = (prompt('PC ekranındaki PIN:') || '').trim();
     if (PIN) lsSet('kpin', PIN);
   }
   try {
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?p=' + encodeURIComponent(PIN));
+    ws = new WebSocket(((apiBase() || location.protocol === 'https:') ? 'wss://' : 'ws://') + hostPort() + '/ws?p=' + encodeURIComponent(PIN));
   } catch (e) { setTimeout(connect, 1500); return; }
   ws.onopen = () => {
     wsOk = true; fails = 0; setDot();
@@ -1882,17 +1919,31 @@ function connect() {
     try {
       const msg = JSON.parse(ev.data);
       if (msg.t === 'sel') handlePcSelectionEvent(msg.s);
+      else if (msg.t === 'pong') showRtt(performance.now() - msg.ts);
       else if (msg.t === 'pad_info' && typeof window.__onPadInfo === 'function') window.__onPadInfo(msg);
     } catch (e) {}
   };
   ws.onclose = () => {
     const was = wsOk; wsOk = false; setDot();
     if (!was) fails++;
-    if (fails >= 3) { fails = 0; toast('Bağlanamadı. PC penceresi açık mı?'); PIN = ''; lsDel('kpin'); }
+    if (fails >= 3) {
+      fails = 0; PIN = ''; lsDel('kpin');
+      if (apiBase()) {
+        toast('Bağlanamadı. PC adresi değişmiş olabilir.');
+        const h = normHost(prompt('PC adresi bağlanamıyor. PC penceresindeki güncel IP\'yi yaz.\n(Gerekirse önce tarayıcıda https://IP:8765 açıp "Devam et" de.)', S.host) || '');
+        if (h) { S.host = h; saveS(); loadSettingsUI(); startScreenLoop(true); }
+      } else toast('Bağlanamadı. PC penceresi açık mı?');
+    }
     setTimeout(connect, 1000);
   };
   ws.onerror = () => {};
 }
+function showRtt(ms) {
+  const el = $('#rttTxt'); if (!el) return;
+  el.textContent = Math.round(ms) + ' ms';
+  el.style.color = ms < 40 ? '#3fb950' : ms < 100 ? '#f5a524' : '#e5484d';
+}
+setInterval(() => { if (wsOk && ws && ws.readyState === 1 && document.visibilityState === 'visible') ws.send(JSON.stringify({ t: 'ping', ts: performance.now() })); }, 3000);
 function tx(o) { if (wsOk && ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
 connect();
 
@@ -1926,11 +1977,11 @@ function startScreenLoop(forceRestart) {
   }
   const scale = S.scrScale || '1.0';
   const delay = S.scrFps || '40';
-  const qual = S.scrQual || '90';
+  const qual = S.scrQual || '80';
   const baseKey = `${scale}_${delay}_${qual}`;
   if (!forceRestart && streamUrlCurrent === baseKey) return;
   streamUrlCurrent = baseKey;
-  pcScreenImg.src = `/stream.mjpg?p=${encodeURIComponent(PIN)}&s=${scale}&q=${qual}&d=${delay}&t=${Date.now()}`;
+  pcScreenImg.src = `${apiBase()}/stream.mjpg?p=${encodeURIComponent(PIN)}&s=${scale}&q=${qual}&d=${delay}&t=${Date.now()}`;
 }
 
 pcScreenImg.onerror = () => {
@@ -3432,6 +3483,7 @@ function bindSettings() {
       }
       saveS(); applyPrefs(); loadSettingsUI();
       if (k === 'awake') wake();
+      if (k === 'host') { S.host = normHost(S.host); saveS(); loadSettingsUI(); fails = 0; try { ws && ws.close(); } catch (e) {} streamUrlCurrent = ''; startScreenLoop(true); }
     });
   });
   $$('#segMode button').forEach(b => b.onclick = () => { S.direct = b.dataset.direct === '1'; saveS(); applyPrefs(); loadSettingsUI(); });
