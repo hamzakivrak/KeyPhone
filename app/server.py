@@ -28,6 +28,7 @@ from urllib.parse import urlparse, parse_qs
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.environ.get("KUMANDA_DATA") or os.path.join(HERE, "data")
 PORT = 8765
+MAX_STREAM_EDGE = 1920  # akışta uzun kenar üst sınırı (px); gecikmeyi düşürür
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 try:
@@ -169,6 +170,9 @@ def capture_screen_jpeg(scale=1.0, quality=88):
     with _cap_lock:
         sw = user32.GetSystemMetrics(0)
         sh = user32.GetSystemMetrics(1)
+        # Yüksek DPI'lı/2K-4K ekranlarda 1:1 kare çok büyük olur ve Wi-Fi'de gecikme yaratır.
+        # Uzun kenarı MAX_STREAM_EDGE ile sınırla (telefon ekranında fark edilmez).
+        scale = min(scale, MAX_STREAM_EDGE / float(max(sw, sh)))
         tw = max(640, int(sw * scale))
         th = max(360, int(sh * scale))
 
@@ -756,6 +760,11 @@ def handle(ev, send_ws_fn=None, client_state=None):
                 send(mouse(MOVE, clamp(mdx, 1800), clamp(mdy, 1800)))
         return
 
+    if t == "ping":
+        if send_ws_fn:
+            send_ws_fn({"t": "pong", "ts": ev.get("ts", 0)})
+        return
+
     if t == "pad_init":
         if client_state:
             pref = ev.get("slot")
@@ -895,9 +904,21 @@ def get_pin():
     return pin
 
 
+def _cert_has_ip(cp, ip):
+    try:
+        from cryptography import x509
+        with open(cp, "rb") as f:
+            c = x509.load_pem_x509_certificate(f.read())
+        san = c.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+        return ipaddress.ip_address(ip) in san.get_values_for_type(x509.IPAddress)
+    except Exception:
+        return False
+
+
 def ensure_cert(ip):
     cp, kp = os.path.join(DATA, "cert.pem"), os.path.join(DATA, "key.pem")
-    if os.path.exists(cp) and os.path.exists(kp):
+    # PC'nin IP'si değiştiyse sertifika yeni IP'yi de kapsasın (eskisi geçersiz adres uyarısı verirdi).
+    if os.path.exists(cp) and os.path.exists(kp) and _cert_has_ip(cp, ip):
         return cp, kp
     from cryptography import x509
     from cryptography.x509.oid import NameOID
@@ -993,8 +1014,24 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.cors()
         self.end_headers()
         self.wfile.write(body)
+
+    def cors(self):
+        # Uygulama kabuğu başka bir adresten (ör. GitHub Pages) açılırsa PC'ye erişebilsin.
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Content-Length", "0")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+        self.send_header("Access-Control-Max-Age", "600")
+        self.end_headers()
 
     def do_GET(self):
         u = urlparse(self.path)
@@ -1053,7 +1090,11 @@ class H(BaseHTTPRequestHandler):
                 "orientation": "any",
                 "background_color": "#000000",
                 "theme_color": "#000000",
-                "icons": [{"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+                "icons": [
+                    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                    {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+                ]
             }).encode("utf-8")
             self.reply(200, manifest, "application/manifest+json; charset=utf-8")
             return
@@ -1061,8 +1102,19 @@ class H(BaseHTTPRequestHandler):
             self.reply(200, ICON_SVG, "image/svg+xml")
             return
         if u.path == "/sw.js":
-            sw_code = b"self.addEventListener('fetch', function(e){});"
+            try:
+                with open(os.path.join(HERE, "web", "sw.js"), "rb") as f:
+                    sw_code = f.read()
+            except OSError:
+                sw_code = b"self.addEventListener('fetch', function(e){});"
             self.reply(200, sw_code, "application/javascript; charset=utf-8")
+            return
+        if u.path in ("/icon-192.png", "/icon-512.png"):
+            try:
+                with open(os.path.join(HERE, "web", u.path[1:]), "rb") as f:
+                    self.reply(200, f.read(), "image/png")
+            except OSError:
+                self.reply(404, b"yok")
             return
         if u.path in ("/", "/index.html"):
             try:
@@ -1074,10 +1126,16 @@ class H(BaseHTTPRequestHandler):
         self.reply(404, b"yok")
 
     def mjpeg_stream(self, scale, quality, delay):
+        # Gönderme tamponunu küçük tut: kareler ağda/çekirdekte kuyruk oluşturmasın, her kare taze yakalansın.
+        try:
+            self.connection.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+        except OSError:
+            pass
         self.send_response(200)
         self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Connection", "close")
+        self.cors()
         self.end_headers()
         self.close_connection = True
         try:
